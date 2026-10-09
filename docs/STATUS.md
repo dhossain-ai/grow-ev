@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
-Updated: 2026-10-09
-Phase: Cross-platform map foundation
+Updated: 2026-10-10
+Phase: Charging database foundation
 
 IMPORTANT:
 This is the initial status document.
@@ -41,10 +41,21 @@ Product components:
 - TASK-002 cross-platform MapLibre foundation.
 - Native Android and browser maps render OpenFreeMap Liberty centered on Vilnius.
 - Pan, zoom and attribution verified on Pixel_8 and in the browser.
+- TASK-003 Via Lietuva OCPI investigation implementation.
+- TASK-004A cloud database foundation verified on the user-confirmed disposable
+  Supabase project: migration applied, five tables/RLS verified, rollback-only
+  SQL suite passed twice on PostgreSQL 17.11 / PostGIS 3.3.7.
+- Live locations response structure, Vilnius coverage, statuses, identifiers,
+  timestamps and tariff references documented in `docs/OCPI_FINDINGS.md`.
+- Small TypeScript investigation script and representative fixture added.
+- Coverage correction: the original 93 locations were the first source window.
+  Full OCPI scan verified 1,984 locations, 5,824 EVSEs and 13 stable operator
+  IDs; Vilnius city match has 888 locations, 2,097 EVSEs and 11 operators.
+- DATEX static publication verified 3,672 sites and 29 provider names;
+  its point/connector counts are not yet mapped to independent EVSE capacity.
 
 ## Work not yet verified as complete
 
-- Database migrations
 - External charger feed integration
 - Scheduled ingestion
 - Status-history processing
@@ -86,11 +97,16 @@ Do not assume these have been implemented.
 
 ## Current task
 
-TASK-002 implemented and verified; awaiting review. TASK-003 has not started.
+TASK-004A cloud migration and database verification finalized in Git.
+TASK-003 changes remain uncommitted. TASK-004B is next.
 
 ## Current blockers
 
-- None for TASK-002.
+- Local PostgreSQL/PostGIS and Docker runtime remain unavailable. Cloud database
+  verification succeeded and TASK-004A is no longer blocked by local setup.
+- Production ingestion needs clarification of OCPI advertised-count semantics
+  and DATEX entity mapping/publication scope. Source timestamp timezone and
+  longitudinal update timing also remain unresolved. See `OCPI_FINDINGS.md`.
 
 ## Unresolved dependency audit findings
 
@@ -99,6 +115,18 @@ TASK-002 implemented and verified; awaiting review. TASK-003 has not started.
   These are upstream to Expo SDK 57 / React Native 0.86; force-fixing would break SDK 57 compatibility.
 
 ## Latest verification
+
+TASK-004A (2026-10-10): Supabase CLI 2.106.0 initialized and authenticated;
+user confirmed disposable project `heafsrqaytsfthfcxmqu`. Empty-target preflight
+and dry-run passed; explicitly approved `db push --yes` applied migration
+`20261009000100`. PostgreSQL 17.11 / PostGIS 3.3.7 verified. Complete SQL suite
+passed twice via `db query --linked --file` after removing psql meta-commands
+in a temporary transport copy. Actual anon/authenticated ACL denial and
+default-deny RLS tested. Post-test counts were zero for all five tables and
+temporary SELECT grants rolled back. `git diff --check` passed.
+No application files/dependencies changed; application checks not rerun.
+Remote migration-history SQL matches the repository (31 statements, normalized
+whitespace/comments). TASK-004A finalized in Git; no remote reset.
 
 2026-10-09, from `apps/driver`:
 - `npm run typecheck` — passed.
@@ -116,6 +144,16 @@ TASK-002 implemented and verified; awaiting review. TASK-003 has not started.
   double-tap zoom and full attribution dialog verified.
 - TASK-002 web — rendered in browser; pointer pan, zoom control, attribution
   links and a clean console in a fresh session verified.
+- TASK-003 full coverage investigation — passed; four explicit OCPI windows
+  and an independent large-window fetch returned the same 1,984 unique location
+  identities. Default 93-location response was a partial window.
+- OCPI national and Vilnius counts reproduced; both DATEX publications counted
+  using the platform XML parser without saving raw feeds.
+- Pagination regression tests — 4/4 passed (empty intermediate window,
+  duplicate identities, changing total and missing total).
+- TASK-003 ingestion-script TypeScript check — passed.
+- Driver typecheck and lint after TASK-003 — passed; application code and
+  dependencies were unchanged, so the web build was not rerun.
 
 ## Handoff rules
 

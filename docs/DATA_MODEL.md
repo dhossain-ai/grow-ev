@@ -1,254 +1,129 @@
 # Grow EV — Data Model
 
-Status: Proposed logical schema
-Version: 0.1
-
-This document defines the meaning of our data.
-
-The first database migration must be reviewed before implementation.
-
-## 1. Main entities
-
-### operators
-
-Represents charging network operators.
-
-Fields:
-- id
-- name
-- external_identifiers
-- website (optional)
-
-### stations
-
-Represents physical charging locations.
-
-Fields:
-- id
-- source_id
-- operator_id
-- name
-- address
-- latitude
-- longitude
-- location (PostGIS geography/geometry)
-- last_source_update
-
-### evses
-
-Represents individual EV supply equipment units.
-
-Fields:
-- id
-- station_id
-- source_evse_id
-- current_status
-- status_updated_at
-- last_observed_at
-- source_name
-
-Status belongs to the EVSE according to the source model.
-
-Do not assume every connector is an independently usable charging space.
-
-### connectors
-
-Fields:
-- id
-- evse_id
-- connector_type
-- power_kw
-- current_type
-- voltage (optional)
-- amperage (optional)
-
-An EVSE may expose several connector types without supporting simultaneous independent charging.
-
-### status_events
-
-Records observed status transitions.
-
-Fields:
-- id
-- evse_id
-- previous_status
-- new_status
-- source_updated_at (nullable)
-- observed_at
-- source_name
-
-An observation timestamp and a source timestamp are not always the same.
-
-### status_observations
-
-Optional raw or sampled observations for audit and analysis.
-
-Avoid unlimited duplicate snapshots.
-
-### occupancy_episodes
-
-Derived observed occupancy periods.
-
-Fields:
-- id
-- evse_id
-- started_at
-- ended_at (nullable)
-- duration_seconds (nullable)
-- confidence / quality flag
-- incomplete_start
-- incomplete_end
-
-These episodes are inferred from status transitions.
-
-They are not proof that energy was flowing for the entire period.
-
-### tariffs
-
-Fields:
-- id
-- station_id or connector relation
-- operator_id
-- tariff_id
-- currency
-- pricing_structure
-- valid_from
-- last_updated
-
-Do not assume every tariff is a simple price per kWh.
-
-Some tariffs may include time, parking, session or membership charges.
-
-### station_metrics
-
-Derived measurements such as:
-- observed availability ratio
-- observed occupied ratio
-- unavailable ratio
-- average occupied duration
-- status freshness
-- nearby usable capacity
-- calculation window
-- sample count
-
-### vehicles
-
-Fields:
-- id
-- make
-- model
-- battery_capacity_kwh
-- supported_connectors
-- charging_capabilities
-- charging_curve_reference (optional)
-
-Vehicle data must identify the source and avoid inaccurate assumptions.
-
-### recommendations
-
-Fields:
-- id
-- created_at
-- anonymous/session user reference
-- selected_station_id
-- considered_stations
-- evidence
-- recommendation_version
-- predicted_metrics
-- user_preference
-
-### problem_reports
-
-Fields:
-- id
-- station_id
-- report_type
-- description (optional)
-- evidence reference (optional)
-- created_at
-- verification_status
-
-Community reports are unverified until corroborated.
-
-## 2. EVSE status handling
-
-Normalize source statuses carefully.
-
-Examples may include:
-- AVAILABLE
-- CHARGING
-- BLOCKED
-- RESERVED
-- INOPERATIVE
-- OUTOFORDER
-- UNKNOWN
-- PLANNED
-- REMOVED
-
-Preserve the original source status where useful.
-
-UNKNOWN must not mean AVAILABLE.
-
-BLOCKED must not automatically mean confirmed post-charge idling.
-
-## 3. Ingestion rules
-
-1. Fetch data according to source limits.
-2. Validate required fields.
-3. Normalize external identifiers.
-4. Upsert current state.
-5. Write a status event only for a real transition.
-6. Preserve observed and source timestamps separately.
-7. Avoid duplicate history events.
-8. Do not erase the last known good state because one response is malformed.
-9. Mark old observations as stale.
-10. Log errors and unusual feed behavior.
-
-## 4. Data freshness
-
-A currently stored status is not necessarily live.
-
-Each EVSE needs:
-- Last successful observation.
-- Source update time where provided.
-- Freshness classification.
-
-Freshness thresholds must be configurable and tested against real feed behavior.
-
-Stale status must not be advertised as confirmed current availability.
-
-## 5. Geographic data
-
-Use PostGIS for:
-- Nearby station searches.
-- Radius calculations.
-- Geographic clustering.
-- Area-based capacity analysis.
-
-Use actual road routing APIs for driving time.
-
-Straight-line distance must not be labeled driving distance.
-
-## 6. Data quality
-
-Track:
-- Missing coordinates.
-- Invalid coordinates.
-- Duplicate source identifiers.
-- Missing power values.
-- Missing or ambiguous tariffs.
-- Unusual status transitions.
-- Stale observations.
-- Data-source failures.
-
-Missing information should remain missing, not silently become zero.
-
-## 7. Privacy
-
-Do not collect personal location history unless required and justified.
-
-For guest recommendations, prefer short-lived session data.
-
-Apply access controls to user reports and operator data.
-
-Never expose service-role credentials to the mobile or browser client.
+Status: TASK-004A cloud migration and PostgreSQL/PostGIS tests verified 2026-10-10
+Version: 0.2
+
+Migration: `supabase/migrations/20261009000100_charging_foundation.sql`.
+Migration verified against remote migration-history SQL and finalized in Git. Applied to the
+user-confirmed disposable Supabase project `heafsrqaytsfthfcxmqu`.
+
+## Implemented tables
+
+| Table | Purpose | Idempotent identity |
+| --- | --- | --- |
+| `charging_locations` | Source identity, operator details, address, geography and observation times | `(source, country_code, party_id, ocpi_location_id)` |
+| `charging_evses` | Technical identity, current normalized/original status and observations | `(source, country_code, party_id, uid)` |
+| `charging_connectors` | Technical connector options and tariff references | `(evse_id, connector_id)` |
+| `source_poll_runs` | Poll timing, outcome, traversal completeness, counts, pagination evidence and errors | UUID assigned once per run, reused for updates |
+| `evse_status_transitions` | Observed changes and the interval between observations | `(evse_id, poll_run_id)` |
+
+All internal primary keys are UUIDs. Source is a stable feed identifier,
+separate from the versioned endpoint URL. Future ingestion converts numeric
+wire identifiers losslessly to text. Public `evse_id` is deliberately nonunique.
+
+An EVSE retains its canonical identity when its location changes. Its composite
+foreign key requires the location's source, country and party to match.
+Transitions similarly enforce matching EVSE and poll sources. Foreign keys
+prevent deletion of referenced records; no cascade deletion is configured.
+
+Operator names/websites stay on locations; source/country/party identifies the
+operator in this feed. A separate operator table is deferred. Small JSON objects
+retain relevant published metadata, without storing full feed responses.
+
+## Status and timestamp semantics
+
+`current_status` recognizes AVAILABLE, BLOCKED, CHARGING, INOPERATIVE,
+OUTOFORDER, PLANNED, REMOVED, RESERVED and UNKNOWN. INOPERATIVE is separate from
+OUTOFORDER. Future ingestion maps missing/unrecognized values to UNKNOWN and
+preserves the exact original `source_status` (NULL when missing).
+UNKNOWN never implies availability. Neither CHARGING nor long occupancy proves
+charging completion or post-charge idling.
+
+Locations and EVSEs require explicit, ordered `first_observed_at` and
+`last_observed_at` as `timestamptz`. Each source update has original
+`source_last_updated_text` and nullable `source_last_updated_at`.
+Leave the latter NULL while the timezone is uncertain; never cast offset-free
+text using the database session's timezone.
+
+Transitions preserve previous/new normalized and original statuses, previous/new
+observation times, the observing poll and the new source timestamp. The actual
+change occurred between observations; neither bound is an exact transition
+time. First observation creates no fabricated transition. Original status
+changes can be retained even when both normalized values are UNKNOWN.
+
+Only changes are stored, not every unchanged observation. Partial or failed
+polls cannot prove every EVSE was observed. Historical occupancy episodes will
+need interval/gap uncertainty; they are not implemented in TASK-004A.
+
+## Polling history and future writer responsibilities
+
+Outcome is RUNNING, SUCCESS or FAILURE. Completeness is UNKNOWN, PARTIAL or
+COMPLETE. Successful requests can still be partial. COMPLETE means validated
+traversal of the requested feed scope, never complete national coverage.
+Advertised totals are diagnostic; do not equate them with unique locations.
+Small paging metadata records offsets, returned counts, headers and validation
+notes. FAILURE requires an error description. Unfinished RUNNING rows expose
+interrupted polls. Zero initial counters mean a run has not retrieved records
+yet, not that a missing source measurement was zero.
+
+TASK-004B must validate external values; update observation times only for
+validated records; preserve first-seen times and last good state; serialize
+competing state updates; and record current state plus transitions atomically.
+Do not erase unseen records after a partial response. Cross-row chronology and
+poll-success checks remain writer responsibilities. No ingestion triggers,
+stored service procedures or ingestion code exist.
+
+## Connectors and geography
+
+Connector identifiers are scoped to their EVSE. Standards, formats and power
+types retain source text. Optional power, voltage and amperage remain NULL when
+missing; validated values must be positive. Rated power is published maximum
+watts, not measured power or a constant charging rate. Capacity counts EVSEs,
+not connector options.
+
+Tariffs are source references scoped through EVSE/operator identity. NULL means
+missing references; an empty array means explicitly none. No tariff prices or
+pricing calculations are stored yet.
+
+Latitude/longitude are nullable together, constrained to geographic ranges.
+A stored generated WGS84 `geography(Point,4326)` uses longitude first, with
+a GiST index for radius queries. Missing coordinates remain NULL. Road routing
+and administrative-boundary classification are not implemented.
+
+## Database security and setup
+
+PostGIS is installed in `extensions`. The migration fails if an existing
+installation uses another schema rather than relocating it implicitly.
+
+RLS is enabled on all five tables with no client policies. PUBLIC, anon and
+authenticated have no direct grants. Existing service_role receives
+SELECT/INSERT/UPDATE on current-state/run tables and SELECT/INSERT on transitions;
+no DELETE or transition UPDATE grants are added. Vanilla PostgreSQL need not
+have Supabase roles. Supabase's service_role bypasses RLS; credentials stay
+server-side. Future client reads require a separately reviewed API/policy.
+See [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)
+and [PostGIS setup](https://supabase.com/docs/guides/database/extensions/postgis).
+
+On an explicitly disposable, empty PostgreSQL 15+ database with PostGIS available:
+
+```powershell
+psql --dbname growev_task004a_test --set ON_ERROR_STOP=1 --file supabase/migrations/20261009000100_charging_foundation.sql
+psql --dbname growev_task004a_test --set ON_ERROR_STOP=1 --file supabase/tests/charging_foundation.sql
+```
+
+Tests roll back data/helpers and can run twice. Reproduce clean setup in a
+second empty database. Supabase migration history applies the version once;
+replaying DDL on an existing schema intentionally fails instead of masking drift.
+
+Cloud verification used PostgreSQL 17.11 / PostGIS 3.3.7. The complete SQL suite
+passed twice through `npx supabase db query --linked --file` using a temporary
+copy with psql meta-commands removed. Constraints, spatial operations, ACLs and
+actual anon/authenticated default-deny RLS were verified. All fixture rows and
+temporary grants rolled back; all five tables remained empty. Independent
+setup in a second database was not run. Local Windows/WSL runtime remains absent.
+
+## Deferred entities
+
+Separate operators, tariffs, raw per-EVSE observations, occupancy episodes,
+station metrics, vehicles, recommendations and community reports remain future
+design work. No speculative tables for these entities are part of TASK-004A.
