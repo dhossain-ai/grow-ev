@@ -75,9 +75,17 @@ npm run web
 ```
 
 The web development server prints its local URL. To start the Android target,
-connect a device or start an emulator, then run `npm run android`. Android
-runtime verification depends on a locally configured Android SDK and was not
-completed during the initial scaffold.
+connect a device or start an emulator, then run `npm run android`.
+
+The native map includes custom native code and therefore requires an Expo
+development build; it does not run in Expo Go. `npm run android` builds,
+installs and opens that development build. The command was verified with the
+`Pixel_8` Android emulator.
+
+Web commands automatically copy the MapLibre GL JS worker that matches the
+installed package into an ignored `public/maplibre` directory. Run
+`npm run prepare-maplibre-web` manually only when starting Expo without the npm
+scripts.
 
 ## Verification
 
@@ -90,7 +98,7 @@ npm run build:web
 ```
 
 The production web export is written to `apps/driver/dist` and is ignored by
-Git. These commands were verified for TASK-001 on 2026-10-09.
+Git. These commands were verified for TASK-002 on 2026-10-09.
 
 ## Environment variables
 

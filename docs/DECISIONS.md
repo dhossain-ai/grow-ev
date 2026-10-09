@@ -29,12 +29,23 @@ Use MapLibre.
 Native: MapLibre React Native.
 Web: MapLibre GL JS.
 
+Basemap:
+Use the public OpenFreeMap Liberty style initially:
+`https://tiles.openfreemap.org/styles/liberty`.
+
 Reason:
 Open-source renderer, custom styling and control of
 map visualization.
 
 Important:
 Basemap tiles are a separate service.
+
+Verified:
+MapLibre React Native 11.5 works with Expo SDK 57 / React Native 0.86 using
+the official Expo config plugin and a development build. MapLibre GL JS 6.13
+works with Expo Metro when its ESM worker is served as a same-origin public
+asset. OpenFreeMap supplies the required OpenFreeMap, OpenMapTiles and
+OpenStreetMap attribution through the style.
 
 ## ADR-003 — Routing
 
@@ -124,12 +135,10 @@ Reduce duplicated context and avoid conflicting agent rules.
 
 ## Open decisions
 
-- Exact basemap provider configuration.
 - Routing API account and quota validation.
 - Polling interval and scheduler.
 - Grow Score weights and presentation.
 - Exact availability-prediction baseline.
-- Native map package/Expo SDK compatibility.
 - Production hosting and authentication details.
 
 These are not finalized until verified.

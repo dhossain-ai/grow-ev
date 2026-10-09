@@ -3,11 +3,13 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@maplibre/maplibre-react-native": "^11.5.0",
     "expo": "~57.0.27",
     "expo-constants": "~57.0.21",
     "expo-linking": "~57.0.12",
     "expo-router": "~57.0.25",
     "expo-status-bar": "~57.0.1",
+    "maplibre-gl": "^6.13.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
@@ -23,12 +25,16 @@
   },
   "scripts": {
     "start": "expo start",
+    "prestart": "npm run prepare-maplibre-web",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "preweb": "npm run prepare-maplibre-web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "build:web": "expo export --platform web"
+    "build:web": "expo export --platform web",
+    "prebuild:web": "npm run prepare-maplibre-web",
+    "prepare-maplibre-web": "node ./scripts/prepare-maplibre-web.mjs"
   },
   "private": true
 }
