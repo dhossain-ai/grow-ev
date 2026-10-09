@@ -52,3 +52,5 @@ yarn-error.*
 .metro-health-check*
 *.tsbuildinfo
 
+# Local collector snapshots and test artifacts
+services/ingestion/.scratch/

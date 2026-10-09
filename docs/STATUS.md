@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: Charging database foundation
+Phase: Lithuanian charging data ingestion verified and completed
 
 IMPORTANT:
 This is the initial status document.
@@ -41,7 +41,11 @@ Product components:
 - TASK-002 cross-platform MapLibre foundation.
 - Native Android and browser maps render OpenFreeMap Liberty centered on Vilnius.
 - Pan, zoom and attribution verified on Pixel_8 and in the browser.
-- TASK-003 Via Lietuva OCPI investigation implementation.
+- TASK-003 Via Lietuva OCPI investigation verified and completed.
+- TASK-004B one-shot collector verified and completed on Supabase DEV: two complete polls,
+  1,984 locations, 5,836 EVSEs, 5,838 connectors, zero duplicate canonical
+  entities and zero false transitions. Real-transition/failure/interruption tests
+  passed locally; no simulated status changes were written to DEV.
 - TASK-004A cloud database foundation verified on the user-confirmed disposable
   Supabase project: migration applied, five tables/RLS verified, rollback-only
   SQL suite passed twice on PostgreSQL 17.11 / PostGIS 3.3.7.
@@ -56,15 +60,14 @@ Product components:
 
 ## Work not yet verified as complete
 
-- External charger feed integration
 - Scheduled ingestion
-- Status-history processing
+- Historical occupancy/analytics processing
 - Routing integration
 - Recommendation engine
 - Dashboard
 - Driver charging features
 - Public deployment
-- Automated testing
+- Driver/dashboard automated testing
 
 Do not assume these have been implemented.
 
@@ -97,13 +100,14 @@ Do not assume these have been implemented.
 
 ## Current task
 
-TASK-004A cloud migration and database verification finalized in Git.
-TASK-003 changes remain uncommitted. TASK-004B is next.
+TASK-003 and TASK-004B verified and completed. Next task: TASK-005 (network
+analytics and status-history processing). See `tasks/active/TASK-004B.md`.
 
 ## Current blockers
 
-- Local PostgreSQL/PostGIS and Docker runtime remain unavailable. Cloud database
-  verification succeeded and TASK-004A is no longer blocked by local setup.
+- Local PostgreSQL 16.15 / PostGIS 3.4.2 now available in WSL for disposable tests.
+- No TASK-004B verification blocker. Server-side environment is configured and
+  ignored; TLS uses the official CA and the confirmed DEV session pooler.
 - Production ingestion needs clarification of OCPI advertised-count semantics
   and DATEX entity mapping/publication scope. Source timestamp timezone and
   longitudinal update timing also remain unresolved. See `OCPI_FINDINGS.md`.
@@ -115,6 +119,19 @@ TASK-003 changes remain uncommitted. TASK-004B is next.
   These are upstream to Expo SDK 57 / React Native 0.86; force-fixing would break SDK 57 compatibility.
 
 ## Latest verification
+
+TASK-004B (2026-10-10): both approved DEV runs passed on user-confirmed
+heafsrqaytsfthfcxmqu. First live fetch/stored counts: 1,984 locations, 5,836 EVSEs,
+5,838 connectors, one SUCCESS/COMPLETE poll, zero baseline transitions. Exact
+captured-source replay: same entity counts, two SUCCESS/COMPLETE polls overall,
+zero transitions. Full-row/identity comparison passed: no canonical duplicates,
+UUID/first-observation changes, source-field corruption or partial publication.
+95 duplicated public EVSE-ID groups and 30 UNKNOWN EVSEs preserved correctly.
+Local parser and PostgreSQL tests rerun: 23 passed, zero failed/skipped.
+Ingestion TypeScript, read-only schema/TLS check and diff checks passed.
+Connection formatting/IPv6/CA setup corrected privately; no credential printed.
+No schema, app, scheduling or new feature changes. TASK-003 and TASK-004B finalized in Git.
+See tasks/active/TASK-004B.md for poll IDs, commands and verification details.
 
 TASK-004A (2026-10-10): Supabase CLI 2.106.0 initialized and authenticated;
 user confirmed disposable project `heafsrqaytsfthfcxmqu`. Empty-target preflight

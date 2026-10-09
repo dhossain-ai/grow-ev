@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-10-09T19:49:24Z",
+  "status_code": 1000,
+  "status_message": "Success",
+  "data": [
+    {
+      "country_code": "LT",
+      "party_id": "IBG",
+      "id": 258,
+      "publish": true,
+      "name": "L3 | Inbalance grid",
+      "address": "Laisvės pr. 3",
+      "city": "Vilnius",
+      "country": "LTU",
+      "coordinates": {
+        "latitude": "54.6745570",
+        "longitude": "25.2243550"
+      },
+      "evses": [
+        {
+          "uid": 535,
+          "evse_id": "IBG-P-A9MY-A",
+          "status": "AVAILABLE",
+          "connectors": [
+            {
+              "id": 650306,
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_1_PHASE",
+              "voltage": 400,
+              "amperage": 32,
+              "max_electric_power": 22000,
+              "tariff_ids": ["d37ff71c-0a3d-11f0-9a21-06a2d3719779"],
+              "last_updated": "2024-09-02T15:49:50"
+            }
+          ],
+          "last_updated": "2026-10-09T17:21:50"
+        }
+      ],
+      "operator": {
+        "name": "In Balance grid, UAB",
+        "website": "www.inbalancegrid.lt"
+      },
+      "time_zone": "Europe/Vilnius",
+      "last_updated": "2026-10-09T17:52:46"
+    }
+  ]
+}
