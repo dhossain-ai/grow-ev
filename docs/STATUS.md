@@ -1,10 +1,10 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: Lithuanian charging data ingestion verified and completed
+Phase: Real charging maps verified and completed on web and Android
 
 IMPORTANT:
-This is the initial status document.
+This document records current implementation and verification.
 No implementation is marked complete without verification.
 
 ## Confirmed product direction
@@ -38,6 +38,9 @@ Product components:
 - Typecheck, lint, Expo Doctor and production web export pass.
 - Browser smoke test renders the Grow EV home screen without console errors.
 - Android debug build (`app-debug.apk`) generated, installed, and verified running on Pixel_8 emulator.
+- TASK-005 real charging maps verified on Chrome (including production export) and Pixel_8 emulator.
+- Publishable-key RPC, protected-table access denial, pagination, EVSE counts,
+  markers/clusters/details/filters/timestamps and loading/empty/error/retry verified.
 - TASK-002 cross-platform MapLibre foundation.
 - Native Android and browser maps render OpenFreeMap Liberty centered on Vilnius.
 - Pan, zoom and attribution verified on Pixel_8 and in the browser.
@@ -73,18 +76,7 @@ Do not assume these have been implemented.
 
 ## Immediate next tasks
 
-1. Review product and architecture documents.
-2. Create repository structure.
-3. Define the next scoped driver-app task.
-4. Verify charger feed structure, access and licensing.
-5. Verify routing provider access and quotas.
-6. Implement database schema.
-7. Implement ingestion and validation.
-8. Implement network analysis.
-9. Implement initial recommendation engine.
-10. Connect the driver UI and network dashboard.
-11. Test with real data and documented scenarios.
-12. Prepare live and fallback demo modes.
+1. Explicitly select and define the next scoped task (e.g., driver route planning or network analytics).
 
 ## Critical technical risks
 
@@ -100,17 +92,16 @@ Do not assume these have been implemented.
 
 ## Current task
 
-TASK-003 and TASK-004B verified and completed. Next task: TASK-005 (network
-analytics and status-history processing). See `tasks/active/TASK-004B.md`.
+TASK-005 verified and completed. Next task to be assigned explicitly.
+See `tasks/active/TASK-005.md` for scope, evidence and limits. No next task started.
 
 ## Current blockers
 
-- Local PostgreSQL 16.15 / PostGIS 3.4.2 now available in WSL for disposable tests.
-- No TASK-004B verification blocker. Server-side environment is configured and
-  ignored; TLS uses the official CA and the confirmed DEV session pooler.
-- Production ingestion needs clarification of OCPI advertised-count semantics
-  and DATEX entity mapping/publication scope. Source timestamp timezone and
-  longitudinal update timing also remain unresolved. See `OCPI_FINDINGS.md`.
+- No blocker to the verified web/Android emulator map demo.
+- Stored observations are from 2026-10-10 00:52:03 Europe/Vilnius, marked stale;
+  scheduling/fresh collection and physical Android-device validation are unverified.
+- Later private SQL/CLI rechecks timed out or stalled; initial read-only SQL suite
+  and deployed catalog checks passed, and final public API checks pass.
 
 ## Unresolved dependency audit findings
 
@@ -119,6 +110,21 @@ analytics and status-history processing). See `tasks/active/TASK-004B.md`.
   These are upstream to Expo SDK 57 / React Native 0.86; force-fixing would break SDK 57 compatibility.
 
 ## Latest verification
+
+TASK-005 (2026-10-10): frontend contains only ignored public configuration;
+publishable-key RPC succeeds. Deployed function matches the reviewed body,
+uses a trusted search path/explicit EXECUTE grants; anon/authenticated lack all
+read/write privileges on five protected RLS tables. Public GET/empty POST denied.
+National client retrieves 1,984 stations / 5,836 EVSEs through two pages; Vilnius
+bounds return 923 stations / 2,207 EVSEs. Initial read-only SQL count/denial/input
+suite passed after a test-only text cast; subsequent private SQL repeats failed
+to connect. Invalid public queries and field allowlist checks pass.
+Typecheck, zero-warning lint, 4 unit tests, live HTTP verification, production web
+export, Android debug build and diff checks pass. Chrome and Pixel_8 verified
+clusters, observed availability, selection, details, connectors/power, timestamps,
+loading/empty/error/retry and map interactions. Emulator DNS workaround required;
+upstream basemap geometry warning remains. No FPS benchmark or physical-device
+validation. No migration push/edit, collector changes, TASK-006 or commit.
 
 TASK-004B (2026-10-10): both approved DEV runs passed on user-confirmed
 heafsrqaytsfthfcxmqu. First live fetch/stored counts: 1,984 locations, 5,836 EVSEs,
