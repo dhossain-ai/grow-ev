@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Expo & Web builds
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native & generated build directories
+android/
+ios/
+apps/*/android/
+apps/*/ios/
+.gradle/
+build/
+*.orig.*
+.kotlin/
+.cxx/
+
+# Android local and keystore files
+local.properties
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Secrets and environment variables
+.env
+.env*.local
+*.pem
+
+# IDE and OS files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Logs and caches
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.metro-health-check*
+*.tsbuildinfo
+
