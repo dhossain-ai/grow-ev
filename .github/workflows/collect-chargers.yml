@@ -52,7 +52,13 @@ jobs:
             exit 1
           fi
           umask 077
-          printf '%s\n' "$GROW_EV_DATABASE_CA" > "$GROW_EV_DATABASE_CA_FILE"
+          printf '%s' "$GROW_EV_DATABASE_CA" > "$GROW_EV_DATABASE_CA_FILE"
+
+      - name: Credential-free strict TLS diagnostic
+        working-directory: services/ingestion
+        env:
+          GROW_EV_DATABASE_URL: ${{ secrets.GROW_EV_DATABASE_URL }}
+        run: npm run tls-diagnostic
 
       - name: Read-only DEV preflight
         working-directory: services/ingestion
