@@ -15,6 +15,8 @@ jobs:
   collect:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      GROW_EV_DATABASE_CA: ${{ secrets.GROW_EV_DATABASE_CA }}
     permissions:
       contents: read
     steps:
@@ -32,9 +34,7 @@ jobs:
         run: npm ci
 
       - name: Reconstruct database certificate
-        if: ${{ secrets.GROW_EV_DATABASE_CA != '' }}
-        env:
-          GROW_EV_DATABASE_CA: ${{ secrets.GROW_EV_DATABASE_CA }}
+        if: ${{ env.GROW_EV_DATABASE_CA != '' }}
         run: |
           echo "$GROW_EV_DATABASE_CA" > /tmp/supabase-ca.crt
 

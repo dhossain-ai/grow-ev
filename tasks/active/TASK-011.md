@@ -1,6 +1,6 @@
 # TASK-011 — Public Deployment and Automation
 
-Status: Implemented locally. Awaiting manual Cloudflare configuration and public URL verification.
+Status: Release engineering validation passed locally; awaiting the new main CI deployment and public URL verification.
 Date: 2026-10-10
 Prerequisite: TASK-010 checkpoint.
 
@@ -26,7 +26,7 @@ Publish Grow EV on Cloudflare Workers and establish reliable GitHub Actions CI/C
 ### Phase 4 - Public Routing Safety
 - The modified routing Edge Function is still un-deployed.
 - The app handles routing absence gracefully with a fallback UI.
-- Not deploying the Edge Function ensures no unexpected paid routing exposure.
+- An older routing implementation was already deployed to DEV. The undeployed patch does not disable that endpoint; public clients can reach it. No routing calls or redeployment are authorized in this task.
 
 ### Phase 5 - GitHub Actions Web CI/CD
 - Created `.github/workflows/deploy-web.yml`.
@@ -57,10 +57,21 @@ Publish Grow EV on Cloudflare Workers and establish reliable GitHub Actions CI/C
 3. Once verified, uncomment the `schedule` block in `collect-chargers.yml` and merge.
 
 ### Known Limitations
-- The TomTom Routing Edge function is NOT globally rate-limited. It is still disabled in production to protect quotas.
-- Data ingestion is currently triggered manually or on a 30-minute schedule (pending approval), so real-time status in the UI might be up to 30 minutes old. Stale readings are labelled as such.
+- Existing DEV routing remains deployed and is NOT globally rate-limited. The local patch is undeployed; routing was not exercised during release validation.
+- Collector scheduling remains commented out. Existing observations may be stale; no refresh was run during release validation.
 
 ## Next Steps
 - User needs to authenticate Cloudflare or run CI/CD to obtain the final public URL.
 - Verify the public HTTPS URL in browser.
 
+
+## Independent release engineering verification — 2026-10-10
+
+- Baseline local/remote main: `bbf4c8787d4ff82bc364b897ee6f945fa2b874cb`. Matching Deploy Web run `38048704760` failed at dependency installation: missing root `@emnapi/core@1.11.3` and `@emnapi/runtime@1.11.3`. Older runs were not used to diagnose this commit.
+- Real isolated WSL Ubuntu / Linux Node 22.22.0, npm 10.9.4 reproduced the error. Added only those two lock entries; existing dependency versions unchanged. Clean npm ci then passed.
+- Fresh-checkout TypeScript exposed missing CSS declarations supplied by ignored Expo-generated types. Added a tracked Expo type reference; driver typecheck passed.
+- Driver zero-warning lint and all 61 tests passed. Ingestion clean install/typecheck and 13 tests passed; PostgreSQL suite skipped without a disposable database. No collector poll executed.
+- actionlint 1.7.7 passed both workflow files (shellcheck/pyflakes unavailable and disabled). Fixed prohibited secrets context in collector step condition using job env; schedule remains disabled.
+- GitHub configuration has Cloudflare and public Supabase secret names, but no repository variables. Web build now accepts existing public secrets as fallback. Values withheld.
+- Wrangler 4.149.0 rejects original html_handling and accepts auto-trailing-slash with SPA not_found_handling. Production web export and corrected deploy dry-run passed.
+- Workflow directories, lockfile paths and package scripts checked. No application rewrite, dependency upgrade, migration, routing deployment or TomTom request.

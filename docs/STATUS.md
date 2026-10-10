@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: TASK-011 deployment pipelines ready, awaiting Cloudflare credentials and public URL verification
+Phase: TASK-011 independently validated release fixes, awaiting main CI deployment and public URL verification
 
 ## Verified foundation
 
@@ -225,3 +225,15 @@ Review TASK-010 screenshots and uncommitted implementation. TASK-009 checkpoint 
 Fresh observations require separately approved collection; provider comparison needs
 quota availability. Existing modified routing Edge Function remains undeployed, and
 Android Fabric startup reliability remains unresolved. Stop for review.
+
+## TASK-011 release engineering takeover — 2026-10-10
+
+Baseline main `bbf4c878` failed npm ci in matching GitHub run `38048704760`.
+Linux clean installation reproduced and verified the minimal two-entry lock repair.
+Tracked Expo types fix fresh-checkout CSS typechecking. Driver TypeScript, zero-warning
+lint and 61 tests passed; ingestion TypeScript and 13 tests passed (database suite skipped).
+Both workflows passed actionlint; corrected Wrangler configuration passed installed CLI
+dry-run. Public Supabase settings now support existing GitHub secrets as fallback.
+Collector remains manual-only and unrun. Existing DEV routing remains deployed; the
+undeployed local patch does not disable it. No routing/provider requests or Supabase changes.
+See TASK-011 for exact versions and validation limits.
