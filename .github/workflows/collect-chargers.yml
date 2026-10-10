@@ -1,4 +1,5 @@
 name: Collect Chargers
+run-name: ${{ inputs.mode == 'permanent' && format('Permanent collection / {0}', inputs.dispatch_id) || 'Collect Chargers' }}
 
 on:
   workflow_dispatch:
@@ -9,7 +10,12 @@ on:
         options:
           - preflight
           - collect
+          - permanent
         default: preflight
+      dispatch_id:
+        description: 'Cloudflare slot identifier (permanent mode only)'
+        type: string
+        default: ''
   # Approved hackathon window; scheduled work expires at 2026-10-11 07:00 UTC.
   schedule:
     - cron: '14,44 * * * *'
@@ -25,6 +31,10 @@ jobs:
     env:
       GROW_EV_PROJECT_REF: heafsrqaytsfthfcxmqu
       GROW_EV_DATABASE_CA_FILE: /tmp/grow-ev-supabase-ca.crt
+      GROW_EV_PERMANENT_COLLECTION: ${{ vars.GROW_EV_PERMANENT_COLLECTION }}
+      GROW_EV_COLLECTION_MODE: ${{ inputs.mode }}
+      GROW_EV_HISTORY_ENABLED: ${{ vars.GROW_EV_HISTORY_ENABLED }}
+      GROW_EV_SCHEDULER: ${{ vars.GROW_EV_SCHEDULER }}
     permissions:
       contents: read
     steps:
@@ -36,6 +46,10 @@ jobs:
           if bash .github/scripts/collection-window.sh "$GITHUB_EVENT_NAME"; then
             echo 'allowed=true' >> "$GITHUB_OUTPUT"
           else
+            if [ "$GROW_EV_COLLECTION_MODE" = permanent ]; then
+              echo 'Permanent activation gate rejected; no work performed.' >&2
+              exit 1
+            fi
             echo 'allowed=false' >> "$GITHUB_OUTPUT"
           fi
 
@@ -79,14 +93,43 @@ jobs:
           fi
 
       - name: Run OCPI Collector
-        if: ${{ steps.window.outputs.allowed == 'true' && (github.event_name == 'schedule' || inputs.mode == 'collect') }}
+        id: collector
+        if: ${{ steps.window.outputs.allowed == 'true' && (github.event_name == 'schedule' || inputs.mode == 'collect' || inputs.mode == 'permanent') }}
         working-directory: services/ingestion
         env:
           GROW_EV_DATABASE_URL: ${{ secrets.GROW_EV_DATABASE_URL }}
+          GROW_EV_COLLECTION_RECEIPT: ${{ inputs.mode == 'permanent' && '/tmp/grow-ev-collection-receipt.json' || '' }}
+          GROW_EV_DISPATCH_ID: ${{ inputs.dispatch_id }}
         run: |
           if bash ../../.github/scripts/collection-window.sh "$GITHUB_EVENT_NAME"; then
             npm run collect
           fi
+
+      - name: Verify durable private archive
+        if: inputs.mode == 'permanent' && steps.collector.outcome == 'success'
+        working-directory: services/ingestion
+        env:
+          GROW_EV_DATABASE_URL: ${{ secrets.GROW_EV_DATABASE_URL }}
+          GROW_EV_ARCHIVE_SERVICE_KEY: ${{ secrets.GROW_EV_ARCHIVE_SERVICE_KEY }}
+          GROW_EV_HISTORY_PRUNE: ${{ vars.GROW_EV_HISTORY_PRUNE }}
+          GROW_EV_COLLECTION_RECEIPT: /tmp/grow-ev-collection-receipt.json
+        run: node scripts/archive-history.ts
+
+      - name: Chain CatBoost dry-run for this exact poll
+        if: inputs.mode == 'permanent' && steps.collector.outcome == 'success' && vars.GROW_EV_INFERENCE_CHAIN == 'approved'
+        env:
+          GROW_EV_AI_DISPATCH_TOKEN: ${{ secrets.GROW_EV_AI_DISPATCH_TOKEN }}
+          GROW_EV_COLLECTION_RECEIPT: /tmp/grow-ev-collection-receipt.json
+        run: node .github/scripts/dispatch-inference.mjs
+
+      - name: Preserve collection receipt
+        if: inputs.mode == 'permanent' && steps.collector.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: collection-receipt-${{ github.run_id }}
+          path: /tmp/grow-ev-collection-receipt.json
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Cleanup certificate
         if: always()

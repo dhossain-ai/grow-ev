@@ -12,14 +12,16 @@ const snapshot = (minute, f = fixture) => parseLocations(f, `2026-10-10T10:${Str
 test('PostgreSQL atomic ingestion, history, failures, interruption and source serialization', { skip: !connectionString }, async t => {
   const url = new URL(connectionString);
   assert.ok(['localhost', '127.0.0.1'].includes(url.hostname));
-  assert.equal(url.pathname, '/growev_collector_test');
+  assert.match(url.pathname, /^\/growev_(collector_test|history_test_task015_\d+)$/);
   const db = new pg.Client({ connectionString }); await db.connect();
-  assert.equal((await db.query('select current_database() as name')).rows[0].name, 'growev_collector_test');
+  assert.equal((await db.query('select current_database() as name')).rows[0].name, url.pathname.slice(1));
   const counts = async () => (await db.query(`select (select count(*)::int from charging_locations) locations,(select count(*)::int from charging_evses) evses,(select count(*)::int from charging_connectors) connectors,(select count(*)::int from evse_status_transitions) transitions`)).rows[0];
   async function ingest(s) { const id = await beginPoll(db); return { id, transitions: await publish(db, id, s, evidence()) }; }
   try {
     await checkSchema(db);
-    await db.query('truncate charging_connectors,evse_status_transitions,charging_evses,charging_locations,source_poll_runs');
+    const optional = await db.query("select to_regclass('public.charging_poll_snapshots') s, to_regclass('public.charging_predictions') p");
+    const dependent = [optional.rows[0].s ? 'charging_poll_snapshots' : '', optional.rows[0].p ? 'charging_predictions' : ''].filter(Boolean);
+    await db.query('truncate '+[...dependent,'charging_connectors','evse_status_transitions','charging_evses','charging_locations','source_poll_runs'].join(','));
     await t.test('first observation is a baseline; unchanged runs preserve first observation', async () => {
       assert.equal((await ingest(snapshot(0))).transitions, 0);
       assert.equal((await ingest(snapshot(1))).transitions, 0);

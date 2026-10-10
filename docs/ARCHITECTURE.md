@@ -1,5 +1,15 @@
 # Grow EV — System Architecture
 
+TASK-015 is prepared in an isolated worktree, not activated: a dedicated
+Cloudflare Cron Worker dispatches the existing Actions collector using one
+SQLite Durable Object for durable slot reservations. GitHub concurrency plus
+the existing PostgreSQL source lock serialize collection. Exact fetched
+membership is compressed and saved in the collector transaction, then privately
+archived with download/checksum verification. The separate AI repository reads
+verified poll evidence, runs unchanged CatBoost/MLP models, and exports manual
+retraining candidates without automatic promotion. See `tasks/active/TASK-015.md`
+for proposed activation, exclusive scheduler switch and bounded retention.
+
 TASK-014 adds an isolated `services/voice` Cloudflare Worker targeting the existing
 `grow-ev-voice`, with AI binding `AI` and the exact `@cf/openai/whisper` model.
 Guest PCM/WAV transcription is bounded by format/duration/size checks, an IP rate

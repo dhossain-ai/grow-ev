@@ -1,5 +1,16 @@
 # Grow EV — Data Model
 
+TASK-015 proposed, unapplied `20261010004000_charging_poll_snapshots.sql` adds a
+private immutable gzip snapshot per genuine verified complete poll, with
+source/schema/counts, observation bounds and SHA-256. The payload records only
+fetched canonical members and their observed status/topology, so omitted retained
+EVSEs do not become fresh. Counts by station/standard are reconstructed with
+distinct EVSEs. Inserts share the state/transition/poll-success transaction;
+replays and partial/failing polls create no historical evidence. RLS/ACLs deny
+public reads. Optional three-day compact pruning requires explicit activation
+and durable private archive checksum verification. No backfill or archive
+deletion is prepared. Exact schema, sizing and approval gates: TASK-015.
+
 Status: TASK-004A cloud migration and PostgreSQL/PostGIS tests verified 2026-10-10
 Version: 0.2
 

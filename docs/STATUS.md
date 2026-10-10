@@ -1,5 +1,28 @@
 # Grow EV — Current Project Status
 
+## TASK-015 isolated pipeline — activation approved, secrets pending
+
+`E:\Grow EV-task015` (`task-015-permanent-pipeline`) prepares an explicitly gated
+Cloudflare collector dispatcher, atomic private compressed per-poll snapshots,
+durable private archive verification, optional verified three-day compact pruning,
+storage caps and exact-poll CatBoost dry-run chaining. AI work is isolated in
+`E:\grow-ev-ai-task015` (`task-015-history-inference`): retained omissions no longer
+break verified membership reconstruction; private archive export and manual
+CatBoost/MLP candidate retraining are prepared, with MLP shadow-only.
+
+The earlier absence of GitHub scheduled runs is superseded by genuine scheduled
+run `38076185317`, poll `373f0ec2-8520-4650-939b-d05c914ea1d7`, completed
+2026-10-10 18:33:26 UTC, confirmed SUCCESS/COMPLETE by a read-only DB audit.
+This existing run has no historical snapshot. It does not prove the new pipeline.
+No remote migration, new collection, scheduler activation, publication or deployment
+was performed. Voice AI and driver are unchanged. TASK-015 acceptance remains
+pending one genuine automatic snapshot/usable-history chain after approved
+activation. Staged hourly activation is now approved, while pruning must wait
+for genuine remote archive verification. GitHub billing is verified at 39/3,000
+minutes with the existing $0 Stop usage budget preserved. Missing server-side
+credentials prevent activation; details and bounded archive export/rotation
+planning are in `tasks/active/TASK-015.md`.
+
 ## TASK-014 isolated voice implementation and production verification
 
 In `E:\Grow EV-task014`, branch `task-014-cloudflare-voice`, the existing

@@ -1,0 +1,14 @@
+{
+  "name": "@grow-ev/collector-trigger",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test *.test.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "dry-run": "wrangler deploy --dry-run"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2",
+    "wrangler": "4.149.0"
+  }
+}

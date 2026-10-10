@@ -2,8 +2,17 @@
 # No dependencies, source requests or database access. Dispatch remains available.
 set -euo pipefail
 case "${1:-}" in
-  workflow_dispatch) exit 0 ;;
-  schedule) ;;
+  workflow_dispatch)
+    if [[ "${GROW_EV_COLLECTION_MODE:-}" == permanent ]]; then
+      if [[ "${GROW_EV_PERMANENT_COLLECTION:-}" != approved || "${GROW_EV_HISTORY_ENABLED:-}" != approved || "${GROW_EV_SCHEDULER:-}" != cloudflare ]]; then
+        echo 'Permanent collection requires reviewed activation and history.' >&2
+        exit 1
+      fi
+    fi
+    exit 0 ;;
+  schedule)
+    # During reviewed switchover, disable GitHub traffic before adding Cloudflare cron.
+    if [[ "${GROW_EV_SCHEDULER:-}" == cloudflare ]]; then exit 1; fi ;;
   *) echo 'Unsupported collection event; refusing work.' >&2; exit 1 ;;
 esac
 

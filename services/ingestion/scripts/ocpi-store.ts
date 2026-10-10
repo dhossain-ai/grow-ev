@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Client } from 'pg';
+import { checkHistorySchema, saveHistory } from './poll-history.ts';
 import { SOURCE, key, type Row, type Snapshot, type Evidence } from './ocpi-source.ts';
 
 const tables = ['charging_locations', 'charging_evses', 'charging_connectors', 'source_poll_runs', 'evse_status_transitions'];
@@ -43,7 +44,7 @@ export async function beginPoll(db: Client): Promise<string> {
 export async function failPoll(db: Client, runId: string, evidence: Evidence, stage: string): Promise<void> {
   await db.query(`update source_poll_runs set outcome='FAILURE',completeness=$2,completed_at=clock_timestamp(),records_retrieved=$3,pages_retrieved=$4,advertised_total_count=$5,requested_page_limit=1000,pagination_metadata=$6,error_information=$7 where id=$1 and outcome='RUNNING'`, [runId, evidence.pages.length ? 'PARTIAL' : 'UNKNOWN', evidence.pages.filter(p => p.limit === 1000).reduce((n, p) => n + p.returned, 0), evidence.pages.length, evidence.advertisedTotal, evidence, stage]);
 }
-export async function publish(db: Client, runId: string, snapshot: Snapshot, evidence: Evidence): Promise<number> {
+export async function publish(db: Client, runId: string, snapshot: Snapshot, evidence: Evidence, history = false): Promise<number> {
   if (!evidence.verified) throw new Error('Cannot publish an unverified fetch');
   await db.query('begin');
   try {
@@ -75,8 +76,9 @@ export async function publish(db: Client, runId: string, snapshot: Snapshot, evi
     }
     const savedEvses = await upsert(db, 'charging_evses', evseRows, ['source', 'country_code', 'party_id', 'uid']);
     const evseIds = new Map(savedEvses.map(e => [key(e.source, e.country_code, e.party_id, e.uid), e.id]));
-    await upsert(db, 'charging_connectors', snapshot.connectors.map(({ evse_key, ...row }) => ({ ...row, evse_id: evseIds.get(String(evse_key)) })), ['evse_id', 'connector_id']);
+    const savedConnectors = await upsert(db, 'charging_connectors', snapshot.connectors.map(({ evse_key, ...row }) => ({ ...row, evse_id: evseIds.get(String(evse_key)) })), ['evse_id', 'connector_id']);
     await db.query(`update source_poll_runs set outcome='SUCCESS',completeness='COMPLETE',completed_at=clock_timestamp(),records_retrieved=$2,pages_retrieved=$3,advertised_total_count=$4,requested_page_limit=1000,pagination_metadata=$5 where id=$1`, [runId, snapshot.locations.length, evidence.pages.length, evidence.advertisedTotal, { ...evidence, counts: { locations: snapshot.locations.length, evses: snapshot.evses.length, connectors: snapshot.connectors.length }, transitions: transitionRows.length }]);
+    if (history && !evidence.replaySha256) await saveHistory(db, runId, SOURCE, locationRows, savedEvses, savedConnectors);
     await db.query('commit');
     return transitionRows.length;
   } catch (error) {
@@ -85,7 +87,7 @@ export async function publish(db: Client, runId: string, snapshot: Snapshot, evi
   }
 }
 
-export async function collect(db: Client, load: (e: Evidence) => Promise<Snapshot>): Promise<{ runId: string; snapshot: Snapshot; transitions: number }> {
+export async function collect(db: Client, load: (e: Evidence) => Promise<Snapshot>, history = false): Promise<{ runId: string; snapshot: Snapshot; transitions: number }> {
   // Session lock includes fetching: a slower older poll cannot overwrite a newer one.
   const lock = await db.query(`select pg_try_advisory_lock(hashtextextended($1,0)) as acquired`, [SOURCE]);
   if (!lock.rows[0].acquired) throw new Error('Another collector owns this source');
@@ -93,11 +95,12 @@ export async function collect(db: Client, load: (e: Evidence) => Promise<Snapsho
   let runId: string | undefined;
   let stage = 'Poll initialization failed';
   try {
+    if (history) await checkHistorySchema(db);
     runId = await beginPoll(db);
     stage = 'Fetch or validation failed; no current state published';
     const snapshot = await load(evidence);
     stage = 'Database publication failed; transaction rolled back or commit outcome uncertain';
-    const transitions = await publish(db, runId, snapshot, evidence);
+    const transitions = await publish(db, runId, snapshot, evidence, history);
     return { runId, snapshot, transitions };
   } catch (error) {
     if (runId) { try { await failPoll(db, runId, evidence, stage); } catch { /* A lost connection leaves RUNNING as interruption evidence. */ } }

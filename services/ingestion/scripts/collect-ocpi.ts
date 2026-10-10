@@ -58,7 +58,13 @@ async function main(): Promise<void> {
     await db.connect();
     await checkSchema(db);
     if (args.includes('--check')) { console.log(JSON.stringify({ schemaCheck: 'passed', project: expectedRef })); return; }
-    const result = await collect(db, load);
+    const result = await collect(db, load, process.env.GROW_EV_HISTORY_ENABLED === 'approved');
+    if (process.env.GROW_EV_COLLECTION_RECEIPT) {
+      const poll = (await db.query('select * from public.source_poll_runs where id=$1', [result.runId])).rows[0];
+      const history = await db.query('select payload_sha256,octet_length(payload_gzip) as bytes from public.charging_poll_snapshots where poll_run_id=$1', [result.runId]);
+      if (history.rowCount !== 1 || poll.outcome !== 'SUCCESS' || poll.completeness !== 'COMPLETE' || poll.pagination_metadata.replaySha256) throw new Error('Missing genuine historical snapshot receipt');
+      await writeFile(process.env.GROW_EV_COLLECTION_RECEIPT, JSON.stringify({ poll_id: result.runId, completed_at: poll.completed_at, history: history.rows[0], github_run_id: process.env.GITHUB_RUN_ID, dispatch_id: process.env.GROW_EV_DISPATCH_ID }), { flag: 'wx' });
+    }
     const stored = await db.query(`select
       (select count(*)::int from charging_locations where source='via-lietuva-ocpi') as locations,
       (select count(*)::int from charging_evses where source='via-lietuva-ocpi') as evses,

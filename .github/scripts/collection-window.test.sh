@@ -19,4 +19,8 @@ check 1 schedule 1791702001
 check 1 schedule invalid
 check 0 workflow_dispatch 1791702001
 check 1 push 1791701999
-echo 'Collection window: 6 checks passed (before/equal/after cutoff, invalid clock, dispatch, unsupported event).'
+GROW_EV_COLLECTION_MODE=permanent check 1 workflow_dispatch 1791702001
+GROW_EV_COLLECTION_MODE=permanent GROW_EV_PERMANENT_COLLECTION=approved GROW_EV_HISTORY_ENABLED=approved GROW_EV_SCHEDULER=cloudflare check 0 workflow_dispatch 1791702001
+GROW_EV_COLLECTION_MODE=permanent GROW_EV_PERMANENT_COLLECTION=approved GROW_EV_HISTORY_ENABLED=approved check 1 workflow_dispatch 1791702001
+GROW_EV_SCHEDULER=cloudflare check 1 schedule 1791701999
+echo 'Collection window: 10 checks passed (cutoff, permanent approval gates, scheduler exclusivity).'
