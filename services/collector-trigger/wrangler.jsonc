@@ -2,7 +2,7 @@
   "name": "grow-ev-collector-trigger",
   "main": "worker.ts",
   "compatibility_date": "2026-10-10",
-  "vars": { "ENABLED": "true", "GITHUB_REF": "main" },
+  "vars": { "ENABLED": "approved", "GITHUB_REF": "main" },
   // No active Cron Trigger. Approved initial activation adds 14 * * * * after disabling GitHub cron.
   "triggers": { "crons": ["14 * * * *"] },
   "durable_objects": { "bindings": [{ "name": "COORDINATOR", "class_name": "CollectorCoordinator" }] },
