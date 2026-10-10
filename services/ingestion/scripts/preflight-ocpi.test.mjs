@@ -41,7 +41,7 @@ test('configuration diagnostics identify only fixed rule labels, never input val
     [env(valid.replace(`postgres.${ref}`, 'different-private-user')), 'USERNAME'],
     [env(valid.replace(`postgres.${ref}`, '%ZZ')), 'USERNAME_ENCODING'],
     [env(valid.replace(':5432', ':6543')), 'SESSION_PORT'],
-    [env(valid.replace('/postgres', '/private-database')), 'DATABASE_NAME'],
+    [env(valid.replace(/\/postgres$/, '/private-database')), 'DATABASE_NAME'],
     [env(`${valid}?ssl=false`), 'SSL_PARAMETER'],
   ]) {
     assert.throws(() => devConnection(configuration), error => {
