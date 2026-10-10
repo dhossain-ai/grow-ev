@@ -10,10 +10,9 @@ on:
           - preflight
           - collect
         default: preflight
-  # Prepared 30-minute off-the-hour cadence (twice per 60m freshness threshold)
-  # Do not activate until user approves the cadence.
-  # schedule:
-  #   - cron: '14,44 * * * *'
+  # Approved hackathon window; scheduled work expires at 2026-10-11 07:00 UTC.
+  schedule:
+    - cron: '14,44 * * * *'
 
 concurrency:
   group: collect-chargers
@@ -31,7 +30,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check collection window before setup or private access
+        id: window
+        run: |
+          if bash .github/scripts/collection-window.sh "$GITHUB_EVENT_NAME"; then
+            echo 'allowed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'allowed=false' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Node
+        if: steps.window.outputs.allowed == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -39,10 +48,15 @@ jobs:
           cache-dependency-path: services/ingestion/package-lock.json
 
       - name: Install dependencies
+        if: steps.window.outputs.allowed == 'true'
         working-directory: services/ingestion
-        run: npm ci
+        run: |
+          if bash ../../.github/scripts/collection-window.sh "$GITHUB_EVENT_NAME"; then
+            npm ci
+          fi
 
       - name: Reconstruct database certificate
+        if: steps.window.outputs.allowed == 'true'
         env:
           GROW_EV_DATABASE_CA: ${{ secrets.GROW_EV_DATABASE_CA }}
           GROW_EV_DATABASE_URL: ${{ secrets.GROW_EV_DATABASE_URL }}
@@ -52,20 +66,27 @@ jobs:
             exit 1
           fi
           umask 077
-          printf '%s\n' "$GROW_EV_DATABASE_CA" > "$GROW_EV_DATABASE_CA_FILE"
+          printf '%s' "$GROW_EV_DATABASE_CA" > "$GROW_EV_DATABASE_CA_FILE"
 
       - name: Read-only DEV preflight
+        if: steps.window.outputs.allowed == 'true'
         working-directory: services/ingestion
         env:
           GROW_EV_DATABASE_URL: ${{ secrets.GROW_EV_DATABASE_URL }}
-        run: npm run preflight
+        run: |
+          if bash ../../.github/scripts/collection-window.sh "$GITHUB_EVENT_NAME"; then
+            npm run preflight
+          fi
 
       - name: Run OCPI Collector
-        if: ${{ github.event_name == 'schedule' || inputs.mode == 'collect' }}
+        if: ${{ steps.window.outputs.allowed == 'true' && (github.event_name == 'schedule' || inputs.mode == 'collect') }}
         working-directory: services/ingestion
         env:
           GROW_EV_DATABASE_URL: ${{ secrets.GROW_EV_DATABASE_URL }}
-        run: npm run collect
+        run: |
+          if bash ../../.github/scripts/collection-window.sh "$GITHUB_EVENT_NAME"; then
+            npm run collect
+          fi
 
       - name: Cleanup certificate
         if: always()

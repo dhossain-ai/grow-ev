@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: Cloudflare public deployment verified; TASK-012 workflow prepared, secrets/TLS and write approvals pending
+Phase: TASK-012 recurring hackathon schedule approved and validated, main activation pending; TASK-013 read-only audit/planning
 
 ## Verified foundation
 
@@ -213,7 +213,7 @@ a successful warm-up and use web/recorded evidence if it crashes.
 
 ## Deferred product scope
 
-Unapproved scheduled ingestion, historical analytics beyond dated snapshot patterns, ML, pricing, waiting-time
+Post-demo scheduled ingestion, historical analytics beyond dated snapshot patterns, ML, pricing, waiting-time
 predictions and background location remain outside this slice.
 Earlier audit reported 29 transitive advisories (10 moderate, 19 high) upstream of
 Expo SDK 57. Installing expo-location reported the same 29 advisories; upstream remediation is deferred.
@@ -251,11 +251,53 @@ is not exposed by the existing public contract; acceptance limitation remains.
 Collector workflow now prepares default read-only preflight, explicit DEV project,
 required private CA/URL configuration and preflight-before-writer gating. Existing
 collector, application and migrations remain unchanged; schedule remains disabled.
-GitHub collector secret names are missing. Local read-only preflight failed TLS
-verification before database health/baseline queries; no verification bypass.
-No DEV writes or TomTom calls executed. GitHub preflight, one explicitly approved
-manual collector test and separately approved cadence remain pending.
+The user corrected the GitHub CA secret; parsed certificate fingerprint matches
+the local official Supabase Root 2021 CA. Strict TLS 1.3 chain/hostname verification
+passed, including the actual node-postgres socket. The previous `TLS_NOT_ACTIVE`
+was a false rejection of Supavisor's backend `pg_stat_ssl=false`; client TLS is
+authorized/encrypted. Read-only run 38055352106 passed. The correction remains
+on the isolated diagnostics branch, not merged into main.
+
+User approved exactly one manual DEV collection. Run
+[38055878539](https://github.com/dhossain-ai/grow-ev/actions/runs/38055878539)
+at SHA `091892978dfa267d3867d98e8deedb9f72f0d2d9` succeeded; poll
+`f8ed5750-a7e0-45c4-96f0-79fc21055503` completed SUCCESS/COMPLETE at
+2026-10-10 13:31:32.677 UTC (137.57 seconds). Fetched/stored 1,984 locations,
+5,836 EVSEs and 5,838 connectors. Independent large-window identity verification
+passed; advertised 3,273 is not the validated location count. Read-only before/after
+audit retained all prior identities/UUIDs/first observations; all 5,836 EVSE times
+advanced to 13:29:17.038–13:29:20.841 UTC. Exactly 1,001 actual normalized/raw
+status changes matched 1,001 transitions; unchanged EVSEs generated none.
+Postflight found zero canonical duplicates, invalid chronology/transitions or
+unfinished polls. No rows deleted; no schema changes. No failed/partial publication
+occurred in this run; failure-retention behavior is supported by prior disposable
+database tests and transaction/no-delete code, not a new DEV failure experiment.
+
+Public browser network view at ~16:32 Europe/Vilnius showed refreshed evidence:
+379 fresh CCS2 observations (288 AVAILABLE, 51 CHARGING, 4 UNKNOWN, 36 other),
+16 fresh cross-operator pairs; Type 2 showed 1,434 fresh observations and 54 pairs.
+Provider update age remains unknown (all 5,836 parsed update times null); observation
+freshness does not prove publication age or arrival availability. The one-write
+approval is consumed. No additional writes, scheduling, training or deployment.
 
 Ingestion TypeScript/non-database tests and all ten disposable PostgreSQL regression
 tests passed; corrected workflow passed actionlint. See `tasks/active/TASK-012.md`
-for security, monitoring, remaining checks and approval gates. Stop for review.
+for security, monitoring, remaining checks and approval gates.
+
+### Recurring collection approval — 2026-10-10
+
+User now approves `14,44 * * * *` UTC recurring DEV collection for the hackathon.
+Cutoff: 2026-10-11 07:00 UTC / 10:00 Europe/Vilnius. Dependency setup/install,
+DB preflight and source collection are gated; delayed starts after cutoff skip
+expensive work. Already-started polls finish transactionally. Manual dispatch remains.
+The previously successful client TLS check is promoted from diagnostics; strict
+CA/hostname verification, DEV guards, concurrency, advisory lock and collector
+behavior preserved. Local TypeScript, 16 tests, six cutoff tests and actionlint
+passed; DB integration suite skipped in this verification.
+
+Source permits reuse with attribution but publishes no numeric polling quota.
+Private GitHub allowance/spending cap inaccessible to current CLI scope; 34
+intended slots cost approximately 102 runner minutes at the observed duration,
+with 340-minute timeout-based estimate. Expired check jobs still consume brief
+runner time; remove cron after demo. Main activation/first scheduled run pending.
+TASK-013 is read-only audit/proposal; no schema, model or prediction writes.

@@ -53,8 +53,15 @@ poll ID and state, especially RUNNING or uncertain commit outcomes. Compare
 canonical identities, first/last observations, raw/normalized status and
 transitions with a read-only baseline; aggregate counts alone are insufficient.
 
-Scheduling is commented out and requires separate cadence approval. The proposed
-`14,44 * * * *` is UTC, 48 runs/day. GitHub scheduling can be delayed or skipped;
+Scheduling is approved for the hackathon at `14,44 * * * *` UTC, 48 runs/day.
+`.github/scripts/collection-window.sh` refuses scheduled expensive work at or after
+2026-10-11 07:00 UTC (10:00 Europe/Vilnius), before dependency setup/install,
+preflight or collection. Manual dispatch remains available with preflight default.
+The clock is checked again before installation, DB preflight and source collection;
+already-started polls finish transactionally rather than being interrupted.
+After expiration, checkout/window-check jobs still use runner minutes; remove the
+cron after the demo to stop that overhead while retaining manual dispatch.
+GitHub scheduling can be delayed or skipped;
 the existing 60-minute freshness cutoff must remain authoritative. Details,
 monitoring SQL and unresolved schedule checks are in `tasks/active/TASK-012.md`.
 

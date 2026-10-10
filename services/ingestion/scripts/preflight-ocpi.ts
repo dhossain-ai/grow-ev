@@ -1,51 +1,83 @@
 import { readFile } from 'node:fs/promises';
+import type { TLSSocket } from 'node:tls';
 import { pathToFileURL } from 'node:url';
 import pg from 'pg';
 import { checkSchema } from './ocpi-store.ts';
 
 const DEV_PROJECT = 'heafsrqaytsfthfcxmqu';
 
+class ConfigurationError extends Error {
+  constructor(rule: 'PROJECT_REF' | 'DATABASE_URL_REQUIRED' | 'CA_FILE_REQUIRED' | 'URL_PARSE' |
+    'PROTOCOL' | 'DEV_HOST' | 'USERNAME' | 'USERNAME_ENCODING' | 'SESSION_PORT' |
+    'DATABASE_NAME' | 'SSL_PARAMETER' | 'CA_FILE_READ') {
+    super(`CONFIGURATION (${rule})`);
+  }
+}
+
 /** Enforce the audited DEV target and session-lock-compatible connection. */
 export function devConnection(env: NodeJS.ProcessEnv): URL {
-  if (env.GROW_EV_PROJECT_REF !== DEV_PROJECT || !env.GROW_EV_DATABASE_URL || !env.GROW_EV_DATABASE_CA_FILE) {
-    throw new Error('CONFIGURATION');
-  }
+  if (env.GROW_EV_PROJECT_REF !== DEV_PROJECT) throw new ConfigurationError('PROJECT_REF');
+  if (!env.GROW_EV_DATABASE_URL) throw new ConfigurationError('DATABASE_URL_REQUIRED');
+  if (!env.GROW_EV_DATABASE_CA_FILE) throw new ConfigurationError('CA_FILE_REQUIRED');
   let url: URL;
-  try { url = new URL(env.GROW_EV_DATABASE_URL); } catch { throw new Error('CONFIGURATION'); }
-  const direct = url.hostname === `db.${DEV_PROJECT}.supabase.co` && url.username === 'postgres';
-  const pooler = url.hostname.endsWith('.pooler.supabase.com') && decodeURIComponent(url.username) === `postgres.${DEV_PROJECT}`;
-  if (!['postgres:', 'postgresql:'].includes(url.protocol) || (!direct && !pooler) ||
-      (url.port !== '' && url.port !== '5432') || url.pathname !== '/postgres' ||
-      url.searchParams.has('ssl')) throw new Error('CONFIGURATION');
+  try { url = new URL(env.GROW_EV_DATABASE_URL); } catch { throw new ConfigurationError('URL_PARSE'); }
+  if (!['postgres:', 'postgresql:'].includes(url.protocol)) throw new ConfigurationError('PROTOCOL');
+  const direct = url.hostname === `db.${DEV_PROJECT}.supabase.co`;
+  const pooler = url.hostname.endsWith('.pooler.supabase.com');
+  if (!direct && !pooler) throw new ConfigurationError('DEV_HOST');
+  let username: string;
+  try { username = decodeURIComponent(url.username); } catch { throw new ConfigurationError('USERNAME_ENCODING'); }
+  if ((direct && url.username !== 'postgres') || (pooler && username !== `postgres.${DEV_PROJECT}`)) throw new ConfigurationError('USERNAME');
+  if (url.port !== '' && url.port !== '5432') throw new ConfigurationError('SESSION_PORT');
+  if (url.pathname !== '/postgres') throw new ConfigurationError('DATABASE_NAME');
+  if (url.searchParams.has('ssl')) throw new ConfigurationError('SSL_PARAMETER');
   for (const name of ['sslmode', 'sslcert', 'sslkey', 'sslrootcert']) url.searchParams.delete(name);
   return url;
 }
 
 /** Never return raw errors, which may contain connection details. */
 export function failureCategory(error: unknown): string {
+  if (error instanceof ConfigurationError) return error.message;
   const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
   if (['28P01', '28000'].includes(code)) return 'AUTHENTICATION';
   if (['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ETIMEDOUT', 'ENETUNREACH', 'ECONNRESET'].includes(code)) return 'NETWORK';
-  if (code.startsWith('ERR_TLS') || code.startsWith('CERT_') || ['SELF_SIGNED_CERT_IN_CHAIN', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'].includes(code)) return 'TLS';
+  if (code.startsWith('ERR_TLS') || code.startsWith('CERT_') ||
+      ['SELF_SIGNED_CERT_IN_CHAIN', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'].includes(code)) {
+    return /^[A-Z0-9_]+$/.test(code) ? `TLS_${code}` : 'TLS_UNKNOWN';
+  }
   if (code === '42501') return 'DATABASE_AUTHORIZATION';
   if (code === '53300') return 'DATABASE_CONNECTION_LIMIT';
-  if (error instanceof Error && ['CONFIGURATION', 'TLS', 'UNFINISHED_POLL', 'DATA_INTEGRITY'].includes(error.message)) return error.message;
+  if (error instanceof Error && error.message === 'TLS') return 'TLS_NOT_ACTIVE';
+  if (error instanceof Error && ['CONFIGURATION', 'UNFINISHED_POLL', 'DATA_INTEGRITY'].includes(error.message)) return error.message;
   return 'DATABASE_OR_SCHEMA_CHECK';
 }
 
 async function main(): Promise<void> {
   const url = devConnection(process.env);
   let ca: string;
-  try { ca = await readFile(process.env.GROW_EV_DATABASE_CA_FILE!, 'utf8'); } catch { throw new Error('CONFIGURATION'); }
+  try { ca = await readFile(process.env.GROW_EV_DATABASE_CA_FILE!, 'utf8'); } catch { throw new ConfigurationError('CA_FILE_READ'); }
   const db = new pg.Client({ connectionString: url.href, ssl: { rejectUnauthorized: true, ca },
     connectionTimeoutMillis: 15_000, query_timeout: 120_000, application_name: 'grow-ev-ocpi-preflight' });
   db.on('error', () => { /* Queries fail separately; never log connection details. */ });
   try {
     await db.connect();
+    // `pg_stat_ssl` reports the pooler's server-side hop when connecting through
+    // Supavisor. Verify the client-to-pooler TLS socket used by node-postgres.
+    const clientInternals = db as unknown as { connection: { stream: TLSSocket };
+      connectionParameters: { ssl: false | null | { rejectUnauthorized?: boolean; ca?: string } } };
+    const socket = clientInternals.connection.stream;
+    if (!socket.encrypted || !socket.authorized ||
+        socket.servername !== url.hostname ||
+        clientInternals.connectionParameters.ssl === false ||
+        clientInternals.connectionParameters.ssl === null ||
+        typeof clientInternals.connectionParameters.ssl !== 'object' ||
+        clientInternals.connectionParameters.ssl.rejectUnauthorized !== true ||
+        clientInternals.connectionParameters.ssl.ca !== ca) throw new Error('TLS');
     await db.query('begin transaction isolation level repeatable read read only');
     await db.query("set local statement_timeout = '60s'");
-    const tls = (await db.query('select ssl, version, cipher from pg_stat_ssl where pid=pg_backend_pid()')).rows[0];
-    if (tls?.ssl !== true) throw new Error('TLS');
+    const tls = { encrypted: socket.encrypted, authorized: socket.authorized,
+      protocol: socket.getProtocol(), servername: socket.servername,
+      backendSsl: (await db.query('select ssl from pg_stat_ssl where pid=pg_backend_pid()')).rows[0]?.ssl ?? null };
     await checkSchema(db);
     const health = (await db.query(`select current_timestamp as checked_at, current_setting('transaction_read_only') as read_only,
       pg_is_in_recovery() as in_recovery,
