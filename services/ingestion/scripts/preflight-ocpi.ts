@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import type { TLSSocket } from 'node:tls';
 import { pathToFileURL } from 'node:url';
 import pg from 'pg';
 import { checkSchema } from './ocpi-store.ts';
@@ -60,10 +61,23 @@ async function main(): Promise<void> {
   db.on('error', () => { /* Queries fail separately; never log connection details. */ });
   try {
     await db.connect();
+    // `pg_stat_ssl` reports the pooler's server-side hop when connecting through
+    // Supavisor. Verify the client-to-pooler TLS socket used by node-postgres.
+    const clientInternals = db as unknown as { connection: { stream: TLSSocket };
+      connectionParameters: { ssl: false | null | { rejectUnauthorized?: boolean; ca?: string } } };
+    const socket = clientInternals.connection.stream;
+    if (!socket.encrypted || !socket.authorized ||
+        socket.servername !== url.hostname ||
+        clientInternals.connectionParameters.ssl === false ||
+        clientInternals.connectionParameters.ssl === null ||
+        typeof clientInternals.connectionParameters.ssl !== 'object' ||
+        clientInternals.connectionParameters.ssl.rejectUnauthorized !== true ||
+        clientInternals.connectionParameters.ssl.ca !== ca) throw new Error('TLS');
     await db.query('begin transaction isolation level repeatable read read only');
     await db.query("set local statement_timeout = '60s'");
-    const tls = (await db.query('select ssl, version, cipher from pg_stat_ssl where pid=pg_backend_pid()')).rows[0];
-    if (tls?.ssl !== true) throw new Error('TLS');
+    const tls = { encrypted: socket.encrypted, authorized: socket.authorized,
+      protocol: socket.getProtocol(), servername: socket.servername,
+      backendSsl: (await db.query('select ssl from pg_stat_ssl where pid=pg_backend_pid()')).rows[0]?.ssl ?? null };
     await checkSchema(db);
     const health = (await db.query(`select current_timestamp as checked_at, current_setting('transaction_read_only') as read_only,
       pg_is_in_recovery() as in_recovery,
