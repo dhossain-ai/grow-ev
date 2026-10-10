@@ -1,7 +1,7 @@
 import { isRoutingBatchRequest, type RouteOutcome, type RoutingProvider, type RoutingFailure } from '../../../packages/routing/index.ts';
 import { RoutingError, unavailable } from './tomtom.ts';
 
-/** Budget is deliberately global per isolate: no trusted-client IP assumptions. */
+/** Budget is shared within one isolate, not a global quota or spending cap. */
 export function createRoutingHandler(provider: RoutingProvider, now: () => number = Date.now) {
   let windowStart = now();
   let calls = 0;
@@ -9,6 +9,7 @@ export function createRoutingHandler(provider: RoutingProvider, now: () => numbe
   let providerBackoffUntil = 0;
   const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store',
     'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'apikey, authorization, content-type, x-client-info',
+    'Access-Control-Expose-Headers': 'Retry-After',
     'Access-Control-Allow-Methods': 'POST, OPTIONS' };
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
   const fail = (error: RoutingError) => json({ error: error.failure }, error.status);
@@ -60,7 +61,8 @@ export function createRoutingHandler(provider: RoutingProvider, now: () => numbe
       }));
       // Preserve partial success and positional destination association.
       if (results.every((r) => 'error' in r)) {
-        const first = results[0] as { error: RoutingFailure };
+        // A provider limit must not be hidden by an earlier timeout/unavailable result.
+        const first = (results.find((r) => 'error' in r && r.error.code === 'EXTERNAL_RATE_LIMITED') ?? results[0]) as { error: RoutingFailure };
         const status = first.error.code === 'EXTERNAL_RATE_LIMITED' ? 429 :
           first.error.code === 'ROUTING_TIMEOUT' ? 504 : first.error.code === 'ROUTING_NOT_CONFIGURED' ? 503 : 502;
         const response = json({ results, error: first.error }, status);

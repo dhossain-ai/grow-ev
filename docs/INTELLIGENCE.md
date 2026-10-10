@@ -79,6 +79,13 @@ Rimi Jeruzalė as road-ranked primary (163 s / 744 m, 2 available EVSEs), Jeruza
 same order, explanations and primary selection/recentering. Observations are dated
 2026-10-10 03:46 Europe/Vilnius; this verification is not an ongoing live guarantee.
 
+Routing stability checkpoint (2026-10-10): explicit comparisons share identical
+in-flight batches and a bounded 30-second session cache keyed by exact origin and
+ordered destinations. Original calculation times and the two-minute route ceiling
+remain intact. Full/partial rate limits impose a cooldown with no automatic retry;
+missing driving times stay unknown. Neither client cooldown nor per-isolate Edge
+budgets establish global quota protection.
+
 The remaining sections describe future scope, not implemented capabilities.
 
 ## 1. Objective

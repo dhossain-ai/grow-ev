@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: TASK-008 live integration verified; checkpoint authorized, demo stabilization underway
+Phase: TASK-008 committed; routing stability checkpoint reviewed, Android crash unresolved
 
 ## Verified foundation
 
@@ -36,7 +36,9 @@ Phase: TASK-008 live integration verified; checkpoint authorized, demo stabiliza
   station selection/recentering and never invent ETA/wait/price/probability.
   Optional supplied user origin is distinct from selected-charger origin;
   current map provides no driver location. See `tasks/active/TASK-008.md`.
-- TASK-008 live integration verified; checkpoint commit authorized. Fresh real-data recommendations,
+- TASK-008 committed as `437efee` after review, driver/server TypeScript, driver
+  lint and 37 tests passed. Credential-pattern scan of all 94 tracked/unignored
+  files passed; explicit staging allowlist used. Fresh real-data recommendations,
   actual road-time ranking, both alternatives and primary selection/recentering
   passed through production Chrome and Pixel_8. No product source changes were
   required in this live verification.
@@ -87,6 +89,54 @@ Phase: TASK-008 live integration verified; checkpoint authorized, demo stabiliza
 
 ## Latest local verification
 
+### Demo stabilization checkpoint — 2026-10-10
+
+- Existing sanitized DEV evidence confirms upstream TomTom `EXTERNAL_RATE_LIMITED`
+  in partial HTTP 200 and all-failed HTTP 429. Edge `RATE_LIMITED` separately means
+  isolate budget/concurrency/provider backoff. No new live TomTom calls made.
+- Driver routing now shares identical in-flight requests across subscribers,
+  cancels HTTP only when all subscribers leave, and caches at most 20 exact
+  origin/ordered-destination batches for 30 seconds. Route calculation timestamps
+  stay unchanged; original two-minute expiry remains authoritative. Comparison
+  still requires an explicit press; map movement and unchanged selections trigger
+  no automatic routing. Rapid repeat presses are blocked synchronously.
+- Full/partial rate limits start a session-local cooldown of at least 60 seconds;
+  numeric Retry-After is used with a one-hour bound. Compare shows a cooldown label.
+  Known partial routes are retained, missing times remain unknown, no automatic
+  retry. These are efficiency measures, not distributed quota protection.
+- Local Edge patch exposes Retry-After to browsers and reports upstream 429 when
+  another destination failed first with timeout/unavailability. Positional outcomes
+  remain unchanged. **Not deployed**; separate approval required.
+- Pixel_8 crash reproduced after an initial five-second alive check: SIGSEGV /
+  SEGV_ACCERR on `mqt_v_js`, React Native `MountingCoordinator::pullTransaction`
+  +713 → `FabricUIManagerBinding::schedulerDidFinishTransaction`. Earlier saved
+  trace matches. No named app/map component established; no speculative native
+  fix, architecture switch or map rewrite. Five short launch checks were insufficient;
+  three additional 20-second cold launches stayed alive/foreground without crashes.
+  Final native UI dump showed map filters. This sample does not resolve intermittency.
+  Sanitized traces/results retained in ignored `services/ingestion/.scratch/`.
+- Driver/server TypeScript, driver/server zero-warning ESLint, 41 regression tests,
+  web production build, Android JS/Hermes export and offline debug build passed
+  (1m 47s, 376 tasks). Known Gradle deprecation/cross-drive copy warnings only.
+  Historical-clock replay of saved actual routes with unchanged read-only DEV
+  capacity passed ranking [163,173,293], counts [2,2,1], distances [744,537,1621],
+  differences [0,10,130], route expiry and origin isolation. Current observations
+  are stale and correctly withhold recommendations. This is replay proof, not a
+  renewed live interactive journey. No collector, migration or deployment run.
+- Failed: native startup reliability (reproduced crash). Unrun: new complete live
+  web/native recommendation journey, physical device, modified Edge runtime/deploy.
+  Stability review passed: driver/server TypeScript, zero-warning lint, 41 tests,
+  web export and diff check rerun. Separate stability commit authorized.
+  Modified Edge Function requires explicit deployment approval; not deployed.
+  TASK-009 remains unstarted at this checkpoint.
+
+Filming fallback: use the previously captured genuine web/Pixel_8 screenshots as
+an explicitly dated recorded demonstration. For a new live recording, prefer the
+production web build; privately check provider quota and obtain separate approval
+for an observation refresh, then compare once. Do not change observation/route
+timestamps or replay old data as current. Android filming should start only after
+a successful warm-up and use web/recorded evidence if it crashes.
+
 - TASK-008: 37 unit/API tests passed (13 new recommendation tests), zero failures
   or skips. Fixtures cover compatibility/congestion, freshness, UNKNOWN/outages,
   multiple connectors, ranking/ties, partial/failed routes, route-origin matching,
@@ -120,7 +170,7 @@ Expo SDK 57. No dependencies changed; audit not rerun.
 
 ## Next
 
-Finalize TASK-008 checkpoint and review subsequent uncommitted stability changes.
+Stability checkpoint reviewed; Android startup issue remains unresolved.
 Before the video, check TomTom
 quota privately and obtain separate approval for another observation refresh if
 needed; the one-poll approval is consumed. Do not start another task automatically.

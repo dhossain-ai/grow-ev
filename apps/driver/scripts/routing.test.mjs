@@ -15,6 +15,9 @@ const { createRoutingHandler } = await import(url((await compile('../../../supab
 const { geographicDistanceMeters, isRoutingBatchRequest } = await import(sharedUrl);
 const { fetchDrivingRoutes, routingCandidates } = await import(url((await compile('../src/features/map/routingApi.ts'))
   .replaceAll("'../../../../../packages/routing'", JSON.stringify(sharedUrl))));
+let clientId = 0;
+const freshClient = async () => import(url((await compile('../src/features/map/routingApi.ts'))
+  .replaceAll("'../../../../../packages/routing'", JSON.stringify(sharedUrl)) + `\n// isolated client ${clientId++}`));
 const typesUrl = url(await compile('../src/features/map/types.ts'));
 const { findAlternatives } = await import(url((await compile('../src/features/map/congestion.ts'))
   .replace("'./types'", JSON.stringify(typesUrl)).replace("'../../../../../packages/routing'", JSON.stringify(sharedUrl))));
@@ -114,6 +117,20 @@ test('endpoint enforces per-isolate budget and window reset', async () => {
   clock += 60000;
   assert.equal((await handler(post())).status, 200);
 });
+
+test('endpoint reports provider limit even when the first failed destination timed out', async () => {
+  const handler = createRoutingHandler({ calculate: async ({ destination }) => {
+    const code = destination.lng === 25.3 ? 'EXTERNAL_RATE_LIMITED' : 'ROUTING_TIMEOUT';
+    throw new RoutingError({ code, message: 'Driving time unavailable', retryable: true }, code === 'EXTERNAL_RATE_LIMITED' ? 429 : 504);
+  } }, () => now);
+  const response = await handler(post({ origin, destinations: [destination, { lat: 54.69, lng: 25.3 }] }));
+  assert.equal(response.status, 429);
+  assert.equal(response.headers.get('Retry-After'), '60');
+  assert.equal(response.headers.get('Access-Control-Expose-Headers'), 'Retry-After');
+  const body = await response.json();
+  assert.equal(body.error.code, 'EXTERNAL_RATE_LIMITED');
+  assert.deepEqual(body.results.map((r) => r.error.code), ['ROUTING_TIMEOUT', 'EXTERNAL_RATE_LIMITED']);
+});
 test('endpoint bounds concurrent batches', async () => {
   const releases = [];
   const handler = createRoutingHandler({ calculate: () => new Promise((resolve) => releases.push(() => resolve(route))) }, () => now);
@@ -142,11 +159,104 @@ test('client uses only public credentials and validates association, age and err
     assert.deepEqual(await fetchDrivingRoutes(batch), [{ route: freshRoute }]);
     for (const results of [[], [{ route: { ...freshRoute, destination: origin } }], [{ route }], [{ route: { ...freshRoute, roadDistanceMeters: null } }]]) {
       globalThis.fetch = async () => Response.json({ results });
-      await assert.rejects(fetchDrivingRoutes(batch));
+      await assert.rejects((await freshClient()).fetchDrivingRoutes(batch));
     }
     globalThis.fetch = async () => Response.json({ error: { code: 'EXTERNAL_RATE_LIMITED', message: 'Provider limit reached', retryable: true } }, { status: 429 });
-    await assert.rejects(fetchDrivingRoutes(batch), (e) => e.failure.code === 'EXTERNAL_RATE_LIMITED');
+    await assert.rejects((await freshClient()).fetchDrivingRoutes(batch), (e) => e.failure.code === 'EXTERNAL_RATE_LIMITED');
   } finally { globalThis.fetch = original; }
+});
+
+test('client deduplicates in flight, isolates cancellation and caches without changing calculation time', async () => {
+  const original = globalThis.fetch;
+  const originalNow = Date.now;
+  let clock = now;
+  let count = 0;
+  let release;
+  let httpSignal;
+  Date.now = () => clock;
+  process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://example.invalid';
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_fixture';
+  try {
+    const client = await freshClient();
+    globalThis.fetch = async (_url, init) => {
+      count++; httpSignal = init.signal;
+      return new Promise((resolve) => { release = () => resolve(Response.json({ results: [{ route }] })); });
+    };
+    const controller = new AbortController();
+    const a = client.fetchDrivingRoutes(batch, controller.signal);
+    const b = client.fetchDrivingRoutes(batch);
+    controller.abort();
+    await assert.rejects(a, /cancelled/);
+    assert.equal(httpSignal.aborted, false);
+    release();
+    assert.deepEqual(await b, [{ route }]);
+    clock += 29999;
+    assert.deepEqual(await client.fetchDrivingRoutes(batch), [{ route }]);
+    assert.equal(count, 1);
+    // Different explicit origin never reuses the selected-charger estimate.
+    globalThis.fetch = async (_url, init) => {
+      count++; const body = JSON.parse(init.body);
+      return Response.json({ results: [{ route: { ...route, origin: body.origin, calculatedAt: new Date(clock).toISOString() } }] });
+    };
+    await client.fetchDrivingRoutes({ ...batch, origin: { ...origin, lat: 54.681 } });
+    assert.equal(count, 2);
+    clock++;
+    await client.fetchDrivingRoutes(batch);
+    assert.equal(count, 3);
+  } finally { globalThis.fetch = original; Date.now = originalNow; }
+});
+
+test('client drops expired estimates even inside cache lifetime and cancels HTTP with its last subscriber', async () => {
+  const original = globalThis.fetch;
+  const originalNow = Date.now;
+  let clock = now;
+  let count = 0;
+  Date.now = () => clock;
+  try {
+    const client = await freshClient();
+    globalThis.fetch = async () => { count++; return Response.json({ results: [{ route: { ...route, calculatedAt: new Date(now - 119000).toISOString() } }] }); };
+    await client.fetchDrivingRoutes(batch);
+    clock += 2000;
+    await assert.rejects(client.fetchDrivingRoutes(batch), /timestamp/);
+    assert.equal(count, 2);
+    let httpSignal;
+    globalThis.fetch = async (_url, init) => {
+      httpSignal = init.signal;
+      return new Promise((_resolve, reject) => init.signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true }));
+    };
+    const controller = new AbortController();
+    const pending = client.fetchDrivingRoutes(batch, controller.signal);
+    controller.abort();
+    await assert.rejects(pending, /cancelled/);
+    assert.equal(httpSignal.aborted, true);
+  } finally { globalThis.fetch = original; Date.now = originalNow; }
+});
+
+test('client honors full and partial provider limits without retries or invented routes', async () => {
+  const original = globalThis.fetch;
+  const originalNow = Date.now;
+  let clock = now;
+  let count = 0;
+  const error = { code: 'EXTERNAL_RATE_LIMITED', message: 'Provider limit reached', retryable: true };
+  Date.now = () => clock;
+  try {
+    const client = await freshClient();
+    globalThis.fetch = async () => { count++; return Response.json({ error }, { status: 429, headers: { 'Retry-After': '90' } }); };
+    await assert.rejects(client.fetchDrivingRoutes(batch), (e) => e.failure.code === error.code && e.retryAfterSeconds === 90);
+    clock += 60000;
+    await assert.rejects(client.fetchDrivingRoutes(batch), (e) => e.retryAfterSeconds === 30);
+    assert.equal(count, 1);
+    clock += 30000;
+    globalThis.fetch = async () => { count++; return Response.json({ results: [{ route: { ...route, calculatedAt: new Date(clock).toISOString() } }, { error }] }); };
+    const partial = { ...batch, destinations: [destination, { lat: 54.69, lng: 25.3 }] };
+    const results = await client.fetchDrivingRoutes(partial);
+    assert.equal(results[1].error.code, error.code);
+    assert.deepEqual(await client.fetchDrivingRoutes(partial), results);
+    await assert.rejects(client.fetchDrivingRoutes(batch), (e) => e.failure.code === 'RATE_LIMITED');
+    clock += 30001;
+    await assert.rejects(client.fetchDrivingRoutes(partial), (e) => e.failure.code === 'RATE_LIMITED');
+    assert.equal(count, 2);
+  } finally { globalThis.fetch = original; Date.now = originalNow; }
 });
 test('candidate integration routes only top three fresh compatible alternatives and retains geography', () => {
   const standard = 'IEC_62196_T2_COMBO';

@@ -15,7 +15,7 @@ export function AlternativeRouting({ target, alternatives, standard, now, onSele
   const station = target.station;
   const { origin, destinations } = routingCandidates(station, alternatives, userOrigin);
   const key = JSON.stringify([station.location_id, standard, userOrigin === undefined ? 'selected-charger' : 'user-origin', origin, alternatives.map((a) => a.evidence.station.location_id), destinations]);
-  const [state, setState] = useState<{ key: string; loading: boolean; receivedAt?: number; results?: RouteOutcome[]; failure?: string } | null>(null);
+  const [state, setState] = useState<{ key: string; loading: boolean; receivedAt?: number; results?: RouteOutcome[]; failure?: string; retryAt?: number } | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
   useEffect(() => () => { controllerRef.current?.abort(); controllerRef.current = null; }, [key]);
   const current = state?.key === key ? state : null;
@@ -25,19 +25,22 @@ export function AlternativeRouting({ target, alternatives, standard, now, onSele
   const recommendation = recommendAlternatives(target, alternatives.map((a) => a.evidence), standard, evidenceNow, outcomes, userOrigin);
   const fresh = current?.results && recommendation.recommendations.length === alternatives.length &&
     recommendation.recommendations.every((a) => a.route !== null);
+  const coolingDown = (current?.retryAt ?? 0) > evidenceNow;
   const compare = async () => {
-    controllerRef.current?.abort();
+    if (controllerRef.current || coolingDown || fresh) return;
     const controller = new AbortController();
     controllerRef.current = controller;
     const timer = setTimeout(() => controller.abort(), 12000);
     setState({ key, loading: true });
     try {
       const results = await fetchDrivingRoutes({ origin, destinations }, controller.signal);
-      if (!controller.signal.aborted) setState({ key, loading: false, results, receivedAt: Date.now() });
+      if (!controller.signal.aborted) setState({ key, loading: false, results, receivedAt: Date.now(),
+        retryAt: results.some((r) => 'error' in r && ['RATE_LIMITED', 'EXTERNAL_RATE_LIMITED'].includes(r.error.code)) ? Date.now() + 60000 : undefined });
     } catch (error) {
       if (controllerRef.current === controller) setState({ key, loading: false,
-        failure: error instanceof RoutingClientError ? error.failure.message : 'Driving time unavailable' });
-    } finally { clearTimeout(timer); }
+        failure: error instanceof RoutingClientError ? error.failure.message : 'Driving time unavailable',
+        retryAt: error instanceof RoutingClientError && error.retryAfterSeconds ? Date.now() + error.retryAfterSeconds * 1000 : undefined });
+    } finally { clearTimeout(timer); if (controllerRef.current === controller) controllerRef.current = null; }
   };
   if (!recommendation.recommendations.length) return <Text style={styles.muted}>No nearby station has fresh, compatible available capacity.</Text>;
   return <View style={{ gap: spacing.sm }}>
@@ -46,8 +49,8 @@ export function AlternativeRouting({ target, alternatives, standard, now, onSele
     <Text style={styles.muted}>{recommendation.rankingBasis === 'driving-time' ?
       'Shortest estimated drive first among these nearby options.' :
       'Nearest first by straight-line distance from the selected charger. Comparable driving times are incomplete.'}</Text>
-    <Pressable accessibilityRole="button" disabled={Boolean(current?.loading || fresh)} onPress={compare}>
-      <Text style={{ color: colors.accent }}>{current?.loading ? 'Checking driving times…' : fresh ? 'Driving comparison up to date' : 'Compare driving times'}</Text>
+    <Pressable accessibilityRole="button" disabled={Boolean(current?.loading || fresh || coolingDown)} onPress={compare}>
+      <Text style={{ color: colors.accent }}>{current?.loading ? 'Checking driving times…' : fresh ? 'Driving comparison up to date' : coolingDown ? 'Routing rate limited · try later' : 'Compare driving times'}</Text>
     </Pressable>
     {current?.failure ? <Text accessibilityRole="alert" style={{ color: colors.warning }}>{current.failure}</Text> : null}
     {recommendation.recommendations.map((a, index) => <Pressable key={a.evidence.station.location_id}

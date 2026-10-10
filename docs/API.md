@@ -59,6 +59,9 @@ Supabase Edge Function, shared by Android and web. Deployed under explicit appro
 to DEV `heafsrqaytsfthfcxmqu`; actual Vilnius routes and both UI journeys verified
 2026-10-10. Real provider 429/partial failures observed; see TASK-007 for evidence
 and remaining quota/global-budget limitations.
+Local stabilization patch (not deployed): expose `Retry-After` through CORS and
+return upstream HTTP 429 when any all-failed destination was provider-limited,
+even if the first outcome was a timeout. Result order remains positional.
 Request: `{ origin: { lat, lng }, destinations: [{ lat, lng }] }`.
 One to three unique destinations, within 15,000 geographic meters of origin;
 finite WGS84 coordinates, JSON body at most 2048 bytes, two-second read deadline.

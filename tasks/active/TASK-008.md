@@ -1,6 +1,6 @@
 # TASK-008 — Explainable deterministic recommendations
 
-Status: Complete — live integration verified on production web and Pixel_8; checkpoint commit authorized. Physical-device and native startup reliability remain unverified.
+Status: Complete — live integration verified on production web and Pixel_8; committed as `437efee`. Subsequent stability checkpoint reviewed for a separate commit. Physical-device and native startup reliability remain unverified.
 Date: 2026-10-10
 
 ## Scope and policy
@@ -202,3 +202,48 @@ unchanged source since those builds. Task/status/API/architecture/intelligence
 records updated; no implementation changes for this verification, no commit or
 staging. Stop for review. Before video: privately verify provider quota and obtain
 new approval for another collector refresh if observations have expired.
+
+## Finalization and demo stability — 2026-10-10
+
+TASK-008 committed as `437efee68a0439b44b09009532e3cc5a6dae200c` after complete
+diff review, credential-pattern scan (94 tracked/unignored files, no matches),
+unchanged applied migrations/collector and passing precommit checks (37 tests).
+Prior no-commit statements are historical; this user explicitly authorized commit.
+
+Subsequent stability changes remain uncommitted for review: `routingApi.ts` adds
+exact-batch in-flight sharing, subscriber cancellation, bounded 30-second caching
+and full/partial 429 cooldown; `AlternativeRouting.tsx` guards repeat presses and
+shows cooldown; `routing/handler.ts` preserves upstream-limit classification under
+mixed failures and exposes Retry-After (not deployed); `routing.test.mjs` covers
+these behaviors. No timestamp refresh, invented route or automatic retry.
+
+Checks executed after stabilization:
+- `npm run typecheck` and server `tsc -p ../../supabase/functions/tsconfig.json`: passed.
+- `npm run lint -- --max-warnings 0` and root ESLint for `supabase/functions`
+  / `packages/routing` with existing `eslint.config.cjs`: passed, zero findings.
+- `node --test scripts/map.test.mjs scripts/congestion.test.mjs scripts/routing.test.mjs scripts/recommendations.test.mjs`: 41 passed, no failures/skips.
+- `npm run build:web`: passed.
+- `npx expo export --platform android --output-dir dist/android-check`: passed.
+- `./gradlew.bat app:assembleDebug --offline`: passed, 1m 47s, 376 tasks.
+- Saved actual route replay with unchanged read-only DEV observations: passed
+  exact ranking/counts/distances/differences, expiry/origin isolation and present
+  stale-evidence rejection, zero TomTom calls. Full new live journey cannot be
+  repeated with expired observations and no refresh authorization.
+
+Native reliability failed: matching Fabric SIGSEGV reproduced after five-second
+checks had appeared successful. Three subsequent 20-second cold launches stayed
+alive and foreground; final UI dump showed map filters. No causal MapLibre/app
+component identified or native fix claimed. Sanitized evidence and safe filming
+fallback are recorded in STATUS. Physical device / modified Edge deployment
+unrun. No collector, migration, architecture toggle or TASK-009 work. Stop for review.
+
+## Stability checkpoint review — 2026-10-10
+
+Reviewed all eight pending files: no unrelated changes or credential findings.
+Original route calculation timestamps/expiry preserved, no automatic retries,
+upstream EXTERNAL_RATE_LIMITED and isolate RATE_LIMITED remain distinct.
+Cooldown blocks new HTTP; valid cached/partial routes and geographic fallback
+remain usable. Driver/server TypeScript and zero-warning lint, 41 tests, web
+production export and diff check rerun and passed. Prior Android build evidence
+remains recorded above; Fabric SIGSEGV unresolved.
+Modified Edge Function still requires explicit deployment approval. Not deployed.
