@@ -1,9 +1,11 @@
 # Grow EV — System Architecture
 
-Status: Proposed architecture
+Status: Stage B demo deployment (Cloudflare Workers Static Assets)
 Version: 0.1
 
-TASK-007 implemented and deployed to DEV: `packages/routing` owns the shared contract and
+TASK-011 implemented: Cloudflare static deployment for browser demo, GitHub Actions CI/CD for web,
+and automated off-the-hour data collection cadence prepared. The architecture now supports
+public HTTP presentation of the driver experience. TASK-007 implemented and deployed to DEV: `packages/routing` owns the shared contract and
 coordinate/geographic validation. `supabase/functions/routing` provides a small
 guest Edge Function and server-only TomTom adapter; the driver details UI makes
 explicit requests for its existing shortlist on both platforms. No database or
