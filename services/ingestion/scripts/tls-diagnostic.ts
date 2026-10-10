@@ -109,7 +109,13 @@ async function main(): Promise<void> {
     },
   };
   console.log(JSON.stringify(output, null, 2));
-  if (!Object.values(output.configuration).every(value => typeof value === 'boolean' || value === 'postgres')) {
+  const pgConfigurationValid = output.configuration.devTargetValidated && output.configuration.protocol === 'postgresql' &&
+    output.configuration.poolerHostShape && output.configuration.portIsSession5432 &&
+    output.configuration.pgHostMatchesParsedTarget && output.configuration.pgPortIs5432 &&
+    output.configuration.sniWillUseParsedHostname && output.configuration.sslParameterRejectedByGuard &&
+    output.configuration.nodePostgresReceivesCaAndStrictVerification &&
+    (tlsNegotiation === 'postgres' || tlsNegotiation === 'direct');
+  if (!pgConfigurationValid) {
     throw Object.assign(new Error(), { safeCode: 'NODE_POSTGRES_TLS_CONFIGURATION' });
   }
   if (!caCert.ca || caCert.fingerprint256 !== OFFICIAL_CA_FINGERPRINT256) {
