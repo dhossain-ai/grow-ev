@@ -1,12 +1,12 @@
 import { isDrivingRoute, isRoutingBatchRequest, sameCoordinates, ROUTE_MAX_AGE_MS,
-  type RouteOutcome, type RoutingFailure, type RoutingBatchRequest } from '../../../../../packages/routing';
+  type Coordinates, type RouteOutcome, type RoutingFailure, type RoutingBatchRequest } from '../../../../../packages/routing';
 import type { Alternative } from './congestion';
 import type { MapStation } from './types';
 export { ROUTE_MAX_AGE_MS } from '../../../../../packages/routing';
 
 /** Input comes exclusively from the compatibility/freshness/geographic shortlist. */
-export function routingCandidates(station: MapStation, alternatives: Alternative[]): RoutingBatchRequest {
-  return { origin: { lat: station.latitude, lng: station.longitude },
+export function routingCandidates(station: MapStation, alternatives: Alternative[], userOrigin?: Coordinates): RoutingBatchRequest {
+  return { origin: userOrigin === undefined ? { lat: station.latitude, lng: station.longitude } : userOrigin,
     destinations: alternatives.map((a) => ({ lat: a.evidence.station.latitude, lng: a.evidence.station.longitude })) };
 }
 

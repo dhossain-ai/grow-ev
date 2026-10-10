@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { Coordinates } from '../../../../../packages/routing';
 
 import { fetchStationCapacity } from './capacityApi';
 import { AlternativeRouting } from './AlternativeRouting';
 import { compatibleCapacity, CONNECTOR_OPTIONS, CONGESTION_EXPLANATIONS, findAlternatives,
   type ConnectorStandard, type StationEvidence } from './congestion';
 import { colors, radii, spacing } from './tokens';
-import { formatAge, type MapStation } from './types';
+import type { MapStation } from './types';
 
-interface Props { station: MapStation; onSelect: (station: MapStation) => void }
+interface Props { station: MapStation; onSelect: (station: MapStation) => void; userOrigin?: Coordinates }
 
-export function CongestionDetail({ station, onSelect }: Props) {
+export function CongestionDetail({ station, onSelect, userOrigin }: Props) {
   const [standard, setStandard] = useState<ConnectorStandard>('IEC_62196_T2_COMBO');
   const [result, setResult] = useState<{ id: string; retry: number; rows: StationEvidence[] } | null>(null);
   const [failure, setFailure] = useState<{ id: string; retry: number } | null>(null);
@@ -66,20 +67,9 @@ export function CongestionDetail({ station, onSelect }: Props) {
       {capacity.unknown > 0 ? <Text style={styles.muted}>{capacity.unknown} compatible EVSE status unknown.</Text> : null}
       {capacity.stale > 0 ? <Text style={styles.warning}>{capacity.stale} compatible observations stale or invalid; excluded from availability.</Text> : null}
       <Text style={styles.muted}>Compatible EVSEs observed: {observationRange || 'Not reported'}</Text>
-      {capacity.state === 'congested' ? <>
-        <Text style={styles.title}>Nearby alternatives</Text>
-        <Text style={styles.muted}>Within 10 km · nearest first · straight-line distance</Text>
-        {!alternatives.length ? <Text style={styles.muted}>No nearby station has fresh, compatible available capacity.</Text> : null}
-        <AlternativeRouting station={station} alternatives={alternatives} now={now} />
-        {alternatives.map((a) => <Pressable key={a.evidence.station.location_id}
-          accessibilityRole="button" accessibilityLabel={`Select ${a.evidence.station.name ?? a.evidence.station.address ?? 'alternative station'}`}
-          onPress={() => onSelect(a.evidence.station)} style={styles.alternative}>
-          <Text style={styles.text}>{a.evidence.station.name ?? a.evidence.station.address ?? 'Charging station'}</Text>
-          <Text style={styles.muted}>{a.evidence.station.operator_name ?? 'Operator not reported'}</Text>
-          <Text style={styles.action}>{a.capacity.available} compatible available EVSE{a.capacity.available === 1 ? '' : 's'} · {a.distanceKm.toFixed(1)} km straight-line</Text>
-          <Text style={styles.muted}>Available capacity observed {formatAge(a.capacity.observedAt)} · {a.capacity.observedAt ? new Date(a.capacity.observedAt).toLocaleString() : ''}</Text>
-          <Text style={styles.action}>Select station →</Text>
-        </Pressable>)}
+      {capacity.state === 'congested' && target ? <>
+        <Text style={styles.title}>Where to charge next</Text>
+        <AlternativeRouting target={target} standard={standard} alternatives={alternatives} now={now} onSelect={onSelect} userOrigin={userOrigin} />
       </> : null}
     </>}
   </View>;
@@ -96,5 +86,4 @@ const styles = StyleSheet.create({
   chip: { backgroundColor: colors.elevated, borderRadius: radii.full, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   selected: { backgroundColor: colors.accent },
   selectedText: { color: colors.accentForeground },
-  alternative: { backgroundColor: colors.elevated, borderRadius: radii.md, padding: spacing.md, gap: spacing.xs },
 });

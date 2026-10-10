@@ -1,13 +1,14 @@
 # TASK-007 — Traffic-aware routing
 
-Status: Locally implemented and offline verified; provisional checkpoint authorized. Live acceptance pending.
+Status: Approved DEV deployment and real TomTom routes verified on web/Pixel_8; provider rate-limit and native startup limitations recorded.
 Date: 2026-10-10
 
 ## Scope
 
 Prepare TomTom road-driving estimates for the existing compatible shortlist.
-No migrations, collector changes, ML, pricing, dependencies or deployment.
-TASK-006 provisional checkpoint: `95764d1`; not fully verified.
+No migrations, collector changes, ML, pricing or new dependencies in TASK-007.
+User explicitly authorized the DEV deployment recorded below.
+TASK-006 checkpoint: `95764d1`; DEV migration/security now verified.
 
 ## Implementation and decisions
 
@@ -131,3 +132,74 @@ tests, production web build and diff checks passed. No live API calls, deploymen
 migration/collector changes. Earlier Android compile/export results retained;
 no new runtime/device claim. Live TomTom/Edge/platform verification awaits hotspot.
 TASK-007 is now a provisional local checkpoint, not full live acceptance.
+
+## Hotspot integration gate — 2026-10-10
+
+Re-inspected shared request validation, 2048-byte/two-second body bound,
+1–3 destinations/15 km bound, server-only key, sanitized errors/timeouts,
+two-batch/30-call isolate limits and provider backoff. Function has no database
+queries or privileged client credential dependency. Selected-charger origin
+remains explicit; driver coordinates require an explicitly supplied origin.
+Driver/server TypeScript, zero-warning driver/server lint and all 37 combined
+unit/API tests passed again. Web/native export and offline debug build passed.
+
+Database connectivity now works independently of CLI management authorization.
+Current CLI account lists a different project; DEV secret inspection returns
+HTTP 403. `TOMTOM_API_KEY` presence cannot be determined. User guided to run
+`npx supabase login` privately with DEV access, then DEV Dashboard → Edge
+Functions → Secrets to ensure `TOMTOM_API_KEY` exists. No key/token requested
+in chat or exposed in diagnostic output.
+
+Exact proposed deployment, awaiting explicit user confirmation:
+`npx supabase functions deploy routing --project-ref heafsrqaytsfthfcxmqu --use-api`.
+Uses existing `verify_jwt=false`; guest routing and TomTom usage are intentional,
+isolate limits are not a global spending cap. No deployment attempted.
+Production browser/Pixel_8 Compare action and public routing client fail safely
+against the undeployed endpoint (HTTP 404 / NOT_FOUND); all recommendation routes
+remain null, no numeric ETA. Frontend/generated-web credential exclusion passed.
+Live road/traffic/HTTP/rate-limit behavior and Edge packaging remain unrun.
+Mock error/rate-limit tests pass but do not establish deployed behavior.
+
+## Approved DEV deployment and live verification — 2026-10-10
+
+User explicitly approved the proposed command, restored DEV CLI authorization,
+and privately configured `TOMTOM_API_KEY`. Secret name presence verified; no
+credential value printed. Executed successfully on DEV only:
+`npx supabase functions deploy routing --project-ref heafsrqaytsfthfcxmqu --use-api`.
+Existing guest access (`verify_jwt=false`) and per-isolate limits retained.
+No source changes, privileged Expo credential, database access or new dependency.
+
+Actual Norfa XXL Ateities g. 10 → Vilnius shortlist routes, 04:14–04:18 local:
+
+| Road-ranked station | Compatible AVAILABLE EVSEs | Driving estimate | Road distance |
+| --- | --- | --- | --- |
+| Rimi Jeruzalė | 2 CCS2 | 163 s / 2.7 min | 744 m |
+| Jeruzalė | 2 CCS2 | 173 s / 2.9 min | 537 m |
+| Baltupių turgus | 1 CCS2 | 293 s / 4.9 min | 1,621 m |
+
+Origin exactly selected charger (54.7377663, 25.2701118); no driver/GPS origin
+supplied. Requests use car/fastest/depart-now/traffic parameters. All three real
+summaries support the adapter's traffic-aware flag; estimates do not prove
+individual sensor coverage or observed driving performance. Compare and primary
+selection/recentering passed on production Chrome and Pixel_8. Two-minute expiry
+restored geographic fallback with unavailable durations.
+
+Deployed OPTIONS 204, GET 405 and seven invalid-body/origin/destination/bounds
+cases 400 passed, with CORS/no-store and sanitized errors. During bounded valid
+requests TomTom naturally returned `EXTERNAL_RATE_LIMITED`: partial 200 preserved
+successful positions and all-failed response returned HTTP 429 / Retry-After 60.
+Verification stopped; no automatic retries or invented ETAs. Initial scratch
+assertions assumed complete success/local-only limits; corrected contract check
+passed. Provider quota availability must be checked privately before the video.
+Global controls, live isolate-budget/reset/concurrency behavior and forced
+timeout/network faults are not established by this run; deterministic tests cover
+those branches. No further collector refresh or database changes.
+
+Post-deployment driver/server TypeScript and lint completed successfully; server
+lint prints an existing React auto-detection warning, with no ESLint findings.
+All 37 tests passed (zero failures/skips). Earlier same-session production web,
+Android JS/Hermes export and offline debug build passed; no source changes since.
+Native successful journey follows the previously recorded Fabric crash; startup
+reliability remains unproven. Physical device unrun. Ignored evidence under
+`services/ingestion/.scratch/`: live recommendation/security JSON, web/native
+routing and selected-station PNGs. TASK-008 remains unstaged/uncommitted.

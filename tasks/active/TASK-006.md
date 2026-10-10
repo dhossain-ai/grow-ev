@@ -1,6 +1,6 @@
 # TASK-006 — Grow EV Congestion Intelligence
 
-Status: Implemented locally; final live verification blocked by DEV connectivity. Stopped for review; live acceptance unmet.
+Status: DEV migration/security, fresh collection and real recommendations verified on web/Pixel_8; native startup instability recorded.
 Date: 2026-10-10
 
 ## Scope and implementation
@@ -170,3 +170,61 @@ fresh-data verification and successful Android recommendations remain pending
 for hotspot connectivity. No migration deployment or collector execution in this
 checkpoint session. Earlier no-commit/no-next-task statements describe prior runs;
 the user now authorized this checkpoint and TASK-007 development.
+
+## Hotspot live integration — 2026-10-10
+
+Supersedes prior connectivity/pending-migration notes. Verified TLS DEV connection
+and schema check passed. Remote migration history contained only foundation and
+map RPC; CLI dry-run listed only `20261010002000_station_capacity_rpc.sql`.
+Audited trusted search path, SECURITY DEFINER allowlist, grants, spatial/result
+bounds and per-EVSE connector association. Applied unchanged migration to DEV
+under the user's existing approval; remote `station_capacity_live.sql` passed,
+including actual anonymous denial. Public `verify-map-live.mjs` passed all
+pagination/field/bounds/input and five-table read/empty-insert denial checks.
+
+Saved read-only canonical baseline, then executed existing collector exactly
+once with capture. Run `125766b8-62ec-45d9-8af0-c3467437558a`: SUCCESS/COMPLETE,
+1,984 locations, 5,836 EVSEs, 5,838 connectors, zero duplicate identities,
+66 transitions. Independent baseline comparison verified preserved canonical
+identities and first-observation timestamps, all observation times advanced,
+exact previous/new normalized/source status and timestamp correspondence,
+and no transitions for unchanged statuses. Approval is consumed; no second poll.
+Observed 03:46:01.044–03:46:04.628 Europe/Vilnius.
+
+Real CCS2 example: Norfa XXL Ateities g. 10 has 0 available, 2 charging compatible
+EVSEs; an available Type 2 EVSE is correctly excluded. Alternatives: Jeruzalė
+2 available / 0.471 km straight-line, Rimi Jeruzalė 2 / 0.497 km, Baltupių turgus
+1 / 0.925 km. The old Spaudos example now has available capacity and was rejected.
+Public capacity client returned 846 validated nearby stations. Freshness,
+distinct EVSE counts, explanations and stale-data exclusion passed using the
+implemented domain policy on public real evidence; stale check used an in-memory
+aged copy, never fabricated database observations.
+
+Production Chrome: CCS2 map filter, Norfa selection, primary/two alternatives,
+safe unavailable routing, Jeruzalė selection and map recentering passed. No mock
+interception. Screenshots and sanitized baseline/poll/recommendation artifacts
+are in ignored `services/ingestion/.scratch/`. Android build/export passed;
+Pixel_8 exercised the same live journey after cold relaunch: CCS2 filter, Norfa
+selection, Type 2 available → CCS2 congestion, primary and both alternatives,
+safe unavailable Compare result, then select Jeruzalė and recenter. Connection
+required all-interface Metro binding and ADB reverse. First connected launch
+produced a Fabric SIGSEGV; next cold relaunch passed. Startup reliability remains
+unverified, crash log retained. No physical-device proof. Remote SQL passed again
+after poll.
+
+Current driver/server/ingestion TypeScript, driver/server lint, 37 driver tests,
+web build, Android export/debug build and diff check passed. Ingestion tests:
+13 passed, 1 guarded PostgreSQL suite skipped. No applied migration or collector
+source changes. Earlier historical no-routing restrictions were superseded by
+the user's current explicit integration scope. TASK-008 remains uncommitted.
+
+## Routing integration follow-through — 2026-10-10
+
+Approved TASK-007 DEV deployment now supplies actual routes to TASK-008. Same
+fresh Norfa CCS2 congestion and distinct compatible alternatives verified on
+production Chrome and Pixel_8; road-ranked primary Rimi Jeruzalė has 2 available
+CCS2 EVSEs and a 163-second / 744-metre estimated drive. Selecting it updates
+details and recenters both maps. See TASK-007/008 for route/HTTP/rate-limit evidence.
+No second collector poll, migration modification or identity/status write.
+The one-poll approval remains consumed. TASK-008 remains uncommitted; native
+startup reliability and physical-device validation retain their recorded limits.

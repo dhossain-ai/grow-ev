@@ -3,12 +3,12 @@
 Status: Proposed architecture
 Version: 0.1
 
-TASK-007 implemented locally: `packages/routing` owns the shared contract and
+TASK-007 implemented and deployed to DEV: `packages/routing` owns the shared contract and
 coordinate/geographic validation. `supabase/functions/routing` provides a small
 guest Edge Function and server-only TomTom adapter; the driver details UI makes
 explicit requests for its existing shortlist on both platforms. No database or
-collector dependency in routing; no new packages. Endpoint/runtime deployment
-and live TomTom verification await hotspot connectivity. Limits are per isolate;
+collector dependency in routing; no new packages. Approved DEV deployment and
+actual TomTom routes verified on web/Pixel_8, 2026-10-10. Limits are per isolate;
 distributed quota controls remain a public-deployment prerequisite. The remaining
 architecture and routing fallback below describe proposed scope.
 

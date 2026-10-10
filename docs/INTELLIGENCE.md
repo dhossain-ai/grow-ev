@@ -1,14 +1,14 @@
 # Grow EV — Intelligence Engine
 
-Status: TASK-006 deterministic congestion module implemented; approved DEV deployment blocked by connectivity
-Version: 0.2
+Status: TASK-006/007 DEV integration and TASK-008 real recommendations verified on web/Pixel_8; TASK-008 live acceptance complete
+Version: 0.3
 
 ## Implemented first slice (TASK-006)
 
 Driver details offer CCS2 (`IEC_62196_T2_COMBO`), Type 2 (`IEC_62196_T2`)
 and CHAdeMO (`CHADEMO`). This single driver requirement is separate from map
 connector/power discovery filters; alternatives do not promise a power threshold.
-The new, not-yet-deployed `get_station_capacity(uuid)` RPC provides canonical
+The DEV-deployed `get_station_capacity(uuid)` RPC provides canonical
 EVSE IDs, statuses, connector standards and individual observation times for the
 selected station and nearby locations across operators. Station aggregates are
 never used to infer compatible availability.
@@ -39,8 +39,45 @@ TomTom durations are estimates using requested available traffic, not measured
 journey times or guaranteed traffic coverage. Road distance and straight-line
 distance retain separate labels. No waiting/arrival availability is inferred.
 Successful estimates expire after two minutes; unavailable/expired results show
-"Driving time unavailable". Server adapter/endpoint and fixture checks exist
-locally; live provider and web/Android integration verification remain pending.
+"Driving time unavailable". Approved DEV endpoint deployment, real Vilnius routes
+and web/Pixel_8 comparison verified 2026-10-10. Provider rate limits were observed;
+quota availability and global abuse controls remain deployment limitations.
+
+## Implemented recommendation policy (TASK-008)
+
+`recommendations.ts` reuses the capacity rules and nearest-three eligible shortlist
+above. Recommend alternatives only for fresh congestion at the selected station;
+do not recommend rerouting when compatible AVAILABLE capacity exists there or
+assert congestion from UNKNOWN/outage/stale evidence. Each recommendation has
+fresh exact-connector AVAILABLE EVSE evidence; other unknown/stale EVSEs are excluded
+from its count and disclosed. Availability is observed, not guaranteed on arrival.
+
+If all shortlisted candidates have fresh matching routes with the same
+traffic-awareness setting, rank by provider-estimated driving seconds, then
+straight-line distance, available count and canonical ID. Otherwise keep
+geographic proximity ranking for the whole shortlist. Missing time is unknown,
+not slower. This policy does not search beyond the existing nearest three.
+Known durations can still be displayed under partial coverage; a time difference
+is only computed against the primary where both estimates share the origin and
+traffic-awareness setting. It says nothing about waiting or total journey time.
+
+Routes must match exact requested origin/destination, have valid nonnegative
+numeric results and age 0–120 seconds. Invalid, future, expired or failed routes
+cannot become an ETA; use "Driving time unavailable" and explicitly geographic
+fallback, with road reachability unverified. Default labels say charger-to-charger
+travel. A supplied `userOrigin` uses distinct driver-origin labels and matching;
+the current map does not provide user location. Geographic proximity always
+remains measured from the selected charger, even with a provided user origin.
+
+Shared cards show one primary and up to two alternatives. Explanations use actual
+capacity counts, selected-station occupied count, distance, oldest supporting
+observation age/time, route time/distance/provider and comparable time differences.
+Observation time does not prove continuous availability. No unvalidated waiting,
+charging time, prices, probability or Grow Score. Live Norfa CCS2 congestion gave
+Rimi Jeruzalė as road-ranked primary (163 s / 744 m, 2 available EVSEs), Jeruzalė
+(173 s / 537 m, 2) and Baltupių turgus (293 s / 1,621 m, 1). Both UIs verified the
+same order, explanations and primary selection/recentering. Observations are dated
+2026-10-10 03:46 Europe/Vilnius; this verification is not an ongoing live guarantee.
 
 The remaining sections describe future scope, not implemented capabilities.
 

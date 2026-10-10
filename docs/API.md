@@ -1,7 +1,7 @@
 # Grow EV — API Contract
 
 Version: 0.1
-Status: Routing contract implemented locally (TASK-007); remaining /v1 endpoints proposed
+Status: Routing deployed and live verified on DEV (TASK-007); remaining /v1 endpoints proposed
 
 ## 1. Purpose
 
@@ -53,9 +53,12 @@ Never present a stale status as confirmed live.
 
 ## 4. Public endpoints
 
-### Implemented locally: POST /functions/v1/routing
+### Implemented on DEV: POST /functions/v1/routing
 
-Supabase Edge Function, shared by Android and web. Not deployed or live verified.
+Supabase Edge Function, shared by Android and web. Deployed under explicit approval
+to DEV `heafsrqaytsfthfcxmqu`; actual Vilnius routes and both UI journeys verified
+2026-10-10. Real provider 429/partial failures observed; see TASK-007 for evidence
+and remaining quota/global-budget limitations.
 Request: `{ origin: { lat, lng }, destinations: [{ lat, lng }] }`.
 One to three unique destinations, within 15,000 geographic meters of origin;
 finite WGS84 coordinates, JSON body at most 2048 bytes, two-second read deadline.

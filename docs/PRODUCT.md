@@ -4,6 +4,17 @@ Status: Initial product definition
 Version: 0.1
 Challenge: Hack4Vilnius 2026 — #13
 
+Verified DEV implementation update (TASK-008, 2026-10-10): fresh compatible capacity and
+optional provider route results support one explained primary charging alternative
+and up to two others when the selected charger is congested. Complete comparable
+routes rank by estimated driving time; otherwise explicitly labeled geographic
+proximity is the fallback. Default routes are charger-to-charger travel; no user
+location is inferred. Real Vilnius observations, TomTom road estimates and primary
+selection verified on production web and Pixel_8. Provider quotas and native startup
+reliability remain limitations. This slice makes no waiting,
+charging-duration, price, probability or arrival-availability claims; dashboard
+and the broader capabilities below remain product scope, not completed features.
+
 ## 1. Vision
 
 Grow EV helps EV drivers make better charging decisions and helps cities and charging operators use existing charging infrastructure more efficiently.

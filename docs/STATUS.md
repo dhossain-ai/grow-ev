@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: TASK-007 local implementation; live verification deferred to hotspot
+Phase: TASK-008 live integration verified; checkpoint authorized, demo stabilization underway
 
 ## Verified foundation
 
@@ -10,70 +10,117 @@ Phase: TASK-007 local implementation; live verification deferred to hotspot
   one-shot collector and real-data map.
 - Earlier verified DEV collection: 1,984 locations, 5,836 EVSEs, 5,838 connectors;
   canonical identities and unchanged-status nontransitions preserved.
-- Earlier Chrome/Pixel_8 map verification and Android debug build passed.
-  Physical-device validation remains unverified.
+- Earlier Chrome/Pixel_8 map checks passed. Physical-device validation remains
+  unverified; current builds are not a claim of current device interaction.
 
 ## Current work
 
-- TASK-006 locally implemented and provisionally committed as `95764d1`.
-  Reviewed all changed/staged files; no secrets included. Current checkpoint
-  typecheck, zero-warning lint and all 14 unit/API tests passed.
-  Remote capacity migration, remote SQL, fresh-data verification and successful
-  Android recommendations remain pending. This is not full TASK-006 acceptance.
-- TASK-007 typed routing contract, server-side TomTom adapter/Edge endpoint,
-  bounded requests and shared web/Android shortlist comparison implemented locally.
-  Explicit comparisons originate at the selected station, retain geographic
-  shortlist order and distinguish road distance from straight-line distance.
-  Missing routing displays "Driving time unavailable". Live routing unverified.
-  See `tasks/active/TASK-007.md` for checks, API budgets and pending acceptance.
-- TASK-007 remains uncommitted and undeployed, stopped for review.
+- TASK-006 provisionally committed as `95764d1`. Hotspot restored verified-TLS
+  DEV database connectivity. Exactly one expected migration was pending and
+  `20261010002000_station_capacity_rpc.sql` was applied to DEV. Remote correctness/
+  security SQL and public anonymous table denial passed. Fresh compatible
+  recommendations and selection/recentering passed in production Chrome.
+  Pixel_8 real-data recommendations, connector switching, safe routing failure and
+  selection/recentering passed after cold relaunch. Native startup instability
+  remains a limitation. Successful road-routing integration is now verified below.
+- TASK-007 provisionally committed as `9402063`: shared routing contract,
+  server-side TomTom adapter and bounded Edge Function, explicit charger-to-charger
+  UI with unavailable/error handling. Reviewed frontend credential exclusion and
+  request budgets; driver/server TypeScript, zero-warning lint, all 24 tests and
+  web production build passed again before the checkpoint. Approved DEV deployment
+  and live routes passed; real provider rate limits were also observed.
+- TASK-008 implemented locally: deterministic policy reuses fresh compatible
+  capacity and existing nearest-three shortlist. Complete comparable fresh routes
+  rank by estimated driving time; partial/missing routes retain geographic order.
+  Shared cards show one primary and up to two explained alternatives, retain
+  station selection/recentering and never invent ETA/wait/price/probability.
+  Optional supplied user origin is distinct from selected-charger origin;
+  current map provides no driver location. See `tasks/active/TASK-008.md`.
+- TASK-008 live integration verified; checkpoint commit authorized. Fresh real-data recommendations,
+  actual road-time ranking, both alternatives and primary selection/recentering
+  passed through production Chrome and Pixel_8. No product source changes were
+  required in this live verification.
 
 ## Connectivity and live gates
 
-- University eduroam blocks Supabase database connectivity. Do not repeatedly
-  troubleshoot; remote checks await hotspot connectivity.
-- No migrations, collector executions or live provider calls in this session.
-- Existing observations (`2026-10-09T21:52:03.348Z`, 00:52:03 Europe/Vilnius) were
-  stale at prior verification. New capacity RPC remains undeployed.
-- TASK-006's earlier conditional remote approval did not result in deployment
-  or consume the one-poll allowance. This session explicitly forbids migration
-  deployment and collector changes; review future live actions separately.
-- TomTom credentials remain server-side. Deno runtime/deployment, live traffic
-  routing, provider quotas/coverage/licensing and live web/Android UI unverified.
-- Edge endpoint budgets apply per isolate; distributed public abuse protection
-  and provider spending caps are still required before public rollout.
+- Mobile hotspot database/public API connectivity passed independently of CLI
+  authorization. User restored DEV CLI access; server secret name verified.
+  No credentials printed or copied into Expo; no TLS/RLS bypass.
+- TASK-006 migration applied under existing conditional approval. Applied migration
+  files and collector implementation remain unchanged. No reset or scheduling.
+- ONE collector poll executed: `125766b8-62ec-45d9-8af0-c3467437558a`, SUCCESS/
+  COMPLETE, 1,984 locations / 5,836 EVSEs / 5,838 connectors, zero duplicates.
+  Baseline verification passed: all canonical IDs/first observations preserved,
+  all observation times advanced, exactly 66 genuine changes and no false
+  transitions. One-poll approval is consumed; do not rerun automatically.
+- Observations: 2026-10-10 03:46:01.044–03:46:04.628 Europe/Vilnius. At verification,
+  Norfa XXL Ateities g. 10 had two occupied CCS2 EVSEs and no available CCS2;
+  its available Type 2 EVSE correctly did not supply CCS2 capacity. Geographic
+  primary Jeruzalė: 2 available CCS2 EVSEs, 0.471 km; Rimi Jeruzalė: 2, 0.497 km;
+  Baltupių turgus: 1, 0.925 km. These are observed snapshots, not arrival guarantees.
+- Exact DEV routing deployment explicitly approved by the user and completed:
+  `npx supabase functions deploy routing --project-ref heafsrqaytsfthfcxmqu --use-api`.
+  Existing `verify_jwt=false` permits guest routing. `TOMTOM_API_KEY` stays in DEV
+  Edge secrets; deployment used the existing audited implementation.
+- Actual Norfa-to-Vilnius estimates at 04:14–04:18 Europe/Vilnius: primary Rimi
+  Jeruzalė 163 s / 744 m (2 available CCS2); Jeruzalė 173 s / 537 m (2); Baltupių
+  turgus 293 s / 1,621 m (1). Differences 10 s and 130 s match calculations.
+  All returned traffic-aware summaries; these are provider estimates, not measured
+  journeys or guaranteed traffic coverage. UI labels the selected-charger origin.
+- Production Chrome and Pixel_8 passed Compare → road-ranked primary/two
+  alternatives → select Rimi Jeruzalė → fresh available details/recentered map.
+  Expired two-minute routes were withheld and geographic fallback restored.
+  Saved actual routes replayed through the domain policy validate ranking,
+  explanations, stale evidence exclusion and rejection under a different explicit
+  user origin. No driver/GPS origin was supplied; physical-device routing unrun.
+- Deployed OPTIONS/GET, invalid JSON, oversized body, missing/invalid origin,
+  duplicate/too-many destinations and >15 km bounds passed. Real provider
+  `EXTERNAL_RATE_LIMITED` appeared both in partial 200 results and all-failed HTTP
+  429, with sanitized errors and `Retry-After: 60`. Bounded verification stopped;
+  quota availability needs checking privately before recording the video.
+  An initial helper assumed complete success/local-only 429; corrected checks
+  accepted the documented partial/provider-limit contract. Timeout and isolate
+  concurrency/minute-budget/reset/backoff proofs remain deterministic tests;
+  distributed/global budget enforcement is not established.
+- TomTom secrets stay server-side. Edge budgets are per isolate; distributed
+  spending/abuse controls remain necessary before public deployment.
+
+## Latest local verification
+
+- TASK-008: 37 unit/API tests passed (13 new recommendation tests), zero failures
+  or skips. Fixtures cover compatibility/congestion, freshness, UNKNOWN/outages,
+  multiple connectors, ranking/ties, partial/failed routes, route-origin matching,
+  explanations and mocked HTTP integration. Final builds/checks recorded in task.
+- Driver/server and ingestion TypeScript, zero-warning driver/server lint, all
+  37 driver tests, web production export, Android JS/Hermes export and offline
+  Android debug build passed again. Ingestion tests: 13 passed, 1 PostgreSQL suite
+  skipped (no disposable database configured); no failed test suites. Remote SQL
+  and public map security checks passed. Native build: 1m 28s, 376 tasks.
+- Temporary verification helpers initially failed on CLI URL quoting/relative CA
+  paths and JS Date comparison formats; corrected checks passed before accepting
+  results. Test web server initially lacked the `.mjs` MIME type; corrected and
+  browser verification passed. Old Metro lacked the shared routing watch folder;
+  emulator connection required all-interface Metro binding and ADB reverse.
+  First connected native launch crashed with SIGSEGV in React Native Fabric
+  `MountingCoordinator::pullTransaction`; subsequent cold relaunch passed the
+  live journey. Crash retained in ignored `.scratch/android-crash.log`; startup
+  reliability is not proven. No product code change claimed.
+- Unit fixtures are synthetic. Fresh DEV evidence and web interaction are real.
+  Actual route/provider integration and UI interaction are now verified. They do
+  not establish road reachability under fallback, arrival availability,
+  traffic sensor coverage or physical-device success. Driver/server TypeScript,
+  zero-warning lint and all 37 tests passed again after deployment.
 
 ## Deferred product scope
 
 Scheduled ingestion, historical analytics, dashboard, ML, pricing, waiting-time
-predictions and public deployment remain outside the implemented slice.
-
-## Dependency findings
-
-Earlier driver audit reported 29 transitive advisories (10 moderate, 19 high)
-upstream of Expo SDK 57. No dependencies changed in TASK-006/007; audit not rerun.
-
-## Latest local verification
-
-TASK-007 final results are recorded in its active task file. These checks use
-fixtures and mocks; they do not establish live traffic routing or fresh capacity.
+predictions, driver geolocation and public deployment remain outside this slice.
+Earlier audit reported 29 transitive advisories (10 moderate, 19 high) upstream of
+Expo SDK 57. No dependencies changed; audit not rerun.
 
 ## Next
 
-Review TASK-007. Then use hotspot connectivity for separately authorized live
-verification. Do not start another task automatically.
-
-Final TASK-007 checks (2026-10-10): driver and server/shared TypeScript passed;
-driver and server/shared lint passed with zero lint warnings/errors; 24 unit/API
-tests passed with zero failures/skips. Web production export, Android JS/Hermes
-export and offline Android debug build passed. Initial import/lint configuration
-and shared-module Metro failures were corrected; final checks pass. Diff check
-passed; generated web JS excludes TomTom secret name and provider URL. Deno runtime,
-live provider/endpoint and platform interactions remain unrun. No remote writes,
-collector changes or TASK-007 commit. Full commands in the active task file.
-
-TASK-007 checkpoint review (2026-10-10): explicit charger-to-charger labels,
-frontend credential exclusion, error-to-unavailable handling and request budgets
-reviewed. Driver/server TypeScript, zero-warning lint, all 24 tests and web build
-passed again. Provisionally checkpointed; live verification remains pending.
-TASK-008 deterministic recommendations now authorized; no live calls/deployment.
+Finalize TASK-008 checkpoint and review subsequent uncommitted stability changes.
+Before the video, check TomTom
+quota privately and obtain separate approval for another observation refresh if
+needed; the one-poll approval is consumed. Do not start another task automatically.

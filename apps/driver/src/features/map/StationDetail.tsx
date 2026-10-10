@@ -3,6 +3,7 @@
  * Uses React Native primitives for cross-platform compatibility.
  */
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { Coordinates } from '../../../../../packages/routing';
 
 import type { MapStation } from './types';
 import { formatAge, formatConnector, formatPower, getAvailability, isStale } from './types';
@@ -13,9 +14,10 @@ interface StationDetailProps {
   station: MapStation;
   onClose: () => void;
   onSelect: (station: MapStation) => void;
+  userOrigin?: Coordinates;
 }
 
-export function StationDetail({ station, onClose, onSelect }: StationDetailProps) {
+export function StationDetail({ station, onClose, onSelect, userOrigin }: StationDetailProps) {
   const availability = getAvailability(station);
   const stale = isStale(station);
   const occupiedCount = station.charging_evse_count;
@@ -48,7 +50,7 @@ export function StationDetail({ station, onClose, onSelect }: StationDetailProps
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <CongestionDetail station={station} onSelect={onSelect} />
+        <CongestionDetail station={station} onSelect={onSelect} userOrigin={userOrigin} />
         {/* Availability summary */}
         <View style={styles.availabilityRow}>
           <View
