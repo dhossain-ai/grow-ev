@@ -281,6 +281,10 @@ export function GrowMap() {
         <div style={webStyles.detailPanel}>
           <StationDetail
             station={selectedStation}
+            onSelect={(station) => {
+              setSelectedStation(station);
+              mapRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15 });
+            }}
             onClose={() => setSelectedStation(null)}
           />
         </div>

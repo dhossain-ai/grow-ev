@@ -210,6 +210,10 @@ export function GrowMap() {
         <View style={styles.detailPanel}>
           <StationDetail
             station={selectedStation}
+            onSelect={(station) => {
+              setSelectedStation(station);
+              cameraRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: 300 });
+            }}
             onClose={() => setSelectedStation(null)}
           />
         </View>

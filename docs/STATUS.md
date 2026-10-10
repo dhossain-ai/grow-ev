@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: Real charging maps verified and completed on web and Android
+Phase: TASK-006 live verification blocked by DEV database connectivity
 
 IMPORTANT:
 This document records current implementation and verification.
@@ -66,7 +66,7 @@ Product components:
 - Scheduled ingestion
 - Historical occupancy/analytics processing
 - Routing integration
-- Recommendation engine
+- Live congestion recommendations (TASK-006 code exists; new RPC deployment and fresh observations pending)
 - Dashboard
 - Driver charging features
 - Public deployment
@@ -76,7 +76,7 @@ Do not assume these have been implemented.
 
 ## Immediate next tasks
 
-1. Explicitly select and define the next scoped task (e.g., driver route planning or network analytics).
+1. Restore DEV database connectivity and resume TASK-006's approved safety gates. No next task started.
 
 ## Critical technical risks
 
@@ -92,10 +92,21 @@ Do not assume these have been implemented.
 
 ## Current task
 
-TASK-005 verified and completed. Next task to be assigned explicitly.
-See `tasks/active/TASK-005.md` for scope, evidence and limits. No next task started.
+TASK-006 implemented locally; final live verification blocked, not complete end to end.
+See `tasks/active/TASK-006.md` for implementation, real-data example, checks and limits.
+TASK-005 remains completed. No commit or remote deployment for TASK-006.
 
 ## Current blockers
+
+- User approved TASK-006 DEV deployment and ONE live collector execution,
+  conditional on safety gates. The migration dry-run cannot connect to DEV;
+  its pending list remains unverified. No remote migration or collector poll ran.
+- Linked CLI account receives HTTP 403; password-backed Windows/WSL CLI and
+  PostgreSQL connections time out to the session pooler. Public HTTP API works.
+- TASK-006 migration and strengthened SQL tests pass on disposable local
+  PostgreSQL 16.15 / PostGIS 3.4.2. Remote SQL verification remains unrun.
+- Stored readings are stale; no fresh real-data recommendation can be verified.
+  Ingestion and scheduling were not changed; collector preflight failed before polling.
 
 - No blocker to the verified web/Android emulator map demo.
 - Stored observations are from 2026-10-10 00:52:03 Europe/Vilnius, marked stale;
@@ -110,6 +121,34 @@ See `tasks/active/TASK-005.md` for scope, evidence and limits. No next task star
   These are upstream to Expo SDK 57 / React Native 0.86; force-fixing would break SDK 57 compatibility.
 
 ## Latest verification
+
+TASK-006 final live-verification attempt (2026-10-10): exact DEV linked-ref and
+connection identity guarded. Supabase CLI dry-runs failed (linked account 403;
+credential-backed connections TCP timeout), so pending migrations could not be
+confirmed and deployment was withheld. Collector `--check` failed; zero live poll
+executions. Public capacity endpoint returns 404/PGRST202; existing map checks
+pass and still report observations from 00:52:03 Europe/Vilnius.
+Unchanged migration applied successfully only to disposable local database.
+SQL tests passed after correcting JSON operator precedence; added spatial
+completeness, field allowlists and both client roles' table privilege/RLS checks.
+Ingestion TypeScript and all 23 local PostgreSQL regression tests pass; driver
+TypeScript/lint, 14 unit/API tests, production web export and Android debug build
+pass. Successful real-data recommendations and requested
+screenshots on both platforms remain unverified; ADB currently lists no device.
+No remote writes, ingestion changes, applied-migration edits, commit or TASK-007.
+
+TASK-006 (2026-10-10): pure TypeScript compatibility/congestion/ranking module,
+public evidence client, connector selection and shared web/native details UI
+implemented. TypeScript, zero-warning lint, 14 unit/API tests and web export pass.
+Existing live public map API checks pass (1,984 stations / 5,836 EVSEs).
+Production browser tests verify failure/retry and, with browser-only synthetic
+responses, incompatible availability, connector changes, explanations, distance,
+freshness and alternative selection/recentering. Mocks removed; no data written.
+Android debug build/install passes; Pixel_8 renders the map and new details,
+connector selection and capacity failure/retry. Successful native alternative
+selection awaits endpoint deployment. New SQL migration/test remain unexecuted
+pending approval.
+No live recommendation claim, collector change, dependency addition or commit.
 
 TASK-005 (2026-10-10): frontend contains only ignored public configuration;
 publishable-key RPC succeeds. Deployed function matches the reviewed body,
@@ -190,3 +229,11 @@ After meaningful implementation:
 Keep this document short and current.
 
 Do not use it as an endless development diary.
+
+## Provisional checkpoint — 2026-10-10
+
+TASK-006 reviewed and checkpointed as locally implemented. Typecheck, lint and
+14 unit/API tests pass in this session. Remote migration, fresh-data verification
+and successful Android recommendations remain pending. University eduroam blocks
+database connectivity; live checks are deferred to a hotspot. No migrations or
+collector runs authorized in this session. TASK-007 is now authorized separately.

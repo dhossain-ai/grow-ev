@@ -1,7 +1,38 @@
 # Grow EV — Intelligence Engine
 
-Status: Initial algorithm specification
-Version: 0.1
+Status: TASK-006 deterministic congestion module implemented; approved DEV deployment blocked by connectivity
+Version: 0.2
+
+## Implemented first slice (TASK-006)
+
+Driver details offer CCS2 (`IEC_62196_T2_COMBO`), Type 2 (`IEC_62196_T2`)
+and CHAdeMO (`CHADEMO`). This single driver requirement is separate from map
+connector/power discovery filters; alternatives do not promise a power threshold.
+The new, not-yet-deployed `get_station_capacity(uuid)` RPC provides canonical
+EVSE IDs, statuses, connector standards and individual observation times for the
+selected station and nearby locations across operators. Station aggregates are
+never used to infer compatible availability.
+
+`apps/driver/src/features/map/congestion.ts` counts each compatible EVSE once.
+AVAILABLE requires an observation no older than 60 minutes; missing/invalid/future
+times cannot prove availability. This freshness ceiling matches the existing map
+stale threshold and is a provisional demo policy, not a guarantee of arrival
+availability. If any compatible observation is stale and none is freshly
+AVAILABLE, current congestion is withheld. Otherwise congestion means zero
+compatible AVAILABLE EVSEs and at least one CHARGING, BLOCKED or RESERVED EVSE.
+UNKNOWN remains uncertainty; INOPERATIVE/OUTOFORDER/PLANNED/REMOVED alone are
+not congestion. Mixed occupied/UNKNOWN states report the unknown count.
+
+For fresh congestion, eligible alternatives must have at least one freshly
+AVAILABLE EVSE with the exact connector standard. Search is independent of the
+map viewport and operator, within 10 km great-circle distance of the selected
+station. Rank nearest first, then more compatible available EVSEs at equal
+distance, then canonical location ID; return at most three. UI explicitly labels
+straight-line distance, shows the oldest observation supporting each available
+count, and allows selection/recentering. No road distance, ETA, waiting estimate,
+prediction, score, tariff or post-charge-idling inference is implemented.
+
+The remaining sections describe future scope, not implemented capabilities.
 
 ## 1. Objective
 

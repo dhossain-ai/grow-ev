@@ -5,18 +5,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { StationFilters } from './types';
 import { colors, radii, spacing } from './tokens';
+import { CONNECTOR_OPTIONS } from './congestion';
 
 interface FilterBarProps {
   filters: StationFilters;
   onFiltersChange: (filters: StationFilters) => void;
 }
-
-/** Common connector standards in the Lithuanian network. */
-const CONNECTOR_OPTIONS = [
-  { value: 'IEC_62196_T2', label: 'Type 2' },
-  { value: 'IEC_62196_T2_COMBO', label: 'CCS2' },
-  { value: 'CHADEMO', label: 'CHAdeMO' },
-] as const;
 
 /** Power threshold options in kW. */
 const POWER_OPTIONS = [

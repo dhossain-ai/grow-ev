@@ -122,7 +122,34 @@ actual anon/authenticated default-deny RLS were verified. All fixture rows and
 temporary grants rolled back; all five tables remained empty. Independent
 setup in a second database was not run. Local Windows/WSL runtime remains absent.
 
-## Deferred entities
+## TASK-006 public read contract (approved deployment blocked by connectivity)
+
+New migration `20261010002000_station_capacity_rpc.sql` adds
+`get_station_capacity(target_location_id uuid)`, a STABLE read-only SECURITY
+DEFINER endpoint with trusted search path and explicit anon/authenticated
+EXECUTE grants. No table grants, RLS policies, schema entities or ingestion
+behavior change. Existing applied migrations remain untouched.
+
+Returns `station` (the same field meanings as the map RPC) plus `evses`, one
+record per canonical EVSE: `id`, normalized `status`, `observed_at`, and
+`connector_standards` belonging to that EVSE. Null standards are omitted; an
+empty array supplies no compatibility evidence. Canonical IDs prevent duplicated
+public EVSE identifiers or multiple connectors from inflating capacity.
+Observation times retain per-EVSE freshness rather than the station maximum.
+No source metadata, poll diagnostics or tariff references are exposed.
+
+Requires an existing geolocated station; rejects null/missing IDs. Spatial
+lookup uses indexed PostGIS geography within 10.1 km (a conservative envelope
+for the client's exact 10 km spherical distance check). Results are ordered by
+canonical location ID and reject more than 2,000 stations rather than truncate.
+Clients page PostgREST responses and reject incomplete/duplicate evidence.
+The unchanged migration and `supabase/tests/station_capacity_live.sql` pass on
+disposable local PostgreSQL 16.15 / PostGIS 3.4.2. The SQL test's JSON operator
+precedence was corrected and security/allowlist/spatial assertions strengthened.
+User approved DEV deployment conditionally; CLI dry-run/database TCP timeouts
+prevent confirming the pending list, so remote application/verification has not run.
+
+## Deferred entities (unchanged)
 
 Separate operators, tariffs, raw per-EVSE observations, occupancy episodes,
 station metrics, vehicles, recommendations and community reports remain future

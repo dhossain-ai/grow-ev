@@ -7,13 +7,15 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { MapStation } from './types';
 import { formatAge, formatConnector, formatPower, getAvailability, isStale } from './types';
 import { availabilityColors, availabilityLabels, colors, radii, spacing } from './tokens';
+import { CongestionDetail } from './CongestionDetail';
 
 interface StationDetailProps {
   station: MapStation;
   onClose: () => void;
+  onSelect: (station: MapStation) => void;
 }
 
-export function StationDetail({ station, onClose }: StationDetailProps) {
+export function StationDetail({ station, onClose, onSelect }: StationDetailProps) {
   const availability = getAvailability(station);
   const stale = isStale(station);
   const occupiedCount = station.charging_evse_count;
@@ -46,6 +48,7 @@ export function StationDetail({ station, onClose }: StationDetailProps) {
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <CongestionDetail station={station} onSelect={onSelect} />
         {/* Availability summary */}
         <View style={styles.availabilityRow}>
           <View
