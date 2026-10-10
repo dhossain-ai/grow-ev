@@ -69,8 +69,14 @@ async function main(): Promise<void> {
     .filter(name => originalUrl.searchParams.has(name));
   const caBuffer = await readFile(process.env.GROW_EV_DATABASE_CA_FILE!);
   const ca = caBuffer.toString('utf8');
-  const caCert = new X509Certificate(ca);
   const caFileSha256 = createHash('sha256').update(caBuffer).digest('hex');
+  let caCert: X509Certificate | undefined;
+  let caParseError: string | undefined;
+  try { caCert = new X509Certificate(ca); }
+  catch (error) {
+    const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+    caParseError = code && /^[A-Z0-9_]+$/.test(code) ? code : 'PEM_PARSE_ERROR';
+  }
   type InspectableClient = pg.Client & {
     connectionParameters: { host: string; port: number; ssl: unknown };
     sslNegotiation: string;
@@ -85,6 +91,12 @@ async function main(): Promise<void> {
   const portReceived = parameters.port === 5432;
   const tlsNegotiation = client.sslNegotiation;
   const pgSendsSni = hostReceived && net.isIP(parameters.host) === 0;
+  const pemStart = '-----BEGIN CERTIFICATE-----';
+  const pemEnd = '-----END CERTIFICATE-----';
+  const firstPemStart = ca.indexOf(pemStart);
+  const firstPemEnd = ca.indexOf(pemEnd, firstPemStart + pemStart.length);
+  const onePemBlock = firstPemStart >= 0 && firstPemEnd >= 0 && ca.indexOf(pemStart, firstPemStart + pemStart.length) < 0;
+  const textOutsidePem = !onePemBlock || ca.slice(0, firstPemStart).trim().length > 0 || ca.slice(firstPemEnd + pemEnd.length).trim().length > 0;
   const output = {
     configuration: {
       devTargetValidated: true,
@@ -100,12 +112,18 @@ async function main(): Promise<void> {
       nodePostgresReceivesCaAndStrictVerification: caReceived,
     },
     ca: {
-      pemHasOneCertificate: (ca.match(/-----BEGIN CERTIFICATE-----/g) ?? []).length === 1,
-      certificateIsCa: caCert.ca,
+      bytes: caBuffer.length,
+      lineEndings: { crlf: (ca.match(/\r\n/g) ?? []).length, lfOnly: (ca.match(/(?<!\r)\n/g) ?? []).length },
+      pemStartsWithExpectedHeader: ca.startsWith(pemStart),
+      pemHasOneBlock: onePemBlock,
+      pemHasTextOutsideCertificate: textOutsidePem,
+      pemEndsWithLineFeed: ca.endsWith('\n'),
+      certificateParseError: caParseError ?? null,
+      certificateIsCa: caCert?.ca ?? null,
       fileBytesExactlyMatchLocalOfficial: caFileSha256 === OFFICIAL_CA_FILE_SHA256,
       fileSha256: caFileSha256,
-      certificateFingerprintMatchesLocalOfficial: caCert.fingerprint256 === OFFICIAL_CA_FINGERPRINT256,
-      certificateFingerprint256: caCert.fingerprint256,
+      certificateFingerprintMatchesLocalOfficial: caCert?.fingerprint256 === OFFICIAL_CA_FINGERPRINT256,
+      certificateFingerprint256: caCert?.fingerprint256 ?? null,
     },
   };
   console.log(JSON.stringify(output, null, 2));
@@ -118,6 +136,7 @@ async function main(): Promise<void> {
   if (!pgConfigurationValid) {
     throw Object.assign(new Error(), { safeCode: 'NODE_POSTGRES_TLS_CONFIGURATION' });
   }
+  if (!caCert) throw Object.assign(new Error(), { safeCode: `CA_PEM_${caParseError ?? 'INVALID'}` });
   if (!caCert.ca || caCert.fingerprint256 !== OFFICIAL_CA_FINGERPRINT256) {
     throw Object.assign(new Error(), { safeCode: 'CA_CERTIFICATE_IDENTITY' });
   }
