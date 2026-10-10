@@ -116,5 +116,11 @@ export function useMapStations(
     };
   }, [west, south, east, north, minPowerKw, connectorKey, refreshKey]);
 
+  // Expire visual status without collecting or reloading observations.
+  useEffect(() => {
+    const clock = setInterval(() => setGeojson(toGeoJSON(stations)), 15000);
+    return () => clearInterval(clock);
+  }, [stations]);
+
   return { geojson, stations, loading, error, lastFetched, refresh };
 }

@@ -1,7 +1,8 @@
 /**
  * Simple connector/power filter bar for the map.
  */
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { StationFilters } from './types';
 import { colors, radii, spacing } from './tokens';
@@ -21,6 +22,7 @@ const POWER_OPTIONS = [
 ] as const;
 
 export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
+  const [powerOpen, setPowerOpen] = useState(false);
   const activeConnectors = filters.connectorStandards ?? [];
   const activePower = filters.minPowerKw ?? 0;
 
@@ -46,7 +48,7 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.row}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {CONNECTOR_OPTIONS.map((opt) => {
           const active = activeConnectors.includes(opt.value);
           return (
@@ -64,7 +66,11 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
             </Pressable>
           );
         })}
-        <View style={styles.separator} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Power filters" accessibilityState={{ expanded: powerOpen }} onPress={() => setPowerOpen((value) => !value)} style={styles.chip}>
+          <Text style={styles.chipText}>{activePower ? activePower + '+ kW ●' : 'Power ▾'}</Text>
+        </Pressable>
+      </ScrollView>
+      {powerOpen ? <View style={styles.row}>
         {POWER_OPTIONS.map((opt) => {
           const active = activePower === opt.value;
           return (
@@ -82,7 +88,10 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
             </Pressable>
           );
         })}
-      </View>
+      </View> : null}
+      {activeConnectors.length || activePower ? <Pressable accessibilityRole="button" accessibilityLabel="Clear filters" onPress={() => onFiltersChange({})} style={{ minHeight: 44, justifyContent: 'center' }}>
+        <Text style={styles.chipText}>{activeConnectors.length + (activePower ? 1 : 0)} active filters · Clear</Text>
+      </Pressable> : null}
     </View>
   );
 }
@@ -91,10 +100,13 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
+    backgroundColor: colors.overlayBackground,
+    borderRadius: radii.lg,
+    gap: 8,
   },
   row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     gap: spacing.sm,
     alignItems: 'center',
   },
@@ -102,12 +114,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radii.full,
     paddingHorizontal: spacing.md,
+    minHeight: 44,
+    justifyContent: 'center',
     paddingVertical: spacing.sm,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   chipActive: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.elevated,
     borderColor: colors.accent,
   },
   chipText: {
@@ -116,11 +130,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   chipTextActive: {
-    color: colors.accentForeground,
-  },
-  separator: {
-    width: 1,
-    height: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    color: colors.accent,
   },
 });

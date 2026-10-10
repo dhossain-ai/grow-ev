@@ -1,9 +1,11 @@
-import { Map, NavigationControl, setWorkerUrl } from 'maplibre-gl';
+import { Map, Marker, NavigationControl, setWorkerUrl } from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent } from 'maplibre-gl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 
+import { useUserLocation } from '../features/location/useUserLocation';
+import { LocationControl } from '../features/location/LocationControl';
 import {
   MAP_ERROR_BACKGROUND_COLOR,
   MAP_ERROR_TEXT_COLOR,
@@ -31,11 +33,14 @@ const UNCLUSTERED_GLOW_LAYER = 'unclustered-station-glow';
 
 export function GrowMap() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<Marker | null>(null);
   const mapRef = useRef<Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [hasLoadingError, setHasLoadingError] = useState(false);
   const [bounds, setBounds] = useState<BoundingBox | null>(null);
   const [selectedStation, setSelectedStation] = useState<MapStation | null>(null);
+  const location = useUserLocation();
+  const [expanded, setExpanded] = useState(false);
   const [filters, setFilters] = useState<StationFilters>({});
   const { geojson, stations, loading, error, lastFetched, refresh } =
     useMapStations(bounds, filters);
@@ -83,16 +88,16 @@ export function GrowMap() {
           'circle-color': [
             'step',
             ['get', 'point_count'],
-            colors.accent,
-            10, '#A0D64A',
-            50, '#78B030',
+            colors.cluster,
+            10, colors.cluster,
+            50, colors.cluster,
           ],
           'circle-radius': [
             'step',
             ['get', 'point_count'],
-            18,
-            10, 24,
-            50, 32,
+            14,
+            10, 18,
+            50, 22,
           ],
           'circle-opacity': 0.85,
           'circle-stroke-width': 2,
@@ -112,7 +117,7 @@ export function GrowMap() {
           'text-font': ['Noto Sans Regular'],
         },
         paint: {
-          'text-color': colors.accentForeground,
+          'text-color': colors.textPrimary,
         },
       });
 
@@ -240,6 +245,11 @@ export function GrowMap() {
     };
   }, [updateBounds]);
 
+  useEffect(() => {
+    const controls = mapRef.current?.getContainer().querySelector<HTMLElement>('.maplibregl-ctrl-bottom-right');
+    if (controls) controls.style.bottom = selectedStation ? (expanded ? '62%' : '188px') : '0';
+  }, [selectedStation, expanded, mapReady]);
+
   // Update GeoJSON data when stations change
   useEffect(() => {
     const map = mapRef.current;
@@ -249,6 +259,16 @@ export function GrowMap() {
       source.setData(geojson);
     }
   }, [geojson, mapReady]);
+
+  useEffect(() => {
+    markerRef.current?.remove(); markerRef.current = null;
+    if (!location.position || !mapRef.current || !mapReady) return;
+    const dot = document.createElement('div');
+    dot.setAttribute('aria-label', 'Your foreground location');
+    Object.assign(dot.style, { width: '16px', height: '16px', borderRadius: '50%', background: colors.location, border: '3px solid white', boxShadow: '0 0 0 7px rgba(38,132,255,0.18)' });
+    markerRef.current = new Marker({ element: dot }).setLngLat([location.position.lng, location.position.lat]).addTo(mapRef.current);
+    return () => { markerRef.current?.remove(); markerRef.current = null; };
+  }, [location.position, mapReady]);
 
   return (
     <div aria-label="Interactive map of EV charging stations" style={webStyles.container}>
@@ -268,19 +288,27 @@ export function GrowMap() {
         </div>
       </div>
 
+      <div style={{ position: 'absolute', right: 16, bottom: selectedStation ? (expanded ? 'calc(62% + 44px)' : 232) : 84, zIndex: 3 }}>
+        <LocationControl busy={location.busy} error={location.error} onPress={() => {
+          void location.locate().then((fix) => { if (fix) mapRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, offset: [0, selectedStation ? -(expanded ? mapRef.current.getContainer().clientHeight * 0.31 : 94) : 0] }); });
+        }} />
+      </div>
       {/* Legend */}
       <div style={webStyles.legend}>
         <LegendItem color={availabilityColors.available} label="Available" />
         <LegendItem color={availabilityColors.occupied} label="In Use" />
         <LegendItem color={availabilityColors.unavailable} label="Unavailable" />
-        <LegendItem color={availabilityColors.unknown} label="Unknown" />
+        <LegendItem color={availabilityColors.unknown} label="Unverified" />
       </div>
 
       {/* Station detail panel */}
       {selectedStation ? (
-        <div style={webStyles.detailPanel}>
+        <div style={{ ...webStyles.detailPanel, height: expanded ? '62%' : 188 }}>
           <StationDetail
             station={selectedStation}
+            userOrigin={location.position ? { lat: location.position.lat, lng: location.position.lng } : undefined}
+            expanded={expanded}
+            onToggleExpanded={() => setExpanded((value) => !value)}
             onSelect={(station) => {
               setSelectedStation(station);
               mapRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15 });
@@ -336,7 +364,7 @@ const webStyles = {
     left: 8,
     display: 'flex',
     flexDirection: 'row' as const,
-    gap: 12,
+    gap: 8,
     backgroundColor: 'rgba(16, 19, 21, 0.88)',
     borderRadius: 8,
     padding: '6px 12px',
@@ -354,7 +382,7 @@ const webStyles = {
   },
   legendText: {
     color: '#A6B0B4',
-    fontSize: 12,
+    fontSize: 11,
   },
   detailPanel: {
     height: '50%',

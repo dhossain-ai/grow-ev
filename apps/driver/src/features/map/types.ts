@@ -95,7 +95,7 @@ export function toGeoJSON(stations: MapStation[]): StationFeatureCollection {
       },
       properties: {
         ...s,
-        availability: getAvailability(s),
+        availability: isStale(s) ? 'unknown' : getAvailability(s),
       },
     })),
   };
@@ -146,13 +146,14 @@ export function formatPower(kw: number | null): string {
 export function isStale(station: MapStation, minutesThreshold: number = 60): boolean {
   if (!station.last_observed_at) return true;
   const age = Date.now() - new Date(station.last_observed_at).getTime();
-  return age > minutesThreshold * 60 * 1000;
+  return !Number.isFinite(age) || age < 0 || age > minutesThreshold * 60 * 1000;
 }
 
 /** Format relative time since last observation. */
 export function formatAge(isoString: string | null): string {
   if (!isoString) return 'Never observed';
   const ms = Date.now() - new Date(isoString).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return 'Observation time unverified';
   const minutes = Math.floor(ms / 60000);
   if (minutes < 1) return 'Just now';
   if (minutes < 60) return `${minutes}m ago`;

@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: TASK-008 committed; routing stability checkpoint reviewed, Android crash unresolved
+Phase: stability committed; TASK-009 implemented locally, visual review pending
 
 ## Verified foundation
 
@@ -14,6 +14,18 @@ Phase: TASK-008 committed; routing stability checkpoint reviewed, Android crash 
   unverified; current builds are not a claim of current device interaction.
 
 ## Current work
+
+- Routing stability checkpoint committed separately as `968c567`: in-flight sharing,
+  bounded 30-second cache and cooldown handling reviewed; 41 tests/local checks
+  passed. Modified Edge Function **not deployed** and still requires explicit
+  deployment approval. Android Fabric SIGSEGV remains unresolved.
+- TASK-009 implemented locally and **uncommitted**: Driver / Network
+  navigation, foreground-only explicit user location, polished map controls and
+  expandable station details, responsive read-only dashboard, connector-scoped distinct EVSE
+  metrics, observation freshness and cross-operator compatible capacity pairs.
+  Existing public RPCs only; no migration, collector, route requests or polling.
+  Scope is the stated Vilnius study window intersected with the existing evidence
+  radius, not a whole-city/national census. See `tasks/active/TASK-009.md`.
 
 - TASK-006 provisionally committed as `95764d1`. Hotspot restored verified-TLS
   DEV database connectivity. Exactly one expected migration was pending and
@@ -35,7 +47,7 @@ Phase: TASK-008 committed; routing stability checkpoint reviewed, Android crash 
   Shared cards show one primary and up to two explained alternatives, retain
   station selection/recentering and never invent ETA/wait/price/probability.
   Optional supplied user origin is distinct from selected-charger origin;
-  current map provides no driver location. See `tasks/active/TASK-008.md`.
+  TASK-009 now supplies an explicitly requested foreground fix. See `tasks/active/TASK-008.md`.
 - TASK-008 committed as `437efee` after review, driver/server TypeScript, driver
   lint and 37 tests passed. Credential-pattern scan of all 94 tracked/unignored
   files passed; explicit staging allowlist used. Fresh real-data recommendations,
@@ -88,6 +100,31 @@ Phase: TASK-008 committed; routing stability checkpoint reviewed, Android crash 
   spending/abuse controls remain necessary before public deployment.
 
 ## Latest local verification
+
+### TASK-009 UI polish and location review — 2026-10-10
+
+- Driver strict TypeScript, zero-warning ESLint and all 58 regression tests passed
+  (zero failures/skips). Production web export and final Android JS/Hermes export
+  passed. Android debug assembly passed online after the new location artifact
+  was unavailable offline: 6m37s, 376 tasks. APK installed on Pixel_8.
+- Chrome production UI at 390x844 and 1440x1000 and Pixel_8 UI were exercised:
+  navigation, filters, station selection, expandable sheet, dashboard stale
+  statistics and explicit user-origin opt-in. Simulated Vilnius fixes show the
+  blue location dot and recentering on both platforms. Android permission denial
+  and disabled-services errors plus browser unavailable/timeout messages were observed. No physical GPS claim.
+- Only explicit foreground fixes, expiring after two minutes/backgrounding;
+  no watcher or persistence. Background location/service permissions excluded.
+  Expo-compatible expo-location is the only new dependency.
+- CCS2 data remains historical: 140 locations / 379 EVSEs, dated statuses
+  334 AVAILABLE, 12 CHARGING, 0 UNKNOWN, 33 other unavailable. Main card compares
+  Elektrum PLTVILU231_EDLT-66 with Ignitis IKI Fabijoniškės, 6 compatible snapshot
+  AVAILABLE EVSEs at 0.209 km straight-line. Current availability is unverified.
+- Captures and verification limits: artifacts/task-009-polish/README.md.
+  Fresh user-origin provider/primary-selection UI, physical devices, full keyboard
+  accessibility and user visual acceptance remain unverified. Existing Android
+  Fabric startup instability remains unresolved. No collector, TomTom requests,
+  migration, deployment or commit in this task. Routing Edge patch still needs
+  separate explicit deployment approval.
 
 ### Demo stabilization checkpoint — 2026-10-10
 
@@ -163,14 +200,16 @@ a successful warm-up and use web/recorded evidence if it crashes.
 
 ## Deferred product scope
 
-Scheduled ingestion, historical analytics, dashboard, ML, pricing, waiting-time
-predictions, driver geolocation and public deployment remain outside this slice.
+Scheduled ingestion, historical analytics beyond dated snapshot patterns, ML, pricing, waiting-time
+predictions, background location and public deployment remain outside this slice.
 Earlier audit reported 29 transitive advisories (10 moderate, 19 high) upstream of
-Expo SDK 57. No dependencies changed; audit not rerun.
+Expo SDK 57. Installing expo-location reported the same 29 advisories; upstream remediation is deferred.
 
 ## Next
 
-Stability checkpoint reviewed; Android startup issue remains unresolved.
-Before the video, check TomTom
-quota privately and obtain separate approval for another observation refresh if
-needed; the one-poll approval is consumed. Do not start another task automatically.
+Review uncommitted TASK-009 screenshots from Chrome desktop/mobile and Pixel_8.
+User visual acceptance remains pending. Android Fabric startup reliability
+remains unresolved. Fresh balancing evidence needs a separately approved collector
+refresh; one-poll approval is consumed. Modified routing Edge Function requires
+explicit deployment approval. Nothing deployed in this task. Stop for review;
+do not start another task automatically.

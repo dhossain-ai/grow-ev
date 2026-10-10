@@ -12,8 +12,18 @@ proximity is the fallback. Default routes are charger-to-charger travel; no user
 location is inferred. Real Vilnius observations, TomTom road estimates and primary
 selection verified on production web and Pixel_8. Provider quotas and native startup
 reliability remain limitations. This slice makes no waiting,
-charging-duration, price, probability or arrival-availability claims; dashboard
-and the broader capabilities below remain product scope, not completed features.
+charging-duration, price, probability or arrival-availability claims.
+
+TASK-009 implements a local read-only Network Overview alongside Driver navigation:
+connector-scoped Vilnius EVSE snapshot counts, freshness and explained compatible
+cross-operator location pairs. Stale patterns are explicitly historical; fresh
+capacity is separate. Statistics cover fetched records in a stated study area,
+not complete city/national/operator coverage. Driver controls and station sheets
+are polished; explicit foreground location supports an optional user route origin,
+without background tracking or persistence. Chrome 390/1440px and Pixel_8
+interaction with simulated location passed; physical GPS and fresh user-origin
+provider comparison remain unverified. User visual acceptance is pending. Broader capabilities below remain future
+scope. No production BI, predictions, queues, energy or revenue estimates.
 
 ## 1. Vision
 

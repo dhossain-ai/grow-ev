@@ -62,7 +62,7 @@ export function CongestionDetail({ station, onSelect, userOrigin }: Props) {
       <Text accessibilityRole="alert" style={styles.muted}>Compatible capacity could not be checked. Please retry.</Text>
       <Pressable accessibilityRole="button" onPress={() => setRetry((n) => n + 1)}><Text style={styles.action}>Retry capacity check</Text></Pressable>
     </> : !capacity ? <Text style={styles.muted}>Checking compatible capacity…</Text> : <>
-      <Text style={styles.text}>{capacity.available} compatible available EVSE{capacity.available === 1 ? '' : 's'} · fresh observations</Text>
+      <Text style={styles.text}>{capacity.state === 'stale' || capacity.state === 'unknown' ? 'Current availability unverified' : `${capacity.available} compatible available EVSE${capacity.available === 1 ? '' : 's'} · fresh observations`}</Text>
       <Text style={styles.muted}>{CONGESTION_EXPLANATIONS[capacity.state]}</Text>
       {capacity.unknown > 0 ? <Text style={styles.muted}>{capacity.unknown} compatible EVSE status unknown.</Text> : null}
       {capacity.stale > 0 ? <Text style={styles.warning}>{capacity.stale} compatible observations stale or invalid; excluded from availability.</Text> : null}
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   muted: { color: colors.textSecondary, fontSize: 13, lineHeight: 19 },
   warning: { color: colors.warning, fontSize: 13 },
   action: { color: colors.accent, fontSize: 13, lineHeight: 20 },
-  chip: { backgroundColor: colors.elevated, borderRadius: radii.full, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  chip: { backgroundColor: colors.elevated, borderRadius: radii.full, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, minHeight: 44, justifyContent: 'center' },
   selected: { backgroundColor: colors.accent },
   selectedText: { color: colors.accentForeground },
 });

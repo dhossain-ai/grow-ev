@@ -23,6 +23,9 @@ export const colors = {
   warning: '#F3B34C',
   unavailable: '#EF6C73',
   info: '#68B8EF',
+  location: '#2684FF',
+  white: '#FFFFFF',
+  cluster: '#354248',
 
   // Map overlay
   overlayBackground: 'rgba(16, 19, 21, 0.92)',

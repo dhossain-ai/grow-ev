@@ -45,6 +45,17 @@ test('availability and GeoJSON preserve observed EVSE counts and coordinates', (
   assert.equal(feature.properties.total_evse_count, 2);
 });
 
+test('stale and future map observations use unverified markers without rewriting counts', () => {
+  for (const observed of [null, new Date(Date.now() - 7200000).toISOString(), new Date(Date.now() + 60000).toISOString()]) {
+    const feature = toGeoJSON([{ ...station, last_observed_at: observed }]).features[0];
+    assert.equal(feature.properties.availability, 'unknown');
+    assert.equal(feature.properties.available_evse_count, 1);
+    assert.equal(feature.properties.last_observed_at, observed);
+  }
+  const feature = toGeoJSON([{ ...station, last_observed_at: new Date().toISOString() }]).features[0];
+  assert.equal(feature.properties.availability, 'available');
+});
+
 test('pages capped responses with a public apikey and no Bearer credential', async () => {
   const original = globalThis.fetch;
   const calls = [];

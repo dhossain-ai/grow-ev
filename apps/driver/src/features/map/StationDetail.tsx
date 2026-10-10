@@ -2,6 +2,7 @@
  * Station detail card shown when a station is tapped on the map.
  * Uses React Native primitives for cross-platform compatibility.
  */
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Coordinates } from '../../../../../packages/routing';
 
@@ -15,9 +16,12 @@ interface StationDetailProps {
   onClose: () => void;
   onSelect: (station: MapStation) => void;
   userOrigin?: Coordinates;
+  expanded: boolean;
+  onToggleExpanded: () => void;
 }
 
-export function StationDetail({ station, onClose, onSelect, userOrigin }: StationDetailProps) {
+export function StationDetail({ station, onClose, onSelect, userOrigin, expanded, onToggleExpanded }: StationDetailProps) {
+  const [routeFromUser, setRouteFromUser] = useState(false);
   const availability = getAvailability(station);
   const stale = isStale(station);
   const occupiedCount = station.charging_evse_count;
@@ -26,6 +30,9 @@ export function StationDetail({ station, onClose, onSelect, userOrigin }: Statio
 
   return (
     <View style={styles.container}>
+      <Pressable accessibilityRole="button" accessibilityLabel={expanded ? 'Collapse station details' : 'Expand station details'} accessibilityState={{ expanded }} onPress={onToggleExpanded} style={styles.handleButton}>
+        <View style={styles.handle} /><Text style={styles.handleLabel}>{expanded ? 'Collapse' : 'Details ↑'}</Text>
+      </Pressable>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerText}>
@@ -33,7 +40,7 @@ export function StationDetail({ station, onClose, onSelect, userOrigin }: Statio
             {displayName}
           </Text>
           {station.operator_name ? (
-            <Text style={styles.operator}>{station.operator_name}</Text>
+            <Text style={styles.operator} numberOfLines={1}>{station.operator_name}</Text>
           ) : null}
         </View>
         <Pressable
@@ -46,27 +53,35 @@ export function StationDetail({ station, onClose, onSelect, userOrigin }: Statio
         </Pressable>
       </View>
 
-      <ScrollView
+      <Text style={styles.summary}>{stale ? 'Current availability unverified' : availabilityLabels[availability]} · {formatPower(station.max_power_kw)}</Text>
+      {expanded ? <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <CongestionDetail station={station} onSelect={onSelect} userOrigin={userOrigin} />
+        {userOrigin ? <View style={styles.section}>
+          <Pressable accessibilityRole="switch" aria-checked={routeFromUser} accessibilityLabel="Route from my location" accessibilityState={{ checked: routeFromUser }} onPress={() => setRouteFromUser((value) => !value)} style={styles.originButton}>
+            <Text style={styles.sectionValue}>{routeFromUser ? '✓ Route from my location' : 'Route from my location'}</Text>
+          </Pressable>
+          <Text style={styles.muted}>{routeFromUser ? 'Your foreground position is sent only when you explicitly compare road routes.' : 'Routes start at the selected charger.'}</Text>
+        </View> : null}
+        <CongestionDetail station={station} onSelect={onSelect} userOrigin={routeFromUser ? userOrigin : undefined} />
         {/* Availability summary */}
         <View style={styles.availabilityRow}>
           <View
             style={[
               styles.statusDot,
-              { backgroundColor: availabilityColors[availability] },
+              { backgroundColor: availabilityColors[stale ? 'unknown' : availability] },
             ]}
           />
           <Text style={styles.availabilityText}>
-            {availabilityLabels[availability]} (observed)
+            {stale ? 'Last observed status' : `${availabilityLabels[availability]} (observed)`}
           </Text>
           <Text style={styles.availabilityCount}>
-            {station.available_evse_count}/{station.total_evse_count} available
+            {station.available_evse_count}/{station.total_evse_count} {stale ? 'last observed available' : 'available'}
           </Text>
         </View>
 
+        <Text style={styles.sectionLabel}>Last observed · all connectors</Text>
         {/* EVSE breakdown */}
         <View style={styles.evseGrid}>
           <EvseRow label="Available" count={station.available_evse_count} color={colors.available} />
@@ -121,7 +136,7 @@ export function StationDetail({ station, onClose, onSelect, userOrigin }: Statio
             <Text style={styles.muted}>{new Date(station.last_observed_at).toLocaleString()}</Text>
           ) : null}
         </View>
-      </ScrollView>
+      </ScrollView> : null}
     </View>
   );
 }
@@ -137,6 +152,11 @@ function EvseRow({ label, count, color }: { label: string; count: number; color:
 }
 
 const styles = StyleSheet.create({
+  handleLabel: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
+  handleButton: { height: 44, alignItems: 'center', justifyContent: 'center' },
+  handle: { height: 4, width: 44, borderRadius: 4, backgroundColor: colors.textSecondary },
+  summary: { color: colors.textSecondary, fontSize: 13, paddingHorizontal: 16, paddingVertical: 8 },
+  originButton: { minHeight: 48, padding: 12, backgroundColor: colors.elevated, borderRadius: 10, justifyContent: 'center' },
   container: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: radii.lg,
@@ -170,7 +190,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     width: 36,
-    height: 36,
+    height: 44,
     borderRadius: radii.full,
     backgroundColor: colors.elevated,
     alignItems: 'center',
@@ -188,6 +208,8 @@ const styles = StyleSheet.create({
   availabilityRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
     paddingVertical: spacing.md,
   },
   statusDot: {

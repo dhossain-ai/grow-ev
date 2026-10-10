@@ -49,14 +49,14 @@ export function AlternativeRouting({ target, alternatives, standard, now, onSele
     <Text style={styles.muted}>{recommendation.rankingBasis === 'driving-time' ?
       'Shortest estimated drive first among these nearby options.' :
       'Nearest first by straight-line distance from the selected charger. Comparable driving times are incomplete.'}</Text>
-    <Pressable accessibilityRole="button" disabled={Boolean(current?.loading || fresh || coolingDown)} onPress={compare}>
+    <Pressable accessibilityRole="button" disabled={Boolean(current?.loading || fresh || coolingDown)} onPress={compare} style={{ minHeight: 48, justifyContent: 'center' }}>
       <Text style={{ color: colors.accent }}>{current?.loading ? 'Checking driving times…' : fresh ? 'Driving comparison up to date' : coolingDown ? 'Routing rate limited · try later' : 'Compare driving times'}</Text>
     </Pressable>
     {current?.failure ? <Text accessibilityRole="alert" style={{ color: colors.warning }}>{current.failure}</Text> : null}
     {recommendation.recommendations.map((a, index) => <Pressable key={a.evidence.station.location_id}
       accessibilityRole="button" accessibilityLabel={`Select ${a.evidence.station.name ?? a.evidence.station.address ?? 'alternative station'}`}
       onPress={() => onSelect(a.evidence.station)} style={[styles.card, index === 0 && styles.primary]}>
-      <Text style={styles.label}>{index === 0 ? 'Recommended' : `Alternative ${index}`}</Text>
+      <Text style={[styles.label, index === 0 && { color: colors.accent }]}>{index === 0 ? 'Recommended' : `Alternative ${index}`}</Text>
       <Text style={styles.name}>{a.evidence.station.name ?? a.evidence.station.address ?? 'Charging station'}</Text>
       <Text style={styles.muted}>{a.evidence.station.operator_name ?? 'Operator not reported'}</Text>
       {a.reasons.map((reason) => <Text key={reason} style={styles.muted}>{reason}</Text>)}
@@ -71,7 +71,7 @@ export function AlternativeRouting({ target, alternatives, standard, now, onSele
 const styles = StyleSheet.create({
   card: { backgroundColor: colors.elevated, borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, borderWidth: 1, borderColor: colors.overlayBorder },
   primary: { borderColor: colors.accent },
-  label: { color: colors.accent, fontSize: 13, lineHeight: 20, fontWeight: '600' },
+  label: { color: colors.textSecondary, fontSize: 13, lineHeight: 20, fontWeight: '600' },
   name: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
   muted: { color: colors.textSecondary, fontSize: 13, lineHeight: 19 },
 });

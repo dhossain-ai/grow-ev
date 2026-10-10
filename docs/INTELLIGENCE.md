@@ -86,6 +86,36 @@ remain intact. Full/partial rate limits impose a cooldown with no automatic retr
 missing driving times stay unknown. Neither client cooldown nor per-isolate Edge
 budgets establish global quota protection.
 
+## Implemented network overview (TASK-009, local review pending)
+
+The pure network overview reuses compatibleCapacity/findAlternatives. All counts
+and pairs follow one selected connector and the explicit fetched Vilnius study
+window (25.20–25.36 E, 54.64–54.76 N), intersected with the existing 10.1 km
+capacity envelope. Distinct canonical EVSE counts partition raw snapshot statuses
+into AVAILABLE, CHARGING, UNKNOWN and other unavailable (BLOCKED, RESERVED,
+INOPERATIVE, OUTOFORDER, PLANNED, REMOVED). UNKNOWN is uncertainty; this partition
+is disclosed separately from the existing map's broader aggregate grouping.
+
+Fresh compatible availability/current congestion apply the same 60-minute policy.
+Separate snapshot totals retain stale observations with dates; invalid/future
+observations cannot supply fresh capacity. Current pairs use current time. When
+none qualify, dated patterns evaluate the newest valid selected source observation
+using the same policy, without modifying timestamps. Those patterns never enter
+fresh pair/congestion counts; asynchronously older evidence is still excluded.
+
+Cross-operator pairs require two known differing trimmed/case-normalized reported
+operator names. At most three nearest alternatives per congested source, within
+10 km straight-line; pairs are choices, not additive capacity or measured demand
+redistribution. No route requests; absent legitimate fresh route evidence, driving
+time stays unavailable and road reachability unverified. No queues, waiting
+drivers, energy use, revenue or predictions. A clock updates labels only, with no
+polling; explicit refresh only reads persisted evidence.
+
+Actual dated CCS2 pattern in the fetched study area: Elektrum PLTVILU231_EDLT-66
+→ Ignitis IKI Fabijoniškės, 6 compatible AVAILABLE EVSEs, 0.209 km straight-line.
+All 03:46 local observations are now stale, so fresh opportunities remain zero.
+See TASK-009 for local tests/builds and pending interactive visual acceptance.
+
 The remaining sections describe future scope, not implemented capabilities.
 
 ## 1. Objective
