@@ -1,5 +1,31 @@
 # Grow EV — Current Project Status
 
+## TASK-014 isolated voice implementation and production verification
+
+In `E:\Grow EV-task014`, branch `task-014-cloudflare-voice`, the existing
+`grow-ev-voice` Worker was deployed on 2026-10-10 (version
+`49f3392f-5343-480d-99e8-289bf8990df5`). Only the voice Worker was targeted;
+`grow-ev-demo` was not deployed. Production CORS preflight passed for the exact
+demo origin. Production method, wrong-origin, unsupported-MIME and oversized-body
+checks returned 405, 403, 415 and 413.
+Production Whisper inference verified: valid 2.895-second canonical WAV returned
+HTTP 200 in 1,665 ms, 23-character transcript (SHA-256: `8c82a0d3cf59e32430e154b7b478103fd13ab59f918c8b32ceabda5d5a1208ae`),
+parsed as CCS2 (`IEC_62196_T2_COMBO`), and applied connector filter.
+Production rate limit verified: attempt 8 tripped HTTP 429 `RATE_LIMITED` with
+`Retry-After: 60`, without invoking AI.
+Synthesized speech duration pipeline verified with 7.009-second recording (224,334 bytes, 5–8s window):
+generated via Windows speech synthesis to verify pipeline duration and Whisper hyphenation normalization ("CCS-2");
+Whisper returned HTTP 200, 31-character transcript (`12b8403301e0a2d00faaec671bc7851eced850a1b2f7a457fe53ee5e7ef3fcfe`),
+parsed strictly as CCS2 connector after normalizing Whisper hyphenation ("CCS-2").
+Actual human microphone capture in Chrome remains unverified.
+The static-export station-fetch issue was investigated and resolved: Babel's `inline-env-vars.js`
+inlines `process.env.EXPO_PUBLIC_*` at build time; exporting with CI public Supabase settings
+inlines real RPC endpoints and passes `verify-map-live.mjs` (1,984 national stations, 923 Vilnius stations).
+All 66 driver tests, 10 Worker tests, type/lint checks, and Android export passed.
+Integration prepared in clean worktree `E:\Grow EV-task014-integration` on branch
+`task-014-integration-from-main` based directly on `main` `65883cec`. No merge to main,
+no driver deployment, no TASK-012 modifications, and no Supabase schema changes.
+
 Updated: 2026-10-10
 Phase: TASK-012 recurring hackathon schedule active on main, first scheduled execution pending; TASK-013 read-only audit/proposal ready
 

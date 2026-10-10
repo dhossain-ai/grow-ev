@@ -331,8 +331,12 @@ export function GrowMap() {
         }} />
       </div>
       <div ref={(element) => { if (element && element.clientHeight !== panelHeight) setPanelHeight(element.clientHeight); }} style={{ ...webStyles.detailPanel,
-        ...(wide ? { top: 24, bottom: 48, left: 24, right: 'auto', width: 400, height: 'auto', maxHeight: !selectedStation && !showCase ? 500 : undefined } : { left: 12, right: 12, bottom: 40, height: showCase || (selectedStation && expanded) ? '72%' : selectedStation ? 200 : '64%', maxHeight: !selectedStation && !showCase ? 440 : undefined }) }}>
+        ...(wide ? { top: 24, bottom: 48, left: 24, right: 'auto', width: 400, height: 'auto', maxHeight: !selectedStation && !showCase ? 500 : undefined } : { left: 12, right: 12, bottom: 40, height: showCase || (selectedStation && expanded) ? '72%' : selectedStation ? 340 : '64%', maxHeight: !selectedStation && !showCase ? 440 : undefined }) }}>
         <ExperiencePanel selected={selectedStation} standard={standard} onStandardChange={setStandard}
+          filters={filters} onFiltersChange={setFilters} onLocate={async (signal) => {
+            const fix = await location.locate(); if (!fix || signal.aborted) return false;
+            mapRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, duration: reduced ? 0 : 280, offset: wide ? [200, 0] : [0, -panelHeight / 2] }); return true;
+          }}
           expanded={expanded} onToggle={() => setExpanded((value) => !value)} onClose={() => setSelectedStation(null)}
           onSelect={(station) => { setSelectedStation(station); setExpanded(true); setShowCase(false); mapRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: reduced ? 0 : 280, offset: wide ? [200, 0] : [0, -(mapRef.current.getContainer().clientHeight * 0.72) / 2 - 20] }); }}
           stations={stations} loading={loading} error={error} userOrigin={location.position ? { lat: location.position.lat, lng: location.position.lng } : undefined}

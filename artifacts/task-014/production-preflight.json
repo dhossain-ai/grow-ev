@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-10-10",
+  "worker": "grow-ev-voice",
+  "version": "49f3392f-5343-480d-99e8-289bf8990df5",
+  "endpoint": "https://grow-ev-voice.dhossain.workers.dev/transcribe",
+  "targetConfirmed": true,
+  "bindings": ["AI", "VOICE_RATE_LIMIT", "VOICE_BUDGET"],
+  "corsPreflight": {
+    "origin": "https://grow-ev-demo.dhossain.workers.dev",
+    "status": 204,
+    "allowedOriginMatched": true
+  },
+  "invalidRequests": {
+    "get": 405,
+    "wrongOrigin": 403,
+    "unsupportedMime": 415,
+    "oversizedAudio": 413
+  },
+  "productionWhisperInference": "pending human microphone recording",
+  "productionRateLimit": "pending"
+}

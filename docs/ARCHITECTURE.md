@@ -1,5 +1,16 @@
 # Grow EV — System Architecture
 
+TASK-014 adds an isolated `services/voice` Cloudflare Worker targeting the existing
+`grow-ev-voice`, with AI binding `AI` and the exact `@cf/openai/whisper` model.
+Guest PCM/WAV transcription is bounded by format/duration/size checks, an IP rate
+binding and a durable global admission cap. Audio/transcripts are not logged or
+persisted by application code. Deterministic frontend commands reuse existing
+connector/power filters, foreground location and recommendation policy; no LLM
+chooses stations. Chrome decodes Expo recordings before PCM/WAV conversion;
+native Expo PCM capture shares the bounded codec. One actual remote model inference
+passed locally; production deployment and human microphone acceptance await review.
+The driver website Worker and Supabase services remain separate deployment targets.
+
 Status: Stage B demo deployment (Cloudflare Workers Static Assets)
 Version: 0.1
 

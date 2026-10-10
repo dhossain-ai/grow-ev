@@ -42,6 +42,15 @@
           "isAndroidBackgroundLocationEnabled": false,
           "isAndroidForegroundServiceEnabled": false
         }
+      ],
+      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Grow EV to record a short charging command when you tap Speak.",
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
       ]
     ],
     "experiments": {

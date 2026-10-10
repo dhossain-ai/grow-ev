@@ -242,8 +242,12 @@ export function GrowMap() {
         }} />
       </View>
       <View onLayout={(event) => setPanelHeight(event.nativeEvent.layout.height)} style={[styles.detailPanel,
-        wide ? { top: 24, bottom: 48, left: 24, right: undefined, width: 400, height: undefined, maxHeight: !selectedStation && !showCase ? 500 : undefined } : { left: 12, right: 12, bottom: 40, height: showCase || (selectedStation && expanded) ? '72%' : selectedStation ? 200 : '64%', maxHeight: !selectedStation && !showCase ? 440 : undefined }]}>
+        wide ? { top: 24, bottom: 48, left: 24, right: undefined, width: 400, height: undefined, maxHeight: !selectedStation && !showCase ? 500 : undefined } : { left: 12, right: 12, bottom: 40, height: showCase || (selectedStation && expanded) ? '72%' : selectedStation ? 340 : '64%', maxHeight: !selectedStation && !showCase ? 440 : undefined }]}>
         <ExperiencePanel selected={selectedStation} standard={standard} onStandardChange={setStandard}
+          filters={filters} onFiltersChange={setFilters} onLocate={async (signal) => {
+            const fix = await location.locate(); if (!fix || signal.aborted) return false;
+            cameraRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: panelHeight } }); return true;
+          }}
           expanded={expanded} onToggle={() => setExpanded((value) => !value)} onClose={() => setSelectedStation(null)}
           onSelect={(station) => { setSelectedStation(station); setExpanded(true); setShowCase(false); cameraRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: mapHeight * 0.72 + 80 } }); }}
           stations={stations} loading={loading} error={error} userOrigin={location.position ? { lat: location.position.lat, lng: location.position.lng } : undefined}

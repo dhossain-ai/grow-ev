@@ -1,0 +1,15 @@
+{
+  "testedAt": "2026-10-10T15:27:25.003Z",
+  "endpoint": "https://grow-ev-voice.dhossain.workers.dev/transcribe",
+  "binding": "VOICE_RATE_LIMIT",
+  "configuration": {
+    "limit": 5,
+    "period": 60
+  },
+  "verificationMethod": "Sent 44-byte empty invalid audio to test rate-limiting without consuming AI inference allowance",
+  "rateLimitObserved": true,
+  "observedStatus": 429,
+  "observedError": "RATE_LIMITED",
+  "observedRetryAfter": "60",
+  "rateLimitTrippedAtAttempt": 8
+}

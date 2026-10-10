@@ -1,5 +1,12 @@
 # Grow EV — Calm Electric
 
+TASK-014 local voice addition: a small outlined microphone and secondary Speak
+action above live driver content, using existing light tokens and 48px actions.
+Recording/processing/cancel/retry states keep transcript and concise action feedback
+visible. The historical case has no voice actions. Discovery and recommendation
+evidence still follow existing freshness rules; voice recognition does not establish
+charger availability. Human microphone and physical-device acceptance remain pending.
+
 Version: 0.2 · Approved light direction · TASK-010 local implementation, review pending
 
 The charging decision is the primary content. The interactive map provides geographic

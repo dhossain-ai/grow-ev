@@ -5,12 +5,14 @@ import type { ConnectorStandard } from '../map/congestion';
 import { colors } from '../map/tokens';
 import { isStale, type MapStation } from '../map/types';
 
-export function DriverAssistant({ standard, onChange, stations, loading, error, onSelect, onCase }: {
+export function DriverAssistant({ standard, onChange, stations, loading, error, onSelect, onCase, discovery = false }: {
   standard: ConnectorStandard; onChange: (standard: ConnectorStandard) => void;
   stations: MapStation[]; loading: boolean; error: string | null;
   onSelect: (station: MapStation) => void; onCase: () => void;
+  discovery?: boolean;
 }) {
-  const [choosing, setChoosing] = useState(false);
+  const [requested, setChoosing] = useState(false);
+  const choosing = requested || discovery;
   const compatible = stations.filter((station) => station.connector_types?.includes(standard));
   const allStale = compatible.length > 0 && compatible.every((station) => isStale(station));
   return <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

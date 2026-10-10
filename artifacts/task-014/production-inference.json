@@ -1,0 +1,25 @@
+{
+  "testedAt": "2026-10-10T15:27:07.326Z",
+  "endpoint": "https://grow-ev-voice.dhossain.workers.dev/transcribe",
+  "mode": "Deployed Cloudflare Worker grow-ev-voice with production AI binding",
+  "model": "@cf/openai/whisper",
+  "audioSource": "Windows synthesized spoken charging command fixture",
+  "audioBytes": 92656,
+  "durationSeconds": 2.894125,
+  "httpStatus": 200,
+  "elapsedMs": 1665,
+  "nonemptyTranscript": true,
+  "transcriptLength": 23,
+  "transcriptSha256": "8c82a0d3cf59e32430e154b7b478103fd13ab59f918c8b32ceabda5d5a1208ae",
+  "command": {
+    "kind": "connector",
+    "standard": "IEC_62196_T2_COMBO"
+  },
+  "appliedFilters": {
+    "connectorStandards": [
+      "IEC_62196_T2_COMBO"
+    ]
+  },
+  "corsHeader": "https://grow-ev-demo.dhossain.workers.dev",
+  "error": null
+}

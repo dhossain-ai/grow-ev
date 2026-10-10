@@ -6,6 +6,7 @@ node_modules/
 # Expo & Web builds
 .expo/
 dist/
+dist-android/
 web-build/
 expo-env.d.ts
 
@@ -54,3 +55,5 @@ yarn-error.*
 
 # Local collector snapshots and test artifacts
 services/ingestion/.scratch/
+services/voice/.scratch/
+.wrangler/

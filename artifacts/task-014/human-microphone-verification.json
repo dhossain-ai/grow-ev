@@ -1,0 +1,15 @@
+{
+  "command": {
+    "kind": "connector",
+    "standard": "IEC_62196_T2_COMBO"
+  },
+  "commandKind": "connector",
+  "transcriptLength": 31,
+  "transcriptSha256": "12b8403301e0a2d00faaec671bc7851eced850a1b2f7a457fe53ee5e7ef3fcfe",
+  "responseStatus": 200,
+  "audioBytes": 224334,
+  "audioDurationSeconds": 7.0090625,
+  "audioSource": "Windows synthesized speech 7.009s fixture sent through loopback relay to verify duration and Whisper hyphenation normalization; NOT human microphone capture",
+  "model": "@cf/openai/whisper",
+  "transcribedAt": "2026-10-10T15:29:05.185Z"
+}
