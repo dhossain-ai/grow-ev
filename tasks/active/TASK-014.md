@@ -1,8 +1,7 @@
 # TASK-014 — Cloudflare voice assistant
 
-Status: Production voice verified (endpoint, Whisper inference, CCS2 intent, rate-limiting, and 7s audio pipeline passed); static export resolved and verified; integration prepared in clean worktree.
-Date: 2026-10-10. Isolated branch `task-014-cloudflare-voice`, worktree
-`E:\Grow EV-task014`, base `65883ce`. TASK-012/main files were not edited here.
+Status: Merged to main (`7000c8c`) and deployed to public production (`grow-ev-demo.dhossain.workers.dev` via GitHub Actions run `38065979368`). Live bundle, Supabase RPC connectivity, and voice preflight verified. Final real-phone microphone test pending user device check.
+Date: 2026-10-10. Fast-forward merged into main.
 
 ## Implemented
 

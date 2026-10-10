@@ -22,12 +22,13 @@ The static-export station-fetch issue was investigated and resolved: Babel's `in
 inlines `process.env.EXPO_PUBLIC_*` at build time; exporting with CI public Supabase settings
 inlines real RPC endpoints and passes `verify-map-live.mjs` (1,984 national stations, 923 Vilnius stations).
 All 66 driver tests, 10 Worker tests, type/lint checks, and Android export passed.
-Integration prepared in clean worktree `E:\Grow EV-task014-integration` on branch
-`task-014-integration-from-main` based directly on `main` `65883cec`. No merge to main,
-no driver deployment, no TASK-012 modifications, and no Supabase schema changes.
+Integration merged to `main` (commit `7000c8c`). Deploy Web GitHub Actions workflow
+run `38065979368` completed successfully. Public website `https://grow-ev-demo.dhossain.workers.dev`
+verified: MapLibre, 890 real Vilnius stations via Supabase RPC, connector filters,
+and voice assistant preflight all live. Physical human phone mic test pending.
 
 Updated: 2026-10-10
-Phase: TASK-012 recurring hackathon schedule active on main, first scheduled execution pending; TASK-013 read-only audit/proposal ready
+Phase: TASK-014 voice interface deployed live; TASK-012 recurring hackathon schedule active on main
 
 ## Verified foundation
 
