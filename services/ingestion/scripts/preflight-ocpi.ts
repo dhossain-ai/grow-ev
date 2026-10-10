@@ -40,10 +40,14 @@ export function failureCategory(error: unknown): string {
   const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
   if (['28P01', '28000'].includes(code)) return 'AUTHENTICATION';
   if (['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ETIMEDOUT', 'ENETUNREACH', 'ECONNRESET'].includes(code)) return 'NETWORK';
-  if (code.startsWith('ERR_TLS') || code.startsWith('CERT_') || ['SELF_SIGNED_CERT_IN_CHAIN', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'].includes(code)) return 'TLS';
+  if (code.startsWith('ERR_TLS') || code.startsWith('CERT_') ||
+      ['SELF_SIGNED_CERT_IN_CHAIN', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'].includes(code)) {
+    return /^[A-Z0-9_]+$/.test(code) ? `TLS_${code}` : 'TLS_UNKNOWN';
+  }
   if (code === '42501') return 'DATABASE_AUTHORIZATION';
   if (code === '53300') return 'DATABASE_CONNECTION_LIMIT';
-  if (error instanceof Error && ['CONFIGURATION', 'TLS', 'UNFINISHED_POLL', 'DATA_INTEGRITY'].includes(error.message)) return error.message;
+  if (error instanceof Error && error.message === 'TLS') return 'TLS_NOT_ACTIVE';
+  if (error instanceof Error && ['CONFIGURATION', 'UNFINISHED_POLL', 'DATA_INTEGRITY'].includes(error.message)) return error.message;
   return 'DATABASE_OR_SCHEMA_CHECK';
 }
 

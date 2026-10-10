@@ -21,11 +21,12 @@ test('DEV preflight rejects other projects, transaction pooling and missing CA',
 
 test('preflight categorizes failures without exposing raw private error messages', () => {
   for (const [code, category] of [['28P01', 'AUTHENTICATION'], ['ENETUNREACH', 'NETWORK'],
-    ['ERR_TLS_CERT_ALTNAME_INVALID', 'TLS'], ['UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'TLS'],
+    ['ERR_TLS_CERT_ALTNAME_INVALID', 'TLS_ERR_TLS_CERT_ALTNAME_INVALID'], ['UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'TLS_UNABLE_TO_VERIFY_LEAF_SIGNATURE'],
     ['42501', 'DATABASE_AUTHORIZATION'], ['53300', 'DATABASE_CONNECTION_LIMIT']]) {
     assert.equal(failureCategory({ code, message: 'private connection string' }), category);
   }
   assert.equal(failureCategory(new Error('UNFINISHED_POLL')), 'UNFINISHED_POLL');
+  assert.equal(failureCategory(new Error('TLS')), 'TLS_NOT_ACTIVE');
   assert.equal(failureCategory(new Error('private connection string')), 'DATABASE_OR_SCHEMA_CHECK');
 });
 
