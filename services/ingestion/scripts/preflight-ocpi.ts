@@ -5,24 +5,38 @@ import { checkSchema } from './ocpi-store.ts';
 
 const DEV_PROJECT = 'heafsrqaytsfthfcxmqu';
 
+class ConfigurationError extends Error {
+  constructor(rule: 'PROJECT_REF' | 'DATABASE_URL_REQUIRED' | 'CA_FILE_REQUIRED' | 'URL_PARSE' |
+    'PROTOCOL' | 'DEV_HOST' | 'USERNAME' | 'USERNAME_ENCODING' | 'SESSION_PORT' |
+    'DATABASE_NAME' | 'SSL_PARAMETER' | 'CA_FILE_READ') {
+    super(`CONFIGURATION (${rule})`);
+  }
+}
+
 /** Enforce the audited DEV target and session-lock-compatible connection. */
 export function devConnection(env: NodeJS.ProcessEnv): URL {
-  if (env.GROW_EV_PROJECT_REF !== DEV_PROJECT || !env.GROW_EV_DATABASE_URL || !env.GROW_EV_DATABASE_CA_FILE) {
-    throw new Error('CONFIGURATION');
-  }
+  if (env.GROW_EV_PROJECT_REF !== DEV_PROJECT) throw new ConfigurationError('PROJECT_REF');
+  if (!env.GROW_EV_DATABASE_URL) throw new ConfigurationError('DATABASE_URL_REQUIRED');
+  if (!env.GROW_EV_DATABASE_CA_FILE) throw new ConfigurationError('CA_FILE_REQUIRED');
   let url: URL;
-  try { url = new URL(env.GROW_EV_DATABASE_URL); } catch { throw new Error('CONFIGURATION'); }
-  const direct = url.hostname === `db.${DEV_PROJECT}.supabase.co` && url.username === 'postgres';
-  const pooler = url.hostname.endsWith('.pooler.supabase.com') && decodeURIComponent(url.username) === `postgres.${DEV_PROJECT}`;
-  if (!['postgres:', 'postgresql:'].includes(url.protocol) || (!direct && !pooler) ||
-      (url.port !== '' && url.port !== '5432') || url.pathname !== '/postgres' ||
-      url.searchParams.has('ssl')) throw new Error('CONFIGURATION');
+  try { url = new URL(env.GROW_EV_DATABASE_URL); } catch { throw new ConfigurationError('URL_PARSE'); }
+  if (!['postgres:', 'postgresql:'].includes(url.protocol)) throw new ConfigurationError('PROTOCOL');
+  const direct = url.hostname === `db.${DEV_PROJECT}.supabase.co`;
+  const pooler = url.hostname.endsWith('.pooler.supabase.com');
+  if (!direct && !pooler) throw new ConfigurationError('DEV_HOST');
+  let username: string;
+  try { username = decodeURIComponent(url.username); } catch { throw new ConfigurationError('USERNAME_ENCODING'); }
+  if ((direct && url.username !== 'postgres') || (pooler && username !== `postgres.${DEV_PROJECT}`)) throw new ConfigurationError('USERNAME');
+  if (url.port !== '' && url.port !== '5432') throw new ConfigurationError('SESSION_PORT');
+  if (url.pathname !== '/postgres') throw new ConfigurationError('DATABASE_NAME');
+  if (url.searchParams.has('ssl')) throw new ConfigurationError('SSL_PARAMETER');
   for (const name of ['sslmode', 'sslcert', 'sslkey', 'sslrootcert']) url.searchParams.delete(name);
   return url;
 }
 
 /** Never return raw errors, which may contain connection details. */
 export function failureCategory(error: unknown): string {
+  if (error instanceof ConfigurationError) return error.message;
   const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
   if (['28P01', '28000'].includes(code)) return 'AUTHENTICATION';
   if (['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ETIMEDOUT', 'ENETUNREACH', 'ECONNRESET'].includes(code)) return 'NETWORK';
@@ -36,7 +50,7 @@ export function failureCategory(error: unknown): string {
 async function main(): Promise<void> {
   const url = devConnection(process.env);
   let ca: string;
-  try { ca = await readFile(process.env.GROW_EV_DATABASE_CA_FILE!, 'utf8'); } catch { throw new Error('CONFIGURATION'); }
+  try { ca = await readFile(process.env.GROW_EV_DATABASE_CA_FILE!, 'utf8'); } catch { throw new ConfigurationError('CA_FILE_READ'); }
   const db = new pg.Client({ connectionString: url.href, ssl: { rejectUnauthorized: true, ca },
     connectionTimeoutMillis: 15_000, query_timeout: 120_000, application_name: 'grow-ev-ocpi-preflight' });
   db.on('error', () => { /* Queries fail separately; never log connection details. */ });
