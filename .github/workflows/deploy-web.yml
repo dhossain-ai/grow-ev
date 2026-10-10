@@ -13,12 +13,12 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -38,6 +38,10 @@ jobs:
         working-directory: apps/driver
         run: npm run lint
 
+      - name: Test Driver
+        working-directory: apps/driver
+        run: npm test
+
       - name: Build Web
         working-directory: apps/driver
         env:
@@ -46,10 +50,9 @@ jobs:
         run: npm run build:web
 
       - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/driver
           command: deploy
-

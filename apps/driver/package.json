@@ -35,7 +35,8 @@
     "typecheck": "tsc --noEmit",
     "build:web": "expo export --platform web",
     "prebuild:web": "npm run prepare-maplibre-web",
-    "prepare-maplibre-web": "node ./scripts/prepare-maplibre-web.mjs"
+    "prepare-maplibre-web": "node ./scripts/prepare-maplibre-web.mjs",
+    "test": "node --test scripts/*.test.mjs"
   },
   "private": true
 }

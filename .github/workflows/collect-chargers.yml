@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Reconstruct database certificate
-        if: env.GROW_EV_DATABASE_CA != ''
+        if: ${{ secrets.GROW_EV_DATABASE_CA != '' }}
         env:
           GROW_EV_DATABASE_CA: ${{ secrets.GROW_EV_DATABASE_CA }}
         run: |
@@ -44,8 +44,7 @@ jobs:
           GROW_EV_DATABASE_URL: ${{ secrets.GROW_EV_DATABASE_URL }}
           GROW_EV_DATABASE_CA_FILE: /tmp/supabase-ca.crt
         run: npm run collect
-        
+
       - name: Cleanup certificate
         if: always()
         run: rm -f /tmp/supabase-ca.crt
-
