@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "strict": true, "noEmit": true, "target": "ES2022", "module": "ESNext",
+    "moduleResolution": "bundler", "allowImportingTsExtensions": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["routing/**/*.ts", "runtime.d.ts", "../../packages/routing/**/*.ts"]
+}

@@ -9,7 +9,10 @@ const compile = async (file) => ts.transpileModule(
   { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } },
 ).outputText;
 const typesUrl = moduleUrl(await compile('types'));
-const congestionUrl = moduleUrl((await compile('congestion')).replace("'./types'", JSON.stringify(typesUrl)));
+const routingUrl = moduleUrl(ts.transpileModule(await readFile(new URL('../../../packages/routing/index.ts', import.meta.url), 'utf8'),
+  { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText);
+const congestionUrl = moduleUrl((await compile('congestion')).replace("'./types'", JSON.stringify(typesUrl))
+  .replace("'../../../../../packages/routing'", JSON.stringify(routingUrl)));
 const { compatibleCapacity, findAlternatives, isStationEvidence, straightLineKm, CONNECTOR_OPTIONS, FRESHNESS_MS } = await import(congestionUrl);
 const apiUrl = moduleUrl((await compile('api')).replace("'./types'", JSON.stringify(typesUrl)));
 process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://example.invalid';

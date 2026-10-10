@@ -30,7 +30,17 @@ station. Rank nearest first, then more compatible available EVSEs at equal
 distance, then canonical location ID; return at most three. UI explicitly labels
 straight-line distance, shows the oldest observation supporting each available
 count, and allows selection/recentering. No road distance, ETA, waiting estimate,
-prediction, score, tariff or post-charge-idling inference is implemented.
+prediction, score, tariff or post-charge-idling inference is implemented by TASK-006.
+
+TASK-007 adds optional explicit road-driving comparison for this same shortlist.
+Routes originate at the selected station (not an inferred driver position).
+Compatibility/freshness eligibility and geographic ranking remain unchanged.
+TomTom durations are estimates using requested available traffic, not measured
+journey times or guaranteed traffic coverage. Road distance and straight-line
+distance retain separate labels. No waiting/arrival availability is inferred.
+Successful estimates expire after two minutes; unavailable/expired results show
+"Driving time unavailable". Server adapter/endpoint and fixture checks exist
+locally; live provider and web/Android integration verification remain pending.
 
 The remaining sections describe future scope, not implemented capabilities.
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fetchStationCapacity } from './capacityApi';
+import { AlternativeRouting } from './AlternativeRouting';
 import { compatibleCapacity, CONNECTOR_OPTIONS, CONGESTION_EXPLANATIONS, findAlternatives,
   type ConnectorStandard, type StationEvidence } from './congestion';
 import { colors, radii, spacing } from './tokens';
@@ -69,6 +70,7 @@ export function CongestionDetail({ station, onSelect }: Props) {
         <Text style={styles.title}>Nearby alternatives</Text>
         <Text style={styles.muted}>Within 10 km · nearest first · straight-line distance</Text>
         {!alternatives.length ? <Text style={styles.muted}>No nearby station has fresh, compatible available capacity.</Text> : null}
+        <AlternativeRouting station={station} alternatives={alternatives} now={now} />
         {alternatives.map((a) => <Pressable key={a.evidence.station.location_id}
           accessibilityRole="button" accessibilityLabel={`Select ${a.evidence.station.name ?? a.evidence.station.address ?? 'alternative station'}`}
           onPress={() => onSelect(a.evidence.station)} style={styles.alternative}>

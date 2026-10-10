@@ -1,7 +1,7 @@
 # Grow EV — API Contract
 
 Version: 0.1
-Status: Proposed, not yet implemented
+Status: Routing contract implemented locally (TASK-007); remaining /v1 endpoints proposed
 
 ## 1. Purpose
 
@@ -52,6 +52,36 @@ Never present heuristic scores as probabilities.
 Never present a stale status as confirmed live.
 
 ## 4. Public endpoints
+
+### Implemented locally: POST /functions/v1/routing
+
+Supabase Edge Function, shared by Android and web. Not deployed or live verified.
+Request: `{ origin: { lat, lng }, destinations: [{ lat, lng }] }`.
+One to three unique destinations, within 15,000 geographic meters of origin;
+finite WGS84 coordinates, JSON body at most 2048 bytes, two-second read deadline.
+Response: `{ results: [ { route } | { error } ] }`, in destination input order.
+`route` includes `origin`, `destination`, `drivingDurationSeconds`,
+`roadDistanceMeters`, `trafficAware`, `provider: "tomtom"`, `calculatedAt` (UTC).
+Durations are provider estimates; geographic distance is separate from road distance.
+Shared authoritative types/validators: `packages/routing/index.ts`.
+
+Partial success returns 200 with per-result failures; all failures return a
+top-level `error` and results with 503 (`ROUTING_NOT_CONFIGURED`),
+504 (`ROUTING_TIMEOUT`), 502 (`ROUTING_UNAVAILABLE`) or
+429 (`EXTERNAL_RATE_LIMITED`). Invalid inputs return 400 (`INVALID_INPUT`).
+Local budgets return 429 (`RATE_LIMITED`); rate-limit responses use Retry-After 60.
+All errors use `{ code, message, retryable }`; no raw provider diagnostics exposed.
+No automatic retry. No-store responses and CORS permit web/native guest use;
+only public Supabase configuration is sent by clients. `TOMTOM_API_KEY` is an
+Edge Function secret, never a client configuration value.
+
+Budgets are 30 destination calls/minute and two active batches per isolate;
+provider 429 triggers 60-second backoff. Distributed quota controls remain pending.
+Client compares only the compatibility shortlist on explicit action, reuses
+successful routes for two minutes, and withholds expired results. No map-update
+requests. Unavailable routing is displayed as "Driving time unavailable".
+The implemented endpoint has no database dependency. Other endpoints below
+remain proposed; this task does not implement `/v1/recommendations`.
 
 ### GET /v1/stations
 

@@ -1,4 +1,5 @@
 import { isMapStation, type MapStation } from './types';
+import { geographicDistanceMeters } from '../../../../../packages/routing';
 
 export const CONNECTOR_OPTIONS = [
   { value: 'IEC_62196_T2_COMBO', label: 'CCS2' },
@@ -69,11 +70,8 @@ export function compatibleCapacity(evidence: StationEvidence, standard: Connecto
 
 /** Great-circle geographic distance, never road distance or ETA. */
 export function straightLineKm(a: MapStation, b: MapStation): number {
-  const rad = Math.PI / 180;
-  const h = Math.sin((b.latitude - a.latitude) * rad / 2) ** 2 +
-    Math.cos(a.latitude * rad) * Math.cos(b.latitude * rad) *
-    Math.sin((b.longitude - a.longitude) * rad / 2) ** 2;
-  return 6371.0088 * 2 * Math.asin(Math.sqrt(Math.min(1, Math.max(0, h))));
+  return geographicDistanceMeters({ lat: a.latitude, lng: a.longitude },
+    { lat: b.latitude, lng: b.longitude }) / 1000;
 }
 
 export function findAlternatives(target: StationEvidence, stations: StationEvidence[], standard: ConnectorStandard, now: number): Alternative[] {

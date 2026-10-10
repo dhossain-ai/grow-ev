@@ -4,6 +4,10 @@
 # working directory name when running `supabase init`.
 project_id = "Grow_EV"
 
+# Public guest routing; handler bounds input and provider usage. No JWT/user data required.
+[functions.routing]
+verify_jwt = false
+
 [api]
 enabled = true
 # Port to use for the API URL.

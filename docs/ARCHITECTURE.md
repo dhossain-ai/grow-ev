@@ -3,6 +3,15 @@
 Status: Proposed architecture
 Version: 0.1
 
+TASK-007 implemented locally: `packages/routing` owns the shared contract and
+coordinate/geographic validation. `supabase/functions/routing` provides a small
+guest Edge Function and server-only TomTom adapter; the driver details UI makes
+explicit requests for its existing shortlist on both platforms. No database or
+collector dependency in routing; no new packages. Endpoint/runtime deployment
+and live TomTom verification await hotspot connectivity. Limits are per isolate;
+distributed quota controls remain a public-deployment prerequisite. The remaining
+architecture and routing fallback below describe proposed scope.
+
 ## 1. Engineering goals
 
 - Real mobile experience.

@@ -1,239 +1,79 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: TASK-006 live verification blocked by DEV database connectivity
+Phase: TASK-007 local implementation; live verification deferred to hotspot
 
-IMPORTANT:
-This document records current implementation and verification.
-No implementation is marked complete without verification.
+## Verified foundation
 
-## Confirmed product direction
+- TASK-001 through TASK-005 completed: Expo SDK 57 / strict TypeScript,
+  universal MapLibre, Via Lietuva investigation, Supabase/PostGIS foundation,
+  one-shot collector and real-data map.
+- Earlier verified DEV collection: 1,984 locations, 5,836 EVSEs, 5,838 connectors;
+  canonical identities and unchanged-status nontransitions preserved.
+- Earlier Chrome/Pixel_8 map verification and Android debug build passed.
+  Physical-device validation remains unverified.
 
-Grow EV addresses Hack4Vilnius Challenge #13:
-Efficient and responsible use of EV charging infrastructure.
+## Current work
 
-Product components:
-- Driver app
-- Browser demo
-- Network/operator dashboard
-- Shared intelligence engine
+- TASK-006 locally implemented and provisionally committed as `95764d1`.
+  Reviewed all changed/staged files; no secrets included. Current checkpoint
+  typecheck, zero-warning lint and all 14 unit/API tests passed.
+  Remote capacity migration, remote SQL, fresh-data verification and successful
+  Android recommendations remain pending. This is not full TASK-006 acceptance.
+- TASK-007 typed routing contract, server-side TomTom adapter/Edge endpoint,
+  bounded requests and shared web/Android shortlist comparison implemented locally.
+  Explicit comparisons originate at the selected station, retain geographic
+  shortlist order and distinguish road distance from straight-line distance.
+  Missing routing displays "Driving time unavailable". Live routing unverified.
+  See `tasks/active/TASK-007.md` for checks, API budgets and pending acceptance.
+- TASK-007 remains uncommitted and undeployed, stopped for review.
 
-## Chosen technical direction
+## Connectivity and live gates
 
-- Expo / React Native / TypeScript
-- Native and web MapLibre implementations
-- Supabase PostgreSQL + PostGIS
-- TypeScript application services
-- Python for analysis and ML
-- Cloudflare web hosting candidate
-- TomTom traffic-aware routing candidate
+- University eduroam blocks Supabase database connectivity. Do not repeatedly
+  troubleshoot; remote checks await hotspot connectivity.
+- No migrations, collector executions or live provider calls in this session.
+- Existing observations (`2026-10-09T21:52:03.348Z`, 00:52:03 Europe/Vilnius) were
+  stale at prior verification. New capacity RPC remains undeployed.
+- TASK-006's earlier conditional remote approval did not result in deployment
+  or consume the one-poll allowance. This session explicitly forbids migration
+  deployment and collector changes; review future live actions separately.
+- TomTom credentials remain server-side. Deno runtime/deployment, live traffic
+  routing, provider quotas/coverage/licensing and live web/Android UI unverified.
+- Edge endpoint budgets apply per isolate; distributed public abuse protection
+  and provider spending caps are still required before public rollout.
 
-## Verified completed work
+## Deferred product scope
 
-- TASK-001 project foundation and final cleanup.
-- Expo SDK 57 driver application in `apps/driver`.
-- Single Git repository initialized at project root (`E:\Grow EV`) with comprehensive root `.gitignore`.
-- Expo Router with one minimal universal home screen.
-- Strict TypeScript, ESLint and npm scripts.
-- Typecheck, lint, Expo Doctor and production web export pass.
-- Browser smoke test renders the Grow EV home screen without console errors.
-- Android debug build (`app-debug.apk`) generated, installed, and verified running on Pixel_8 emulator.
-- TASK-005 real charging maps verified on Chrome (including production export) and Pixel_8 emulator.
-- Publishable-key RPC, protected-table access denial, pagination, EVSE counts,
-  markers/clusters/details/filters/timestamps and loading/empty/error/retry verified.
-- TASK-002 cross-platform MapLibre foundation.
-- Native Android and browser maps render OpenFreeMap Liberty centered on Vilnius.
-- Pan, zoom and attribution verified on Pixel_8 and in the browser.
-- TASK-003 Via Lietuva OCPI investigation verified and completed.
-- TASK-004B one-shot collector verified and completed on Supabase DEV: two complete polls,
-  1,984 locations, 5,836 EVSEs, 5,838 connectors, zero duplicate canonical
-  entities and zero false transitions. Real-transition/failure/interruption tests
-  passed locally; no simulated status changes were written to DEV.
-- TASK-004A cloud database foundation verified on the user-confirmed disposable
-  Supabase project: migration applied, five tables/RLS verified, rollback-only
-  SQL suite passed twice on PostgreSQL 17.11 / PostGIS 3.3.7.
-- Live locations response structure, Vilnius coverage, statuses, identifiers,
-  timestamps and tariff references documented in `docs/OCPI_FINDINGS.md`.
-- Small TypeScript investigation script and representative fixture added.
-- Coverage correction: the original 93 locations were the first source window.
-  Full OCPI scan verified 1,984 locations, 5,824 EVSEs and 13 stable operator
-  IDs; Vilnius city match has 888 locations, 2,097 EVSEs and 11 operators.
-- DATEX static publication verified 3,672 sites and 29 provider names;
-  its point/connector counts are not yet mapped to independent EVSE capacity.
+Scheduled ingestion, historical analytics, dashboard, ML, pricing, waiting-time
+predictions and public deployment remain outside the implemented slice.
 
-## Work not yet verified as complete
+## Dependency findings
 
-- Scheduled ingestion
-- Historical occupancy/analytics processing
-- Routing integration
-- Live congestion recommendations (TASK-006 code exists; new RPC deployment and fresh observations pending)
-- Dashboard
-- Driver charging features
-- Public deployment
-- Driver/dashboard automated testing
+Earlier driver audit reported 29 transitive advisories (10 moderate, 19 high)
+upstream of Expo SDK 57. No dependencies changed in TASK-006/007; audit not rerun.
 
-Do not assume these have been implemented.
+## Latest local verification
 
-## Immediate next tasks
+TASK-007 final results are recorded in its active task file. These checks use
+fixtures and mocks; they do not establish live traffic routing or fresh capacity.
 
-1. Restore DEV database connectivity and resume TASK-006's approved safety gates. No next task started.
+## Next
 
-## Critical technical risks
+Review TASK-007. Then use hotspot connectivity for separately authorized live
+verification. Do not start another task automatically.
 
-- Missing or stale charger status.
-- No historical data at project start.
-- Different operator data quality.
-- Tariffs may be incomplete or complex.
-- Public data may not expose actual charging completion.
-- Free API and hosting quotas.
-- Native/web map differences.
-- Traffic routing availability.
-- Predictions without enough evaluation data.
+Final TASK-007 checks (2026-10-10): driver and server/shared TypeScript passed;
+driver and server/shared lint passed with zero lint warnings/errors; 24 unit/API
+tests passed with zero failures/skips. Web production export, Android JS/Hermes
+export and offline Android debug build passed. Initial import/lint configuration
+and shared-module Metro failures were corrected; final checks pass. Diff check
+passed; generated web JS excludes TomTom secret name and provider URL. Deno runtime,
+live provider/endpoint and platform interactions remain unrun. No remote writes,
+collector changes or TASK-007 commit. Full commands in the active task file.
 
-## Current task
-
-TASK-006 implemented locally; final live verification blocked, not complete end to end.
-See `tasks/active/TASK-006.md` for implementation, real-data example, checks and limits.
-TASK-005 remains completed. No commit or remote deployment for TASK-006.
-
-## Current blockers
-
-- User approved TASK-006 DEV deployment and ONE live collector execution,
-  conditional on safety gates. The migration dry-run cannot connect to DEV;
-  its pending list remains unverified. No remote migration or collector poll ran.
-- Linked CLI account receives HTTP 403; password-backed Windows/WSL CLI and
-  PostgreSQL connections time out to the session pooler. Public HTTP API works.
-- TASK-006 migration and strengthened SQL tests pass on disposable local
-  PostgreSQL 16.15 / PostGIS 3.4.2. Remote SQL verification remains unrun.
-- Stored readings are stale; no fresh real-data recommendation can be verified.
-  Ingestion and scheduling were not changed; collector preflight failed before polling.
-
-- No blocker to the verified web/Android emulator map demo.
-- Stored observations are from 2026-10-10 00:52:03 Europe/Vilnius, marked stale;
-  scheduling/fresh collection and physical Android-device validation are unverified.
-- Later private SQL/CLI rechecks timed out or stalled; initial read-only SQL suite
-  and deployed catalog checks passed, and final public API checks pass.
-
-## Unresolved dependency audit findings
-
-- `npm audit` in `apps/driver` reports 29 transitive vulnerabilities (10 moderate, 19 high)
-  in upstream Metro/Expo packages (`braces`, `decode-uri-component`, `node-forge`, `uuid`).
-  These are upstream to Expo SDK 57 / React Native 0.86; force-fixing would break SDK 57 compatibility.
-
-## Latest verification
-
-TASK-006 final live-verification attempt (2026-10-10): exact DEV linked-ref and
-connection identity guarded. Supabase CLI dry-runs failed (linked account 403;
-credential-backed connections TCP timeout), so pending migrations could not be
-confirmed and deployment was withheld. Collector `--check` failed; zero live poll
-executions. Public capacity endpoint returns 404/PGRST202; existing map checks
-pass and still report observations from 00:52:03 Europe/Vilnius.
-Unchanged migration applied successfully only to disposable local database.
-SQL tests passed after correcting JSON operator precedence; added spatial
-completeness, field allowlists and both client roles' table privilege/RLS checks.
-Ingestion TypeScript and all 23 local PostgreSQL regression tests pass; driver
-TypeScript/lint, 14 unit/API tests, production web export and Android debug build
-pass. Successful real-data recommendations and requested
-screenshots on both platforms remain unverified; ADB currently lists no device.
-No remote writes, ingestion changes, applied-migration edits, commit or TASK-007.
-
-TASK-006 (2026-10-10): pure TypeScript compatibility/congestion/ranking module,
-public evidence client, connector selection and shared web/native details UI
-implemented. TypeScript, zero-warning lint, 14 unit/API tests and web export pass.
-Existing live public map API checks pass (1,984 stations / 5,836 EVSEs).
-Production browser tests verify failure/retry and, with browser-only synthetic
-responses, incompatible availability, connector changes, explanations, distance,
-freshness and alternative selection/recentering. Mocks removed; no data written.
-Android debug build/install passes; Pixel_8 renders the map and new details,
-connector selection and capacity failure/retry. Successful native alternative
-selection awaits endpoint deployment. New SQL migration/test remain unexecuted
-pending approval.
-No live recommendation claim, collector change, dependency addition or commit.
-
-TASK-005 (2026-10-10): frontend contains only ignored public configuration;
-publishable-key RPC succeeds. Deployed function matches the reviewed body,
-uses a trusted search path/explicit EXECUTE grants; anon/authenticated lack all
-read/write privileges on five protected RLS tables. Public GET/empty POST denied.
-National client retrieves 1,984 stations / 5,836 EVSEs through two pages; Vilnius
-bounds return 923 stations / 2,207 EVSEs. Initial read-only SQL count/denial/input
-suite passed after a test-only text cast; subsequent private SQL repeats failed
-to connect. Invalid public queries and field allowlist checks pass.
-Typecheck, zero-warning lint, 4 unit tests, live HTTP verification, production web
-export, Android debug build and diff checks pass. Chrome and Pixel_8 verified
-clusters, observed availability, selection, details, connectors/power, timestamps,
-loading/empty/error/retry and map interactions. Emulator DNS workaround required;
-upstream basemap geometry warning remains. No FPS benchmark or physical-device
-validation. No migration push/edit, collector changes, TASK-006 or commit.
-
-TASK-004B (2026-10-10): both approved DEV runs passed on user-confirmed
-heafsrqaytsfthfcxmqu. First live fetch/stored counts: 1,984 locations, 5,836 EVSEs,
-5,838 connectors, one SUCCESS/COMPLETE poll, zero baseline transitions. Exact
-captured-source replay: same entity counts, two SUCCESS/COMPLETE polls overall,
-zero transitions. Full-row/identity comparison passed: no canonical duplicates,
-UUID/first-observation changes, source-field corruption or partial publication.
-95 duplicated public EVSE-ID groups and 30 UNKNOWN EVSEs preserved correctly.
-Local parser and PostgreSQL tests rerun: 23 passed, zero failed/skipped.
-Ingestion TypeScript, read-only schema/TLS check and diff checks passed.
-Connection formatting/IPv6/CA setup corrected privately; no credential printed.
-No schema, app, scheduling or new feature changes. TASK-003 and TASK-004B finalized in Git.
-See tasks/active/TASK-004B.md for poll IDs, commands and verification details.
-
-TASK-004A (2026-10-10): Supabase CLI 2.106.0 initialized and authenticated;
-user confirmed disposable project `heafsrqaytsfthfcxmqu`. Empty-target preflight
-and dry-run passed; explicitly approved `db push --yes` applied migration
-`20261009000100`. PostgreSQL 17.11 / PostGIS 3.3.7 verified. Complete SQL suite
-passed twice via `db query --linked --file` after removing psql meta-commands
-in a temporary transport copy. Actual anon/authenticated ACL denial and
-default-deny RLS tested. Post-test counts were zero for all five tables and
-temporary SELECT grants rolled back. `git diff --check` passed.
-No application files/dependencies changed; application checks not rerun.
-Remote migration-history SQL matches the repository (31 statements, normalized
-whitespace/comments). TASK-004A finalized in Git; no remote reset.
-
-2026-10-09, from `apps/driver`:
-- `npm run typecheck` — passed.
-- `npm run lint` — passed.
-- `npx expo-doctor` — 21/21 checks passed.
-- `npm run build:web` — passed; static export generated.
-- Browser smoke test — passed at the local Expo web URL with no console errors.
-- Android native build & launch — `./gradlew app:assembleDebug` passed, APK installed and verified rendering on `Pixel_8` emulator.
-- Root repository — single Git root initialized at `E:\Grow EV`, `.gitignore` correctly ignores build artifacts, local properties, secrets, and IDE files while preserving `package-lock.json`.
-- `npm audit` — 29 transitive advisories documented above.
-- TASK-002 `npm run typecheck` and `npm run lint` — passed.
-- TASK-002 `npx expo-doctor` — 21/21 checks passed.
-- TASK-002 `npm run build:web` — passed with MapLibre CSS and worker assets.
-- TASK-002 Android — debug build installed and rendered on `Pixel_8`; pan,
-  double-tap zoom and full attribution dialog verified.
-- TASK-002 web — rendered in browser; pointer pan, zoom control, attribution
-  links and a clean console in a fresh session verified.
-- TASK-003 full coverage investigation — passed; four explicit OCPI windows
-  and an independent large-window fetch returned the same 1,984 unique location
-  identities. Default 93-location response was a partial window.
-- OCPI national and Vilnius counts reproduced; both DATEX publications counted
-  using the platform XML parser without saving raw feeds.
-- Pagination regression tests — 4/4 passed (empty intermediate window,
-  duplicate identities, changing total and missing total).
-- TASK-003 ingestion-script TypeScript check — passed.
-- Driver typecheck and lint after TASK-003 — passed; application code and
-  dependencies were unchanged, so the web build was not rerun.
-
-## Handoff rules
-
-After meaningful implementation:
-- Update completed work.
-- List active tasks.
-- List current blockers.
-- Record verified test results.
-- Reference relevant task files and commits.
-
-Keep this document short and current.
-
-Do not use it as an endless development diary.
-
-## Provisional checkpoint — 2026-10-10
-
-TASK-006 reviewed and checkpointed as locally implemented. Typecheck, lint and
-14 unit/API tests pass in this session. Remote migration, fresh-data verification
-and successful Android recommendations remain pending. University eduroam blocks
-database connectivity; live checks are deferred to a hotspot. No migrations or
-collector runs authorized in this session. TASK-007 is now authorized separately.
+TASK-007 checkpoint review (2026-10-10): explicit charger-to-charger labels,
+frontend credential exclusion, error-to-unavailable handling and request budgets
+reviewed. Driver/server TypeScript, zero-warning lint, all 24 tests and web build
+passed again. Provisionally checkpointed; live verification remains pending.
+TASK-008 deterministic recommendations now authorized; no live calls/deployment.
