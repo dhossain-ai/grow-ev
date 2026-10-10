@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "preflight": "node --env-file-if-exists=.env.local scripts/preflight-ocpi.ts",
     "collect": "node --env-file-if-exists=.env.local scripts/collect-ocpi.ts",
     "test": "node --test scripts/*.test.mjs",
     "typecheck": "tsc -p tsconfig.json"

@@ -30,6 +30,34 @@ npm run collect -- --capture .scratch/dev-run.json
 npm run collect -- --replay .scratch/dev-run.json
 ```
 
+## GitHub Actions operations (TASK-012)
+
+`Collect Chargers` defaults to `mode=preflight`: no source fetch or database
+publication. `npm run preflight` verifies the fixed DEV project, port 5432,
+certificate/hostname validation, encrypted PostgreSQL connection, schema/RLS,
+counts, observation chronology, canonical duplicates and recent poll summaries
+inside a read-only repeatable-read transaction. It refuses unfinished polls and
+invalid stored chronology. Errors disclose only a failure category.
+
+Add repository Actions secrets privately: `GROW_EV_DATABASE_URL` is the existing
+DEV direct/session-pooler URL; `GROW_EV_DATABASE_CA` is the full downloaded DEV
+root certificate text. The workflow creates a mode-0600 temporary CA file and
+removes it with `always()`. Neither secret is passed to dependency installation.
+`GROW_EV_PROJECT_REF` is the audited nonsecret DEV reference in the workflow;
+`GROW_EV_DATABASE_CA_FILE` maps the certificate to the collector's actual input.
+
+After a successful GitHub preflight, obtain explicit approval for **one**
+`mode=collect` dispatch. That dispatch runs preflight again before invoking the
+unchanged collector. Never rerun a failed/cancelled writer blindly: inspect its
+poll ID and state, especially RUNNING or uncertain commit outcomes. Compare
+canonical identities, first/last observations, raw/normalized status and
+transitions with a read-only baseline; aggregate counts alone are insufficient.
+
+Scheduling is commented out and requires separate cadence approval. The proposed
+`14,44 * * * *` is UTC, 48 runs/day. GitHub scheduling can be delayed or skipped;
+the existing 60-minute freshness cutoff must remain authoritative. Details,
+monitoring SQL and unresolved schedule checks are in `tasks/active/TASK-012.md`.
+
 Capture paths must be new: existing artifacts are never overwritten. Captures
 are ignored generated data, with SHA-256 integrity checks on replay. Poll metadata
 labels replay with its checksum. A replay is archival verification, not a fresh

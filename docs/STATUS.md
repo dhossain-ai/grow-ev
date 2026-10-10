@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: TASK-011 independently validated release fixes, awaiting main CI deployment and public URL verification
+Phase: Cloudflare public deployment verified; TASK-012 workflow prepared, secrets/TLS and write approvals pending
 
 ## Verified foundation
 
@@ -213,8 +213,8 @@ a successful warm-up and use web/recorded evidence if it crashes.
 
 ## Deferred product scope
 
-Scheduled ingestion, historical analytics beyond dated snapshot patterns, ML, pricing, waiting-time
-predictions, background location and public deployment remain outside this slice.
+Unapproved scheduled ingestion, historical analytics beyond dated snapshot patterns, ML, pricing, waiting-time
+predictions and background location remain outside this slice.
 Earlier audit reported 29 transitive advisories (10 moderate, 19 high) upstream of
 Expo SDK 57. Installing expo-location reported the same 29 advisories; upstream remediation is deferred.
 
@@ -237,3 +237,25 @@ dry-run. Public Supabase settings now support existing GitHub secrets as fallbac
 Collector remains manual-only and unrun. Existing DEV routing remains deployed; the
 undeployed local patch does not disable it. No routing/provider requests or Supabase changes.
 See TASK-011 for exact versions and validation limits.
+
+## TASK-012 observations automation — 2026-10-10
+
+Later Deploy Web run `38050786913` succeeded for the same release SHA `ff2e2d6`.
+Public `https://grow-ev-demo.dhossain.workers.dev/` and Network Intelligence were
+browser-verified around 15:20 Europe/Vilnius. This supersedes the earlier Cloudflare
+registration blocker. Existing observations remain dated 03:46:01–03:46:04;
+379 CCS2 and 1,434 Type 2 observations are stale, fresh pairs/recommendations withheld.
+Fetching is correctly labeled separately from observation time. Provider update age
+is not exposed by the existing public contract; acceptance limitation remains.
+
+Collector workflow now prepares default read-only preflight, explicit DEV project,
+required private CA/URL configuration and preflight-before-writer gating. Existing
+collector, application and migrations remain unchanged; schedule remains disabled.
+GitHub collector secret names are missing. Local read-only preflight failed TLS
+verification before database health/baseline queries; no verification bypass.
+No DEV writes or TomTom calls executed. GitHub preflight, one explicitly approved
+manual collector test and separately approved cadence remain pending.
+
+Ingestion TypeScript/non-database tests and all ten disposable PostgreSQL regression
+tests passed; corrected workflow passed actionlint. See `tasks/active/TASK-012.md`
+for security, monitoring, remaining checks and approval gates. Stop for review.

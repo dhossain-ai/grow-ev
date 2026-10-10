@@ -2,6 +2,14 @@ name: Collect Chargers
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Read-only preflight, or one explicitly approved collector poll'
+        type: choice
+        options:
+          - preflight
+          - collect
+        default: preflight
   # Prepared 30-minute off-the-hour cadence (twice per 60m freshness threshold)
   # Do not activate until user approves the cadence.
   # schedule:
@@ -16,7 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      GROW_EV_DATABASE_CA: ${{ secrets.GROW_EV_DATABASE_CA }}
+      GROW_EV_PROJECT_REF: heafsrqaytsfthfcxmqu
+      GROW_EV_DATABASE_CA_FILE: /tmp/grow-ev-supabase-ca.crt
     permissions:
       contents: read
     steps:
@@ -34,17 +43,30 @@ jobs:
         run: npm ci
 
       - name: Reconstruct database certificate
-        if: ${{ env.GROW_EV_DATABASE_CA != '' }}
+        env:
+          GROW_EV_DATABASE_CA: ${{ secrets.GROW_EV_DATABASE_CA }}
+          GROW_EV_DATABASE_URL: ${{ secrets.GROW_EV_DATABASE_URL }}
         run: |
-          echo "$GROW_EV_DATABASE_CA" > /tmp/supabase-ca.crt
+          if [ -z "$GROW_EV_DATABASE_URL" ] || [ -z "$GROW_EV_DATABASE_CA" ]; then
+            echo 'Required collector secrets are missing.' >&2
+            exit 1
+          fi
+          umask 077
+          printf '%s\n' "$GROW_EV_DATABASE_CA" > "$GROW_EV_DATABASE_CA_FILE"
 
-      - name: Run OCPI Collector
+      - name: Read-only DEV preflight
         working-directory: services/ingestion
         env:
           GROW_EV_DATABASE_URL: ${{ secrets.GROW_EV_DATABASE_URL }}
-          GROW_EV_DATABASE_CA_FILE: /tmp/supabase-ca.crt
+        run: npm run preflight
+
+      - name: Run OCPI Collector
+        if: ${{ github.event_name == 'schedule' || inputs.mode == 'collect' }}
+        working-directory: services/ingestion
+        env:
+          GROW_EV_DATABASE_URL: ${{ secrets.GROW_EV_DATABASE_URL }}
         run: npm run collect
 
       - name: Cleanup certificate
         if: always()
-        run: rm -f /tmp/supabase-ca.crt
+        run: rm -f "$GROW_EV_DATABASE_CA_FILE"
