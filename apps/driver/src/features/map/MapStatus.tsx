@@ -71,19 +71,19 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   errorBanner: {
-    backgroundColor: 'rgba(239, 108, 115, 0.15)',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(239, 108, 115, 0.3)',
+    borderColor: colors.unavailable,
   },
   loadingBanner: {
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: colors.overlayBorder,
   },
   emptyBanner: {
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: colors.overlayBorder,
   },
   bannerText: {
     color: colors.textPrimary,
@@ -93,10 +93,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.elevated,
     borderRadius: radii.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.md,
   },
   retryText: {
-    color: colors.accent,
+    color: colors.accentInk,
     fontSize: 13,
     fontWeight: '600',
   },

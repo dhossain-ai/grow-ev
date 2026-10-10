@@ -11,8 +11,12 @@ import type {
   ViewStateChangeEvent,
 } from '@maplibre/maplibre-react-native';
 import { useCallback, useRef, useState } from 'react';
-import { NativeSyntheticEvent, StyleSheet, Text, View } from 'react-native';
+import { NativeSyntheticEvent, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import capturedCase from '../features/experience/recordedCase.json';
+import { ExperiencePanel } from '../features/experience/ExperiencePanel';
+import { useReducedMotion } from './CalmUI';
+import type { ConnectorStandard } from '../features/map/congestion';
 import { useUserLocation } from '../features/location/useUserLocation';
 import { LocationControl } from '../features/location/LocationControl';
 import {
@@ -25,7 +29,6 @@ import {
 import {
   FilterBar,
   MapStatus,
-  StationDetail,
   useMapStations,
   availabilityColors,
   colors,
@@ -40,12 +43,19 @@ const UNCLUSTERED_LAYER = 'unclustered-station';
 export function GrowMap() {
   const sourceRef = useRef<GeoJSONSourceRef>(null);
   const cameraRef = useRef<CameraRef>(null);
-  const [mapHeight, setMapHeight] = useState(0);
   const [hasLoadingError, setHasLoadingError] = useState(false);
   const [bounds, setBounds] = useState<BoundingBox | null>(null);
   const [selectedStation, setSelectedStation] = useState<MapStation | null>(null);
   const location = useUserLocation();
   const [expanded, setExpanded] = useState(false);
+  const { width } = useWindowDimensions();
+  const wide = width >= 900;
+  const reduced = useReducedMotion();
+  const [standard, setStandard] = useState<ConnectorStandard>('IEC_62196_T2_COMBO');
+  const [showCase, setShowCase] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [panelHeight, setPanelHeight] = useState(0);
+  const [mapHeight, setMapHeight] = useState(0);
   const [filters, setFilters] = useState<StationFilters>({});
   const { geojson, stations, loading, error, lastFetched, refresh } =
     useMapStations(bounds, filters);
@@ -67,7 +77,7 @@ export function GrowMap() {
         const coords = feature.geometry.coordinates as [number, number];
         const clusterId = feature.properties?.cluster_id as number;
         sourceRef.current?.getClusterExpansionZoom(clusterId).then((zoom) => {
-          cameraRef.current?.easeTo({ center: coords, zoom, duration: 300 });
+          cameraRef.current?.easeTo({ center: coords, zoom, duration: reduced ? 0 : 280 });
         }).catch(() => setHasLoadingError(true));
         return;
       }
@@ -98,15 +108,18 @@ export function GrowMap() {
         last_observed_at: props.last_observed_at as string | null,
       };
       setSelectedStation(station);
+      setExpanded(true);
+      setShowCase(false);
+      cameraRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: mapHeight * 0.72 + 80 } });
     },
-    [],
+    [reduced, wide, mapHeight],
   );
 
   return (
     <View style={styles.container} onLayout={(event) => setMapHeight(event.nativeEvent.layout.height)}>
       <Map
         attribution
-        attributionPosition={{ bottom: selectedStation ? (expanded ? mapHeight * 0.62 + 8 : 196) : 8, left: 8 }}
+        attributionPosition={{ bottom: 8, left: 8 }}
         dragPan
         mapStyle={OPENFREEMAP_STYLE_URL}
         onDidFailLoadingMap={() => setHasLoadingError(true)}
@@ -125,7 +138,7 @@ export function GrowMap() {
 
         {location.position ? <GeoJSONSource id="user-location" data={{ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [location.position.lng, location.position.lat] }, properties: {} }] }}>
           <Layer id="user-location-halo" type="circle" paint={{ 'circle-radius': 16, 'circle-color': colors.location, 'circle-opacity': 0.18 }} />
-          <Layer id="user-location-dot" type="circle" paint={{ 'circle-radius': 7, 'circle-color': colors.location, 'circle-stroke-width': 3, 'circle-stroke-color': colors.white }} />
+          <Layer id="user-location-dot" type="circle" paint={{ 'circle-radius': 11, 'circle-color': colors.location, 'circle-stroke-width': 3, 'circle-stroke-color': colors.white }} />
         </GeoJSONSource> : null}
         <GeoJSONSource
           ref={sourceRef}
@@ -158,7 +171,7 @@ export function GrowMap() {
               ],
               'circle-opacity': 0.85,
               'circle-stroke-width': 2,
-              'circle-stroke-color': 'rgba(0, 0, 0, 0.3)',
+              'circle-stroke-color': colors.overlayBorder,
             }}
           />
 
@@ -192,17 +205,26 @@ export function GrowMap() {
                 'unavailable', availabilityColors.unavailable,
                 availabilityColors.unknown,
               ],
-              'circle-radius': 7,
+              'circle-radius': 11,
               'circle-stroke-width': 2,
-              'circle-stroke-color': 'rgba(0, 0, 0, 0.4)',
+              'circle-stroke-color': colors.overlayBorder,
             }}
           />
+          <Layer id="charging-symbol" type="symbol" filter={['!', ['has', 'point_count']]}
+            layout={{ 'text-field': 'ϟ', 'text-size': 17, 'text-font': ['Noto Sans Regular'], 'text-allow-overlap': true }} paint={{ 'text-color': colors.white }} />
         </GeoJSONSource>
+        {selectedStation ? <GeoJSONSource id="selected-station" data={{ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [selectedStation.longitude, selectedStation.latitude] }, properties: {} }] }}>
+          <Layer id="selected-ring" type="circle" paint={{ 'circle-radius': 18, 'circle-color': colors.accent, 'circle-opacity': 0.18, 'circle-stroke-color': colors.accentInk, 'circle-stroke-width': 3 }} />
+        </GeoJSONSource> : null}
       </Map>
 
       {/* Overlay controls */}
-      <View style={styles.overlayTop}>
-        <FilterBar filters={filters} onFiltersChange={setFilters} />
+      <View style={[styles.overlayTop, { left: wide ? 448 : 16, maxWidth: 420 }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Map filters" accessibilityState={{ expanded: filtersOpen }} onPress={() => setFiltersOpen((value) => !value)} style={{ minHeight: 48, alignSelf: 'flex-start', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.overlayBorder }}><Text style={{ color: colors.textPrimary, fontSize: 13 }}>Filters {filtersOpen ? '−' : '+'}</Text></Pressable>
+        {filtersOpen ? <FilterBar filters={filters} onFiltersChange={setFilters} /> : null}
+      {filtersOpen ? <View style={{ padding: 8, backgroundColor: colors.overlayBackground, borderRadius: 12 }}>
+        <Text style={styles.legendText}>● Available · In use · Unavailable · Unverified</Text>
+      </View> : null}
         <View style={styles.statusContainer}>
           <MapStatus
             loading={loading}
@@ -214,30 +236,19 @@ export function GrowMap() {
         </View>
       </View>
 
-      <View style={{ position: 'absolute', right: 16, bottom: selectedStation ? (expanded ? mapHeight * 0.62 + 44 : 232) : 48, zIndex: 3 }}>
+      <View style={{ position: 'absolute', right: 16, bottom: wide ? 64 : panelHeight + 56, zIndex: 3 }}>
         <LocationControl busy={location.busy} error={location.error} onPress={() => {
-          void location.locate().then((fix) => { if (fix) cameraRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, duration: 300, padding: { bottom: selectedStation ? (expanded ? mapHeight * 0.62 : 188) : 0 } }); });
+          void location.locate().then((fix) => { if (fix) cameraRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: panelHeight } }); });
         }} />
       </View>
-      {!selectedStation ? <View style={styles.legend}>
-        <Text style={styles.legendText}>● Available · In use · Unavailable · Unverified</Text>
-      </View> : null}
-      {/* Station detail panel */}
-      {selectedStation ? (
-        <View style={[styles.detailPanel, { height: expanded ? '62%' : 188 }]}>
-          <StationDetail
-            station={selectedStation}
-            userOrigin={location.position ? { lat: location.position.lat, lng: location.position.lng } : undefined}
-            expanded={expanded}
-            onToggleExpanded={() => setExpanded((value) => !value)}
-            onSelect={(station) => {
-              setSelectedStation(station);
-              cameraRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: 300 });
-            }}
-            onClose={() => setSelectedStation(null)}
-          />
-        </View>
-      ) : null}
+      <View onLayout={(event) => setPanelHeight(event.nativeEvent.layout.height)} style={[styles.detailPanel,
+        wide ? { top: 24, bottom: 48, left: 24, right: undefined, width: 400, height: undefined, maxHeight: !selectedStation && !showCase ? 500 : undefined } : { left: 12, right: 12, bottom: 40, height: showCase || (selectedStation && expanded) ? '72%' : selectedStation ? 200 : '64%', maxHeight: !selectedStation && !showCase ? 440 : undefined }]}>
+        <ExperiencePanel selected={selectedStation} standard={standard} onStandardChange={setStandard}
+          expanded={expanded} onToggle={() => setExpanded((value) => !value)} onClose={() => setSelectedStation(null)}
+          onSelect={(station) => { setSelectedStation(station); setExpanded(true); setShowCase(false); cameraRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: mapHeight * 0.72 + 80 } }); }}
+          stations={stations} loading={loading} error={error} userOrigin={location.position ? { lat: location.position.lat, lng: location.position.lng } : undefined}
+          showCase={showCase} onCase={() => { setShowCase(true); cameraRef.current?.easeTo({ center: [capturedCase.selected.station.longitude, capturedCase.selected.station.latitude], zoom: 14.5, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: mapHeight * 0.72 + 80 } }); }} onCloseCase={() => setShowCase(false)} />
+      </View>
 
       {hasLoadingError ? (
         <View accessibilityRole="alert" style={styles.error}>
@@ -249,7 +260,6 @@ export function GrowMap() {
 }
 
 const styles = StyleSheet.create({
-  legend: { position: 'absolute', bottom: 32, left: 8, right: 72, backgroundColor: colors.overlayBackground, padding: 8, borderRadius: 10 },
   legendText: { color: colors.textSecondary, fontSize: 11 },
   container: {
     flex: 1,
@@ -269,7 +279,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   detailPanel: {
-    height: '50%',
     position: 'absolute',
     bottom: 0,
     left: 0,

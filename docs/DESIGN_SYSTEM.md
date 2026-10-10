@@ -1,358 +1,117 @@
-# Grow EV — Design System
+# Grow EV — Calm Electric
+
+Version: 0.2 · Approved light direction · TASK-010 local implementation, review pending
+
+The charging decision is the primary content. The interactive map provides geographic
+context. One useful action, short explanations and honest evidence take priority over decoration.
+There is no dark mode or claim of native Apple Liquid Glass rendering.
+
+## Tokens
+
+Shared source: `apps/driver/src/features/map/tokens.ts`.
+
+| Role | Value |
+|---|---|
+| Canvas / surface / secondary surface | #F8FAF7 / #FFFFFF / #F0F4EF |
+| Primary / secondary / muted text | #17211E / #52615A / #607068 |
+| Border | #E5EAE6 |
+| Primary action / foreground | #C7F36B / #17211E |
+| Accent supporting surface / ink | #F0F9E4 / #39551C |
+| Available / occupied / unavailable markers | #20B887 / #E8A23E / #E76E70 |
+| Available / warning / unavailable text | #13795B / #8B590D / #B23D47 |
+| Foreground location / focus | #328DFF / #246CC0 |
+
+Secondary text and semantic text use darker variants for legibility on white.
+Status is also expressed in words; stale map markers use the neutral unverified color.
+System fonts only. Display 30, section 22, card 20, body 15, caption 12; values and
+network headings may use 26–34 where appropriate. Spacing follows 4/8-point increments.
+Primary cards use 24px radii, secondary cards 18px, actions 12px, compact map controls
+14–16px. White content surfaces, fine borders and a restrained single panel shadow.
+Only map controls/legend use a nearly opaque translucent surface; no nested glass,
+gradient, decorative glow, saturated panel or emoji icon.
+
+## Driver hierarchy and interaction
+
+1. Compact brand header; Network Intelligence is secondary navigation.
+2. `DriverAssistant`: choose CCS2, Type 2 or CHAdeMO, then Find charging options.
+3. Choose a station from the fetched map area or tap a map marker. These are discovery
+   results, not a global ranking or personalized vehicle match.
+4. `ExperiencePanel` / `StationDetail`: selected station, shared connector requirement,
+   current compatibility evidence and eligible alternatives. Aggregate site power/status
+   remains explicitly separate from connector-level capacity. Additional site statistics
+   are behind Station information; collapse retains a concise station summary.
+5. `ChargingRecommendationCard`: one primary eligible option, compatible observed EVSE
+   count, true route origin, legitimate drive estimate or Driving time unavailable,
+   explanation and original observation timestamp. Compare alternatives discloses the rest.
+6. Compare driving times invokes the existing explicit routing comparison. Select this
+   charger performs station selection/recentering. No View route/navigation action is
+   advertised because this implementation has no route geometry or navigation launch.
+
+The selected connector stays consistent between the assistant and live station details.
+Map discovery filters remain separate from recommendation eligibility, including power.
+Location stays explicit, foreground-only and optional, using TASK-009 safeguards.
+The locate control and attribution stay outside the content panel.
+
+## Stale and missing evidence
+
+Current availability is unverified when observations are stale. No automatic startup
+recommendation, renewed timestamps, invented ETA, price, waiting time or probability.
+Missing-compatible, unknown, unavailable, loading, empty and API-error states retain
+human-readable explanations and real actions such as connector choice or retry.
+
+`HistoricalCase` is a separate recorded CCS2 case, independently labeled on both the
+screen and each card. `recordedCase.json` contains four sanitized captured station/EVSE
+records and original TASK-008 TomTom summaries. It does not feed live recommendation
+state or call routing. The case uses 10 October 2026 observations at 03:46 and estimates
+at 04:14 Europe/Vilnius. Explore this station exits the historical view and checks current
+persisted evidence; it never treats the recorded capacity as current.
+
+## Map and responsive layouts
+
+MapLibre Native and GL JS remain interactive. OpenFreeMap Positron reduces visual
+competition with the decision cards. Existing batched GeoJSON/clustering remains;
+charging glyphs, small white clusters, a selected ring and neutral stale markers use
+map layers. A blue location dot has a white outline; its halo is decorative, not accuracy.
+
+Below 900px: floating bottom panel with bounded height, internal scrolling, safe-area
+shell and nearby locate control. The initial panel is capped at 440px; expanded station
+or case content uses 72% of map height. At 768px the panel stays constrained to 420px.
+At 900px and above: 400px side panel; map controls occupy the remaining space. The home
+panel is capped at 500px, while station/case views can use the taller side panel.
+Power-filter rows scroll horizontally instead of overflowing. Network panels switch
+from stacked content to desktop columns at 900px; statistics remain subordinate.
+
+Chrome captures at 360, 390, 768, 1280 and 1440px and Pixel_8 native captures are in
+`artifacts/task-010/`. These are implementation evidence, not user visual acceptance.
+
+## Motion and accessibility
+
+Tokens: press 120ms, selection 160ms, card 220ms, panel 280ms. Implemented card reveals
+use restrained eased opacity; presses give immediate opacity feedback. Map selection
+and recentering use 280ms where supported, or zero with reduced motion. Sheet expansion
+and connector selection update immediately; no spring dependency or continuous motion.
+Reduced-motion preference defaults conservatively to enabled until resolved and is
+observed through React Native AccessibilityInfo; browser CSS also suppresses motion.
+
+Actions use 44–48px practical targets, accessible labels, connector pressed/selected
+state, disabled states and web focus outlines. Cards/filters scroll, and Expo safe areas
+remain authoritative. Chrome keyboard/focus and reduced-motion checks are recorded in
+the evidence README. Exhaustive assistive-technology and physical outdoor checks remain
+unverified; Android Fabric startup intermittency is not claimed fixed.
+
+## Network Intelligence
 
-Version: 0.1
-Status: Proposed design direction
+A light desktop-oriented study view leads with the opportunity to use existing Vilnius
+charging capacity better. Two operator/location endpoints, compatible capacity,
+straight-line distance, observation date and historical/current labels form the main
+panel. Fresh pair counts and dated network status totals are secondary. Coverage remains
+the existing fetched study-window/radius intersection, never a complete Vilnius census.
+No calculation, database, collector or routing-service change accompanies this redesign.
 
-## 1. Design vision
+## References reviewed
 
-Grow EV should feel like a premium, modern EV product.
+- [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/): clear hierarchy and progressive disclosure.
+- [Apple Materials](https://developer.apple.com/design/human-interface-guidelines/materials): functional layering and restrained materials; solid information surfaces here.
+- [Material 3](https://m3.material.io/): semantic color roles, adaptive hierarchy, purposeful motion and varied shapes.
 
-Design inspiration:
-- Tesla: simplicity and map-first experience.
-- Modern navigation apps: clear location and routing.
-- Professional geospatial software: useful operational data.
-
-Do not copy another company's exact interface.
-
-Grow EV must develop its own recognizable design identity.
-
-## 2. Design principles
-
-1. Map first, but never sacrifice clarity.
-2. One clear primary action per screen.
-3. Show important information before secondary details.
-4. Prefer meaningful information over decoration.
-5. Explain recommendations clearly.
-6. Keep animations smooth and purposeful.
-7. Design for real users, not only screenshots.
-8. Always communicate data freshness and uncertainty.
-
-## 3. Visual identity
-
-Initial direction: premium dark automotive interface.
-
-### Proposed color tokens
-
-Background:
-- Main: #101315
-- Surface: #1B2023
-- Elevated surface: #252C30
-
-Text:
-- Primary: #F6F8F8
-- Secondary: #A6B0B4
-- Muted: #738087
-
-Brand:
-- Primary accent: #C7F36B
-- Accent foreground: #101315
-
-Status:
-- Available: #39C891
-- Warning: #F3B34C
-- Unavailable: #EF6C73
-- Informational: #68B8EF
-
-These are starting tokens, not final approved colors.
-
-Do not use colors directly throughout components.
-Use shared semantic design tokens.
-
-Check WCAG contrast before release.
-
-Do not communicate charger status using color alone.
-
-## 4. Typography
-
-Use a clean modern sans-serif font.
-
-Prefer a locally bundled, properly licensed font or a native system font.
-
-Hierarchy:
-- Large display: major decisions and numbers.
-- Title: screen or station name.
-- Body: instructions and descriptions.
-- Caption: timestamps and secondary metadata.
-
-Avoid:
-- Excessive font weights.
-- Tiny unreadable numbers.
-- Long text inside map markers.
-- Multiple competing headlines.
-
-Important information must remain readable outdoors.
-
-## 5. Spacing and layout
-
-Use a consistent spacing system:
-
-4, 8, 12, 16, 24, 32, 48.
-
-Minimum comfortable mobile touch target:
-Approximately 44–48 logical pixels.
-
-Respect native safe areas.
-
-Support different screen sizes.
-
-Avoid absolute positioning unless needed for map overlays.
-
-## 6. Driver app
-
-The driver app is mobile-first.
-
-### Main screen
-
-Full-screen map.
-
-Overlay:
-- Grow EV identity.
-- User location.
-- Search or destination entry.
-- Charging filters.
-- Recommended charging option.
-- Bottom sheet with important details.
-
-Map should remain visible during normal interaction.
-
-### Main user flow
-
-Open app
-  -> View network
-  -> Choose charging goal
-  -> Receive recommendation
-  -> Inspect alternatives
-  -> Open route/navigation
-
-Avoid mandatory signup during the demo.
-
-### Recommendation card
-
-Show:
-- Station name.
-- Current availability.
-- Connector and charging power.
-- Actual estimated driving time.
-- Price when verified.
-- Recommendation reason.
-- Source freshness.
-
-Optional when supported:
-- Expected waiting time.
-- Charging duration.
-- Arrival availability estimate.
-- Reliability indicators.
-
-Never display unsupported precise numbers.
-
-### Charger details
-
-Progressive disclosure:
-
-First:
-- Is it suitable?
-- Is it available?
-- How long does driving take?
-- How much will it cost?
-
-Then:
-- Connector details.
-- Historical patterns.
-- Additional evidence.
-- Alternatives.
-
-## 7. Map design
-
-Renderer:
-- MapLibre Native on Android/iOS.
-- MapLibre GL JS in browsers.
-
-Basemap candidate:
-OpenFreeMap.
-
-Visual rules:
-- Roads should be visible but not dominate.
-- Charger markers should be recognizable.
-- Selected marker must clearly stand out.
-- Dense areas should use native map layers or clustering.
-- Avoid rendering thousands of arbitrary React markers.
-- Provide meaningful zoom-dependent information.
-
-Marker states:
-- Available.
-- Occupied.
-- Unavailable.
-- Unknown or stale.
-- Selected.
-
-Unknown is not the same as unavailable.
-
-Always provide a legend or understandable status explanation.
-
-## 8. Operator dashboard
-
-The operator dashboard is desktop-first.
-
-Design direction:
-Professional geospatial intelligence console.
-
-Primary layout:
-- Large city map.
-- Network summary.
-- Problem list.
-- Station detail panel.
-- Time filters.
-- Evidence and suggested actions.
-
-Avoid building a dashboard with dozens of unrelated charts.
-
-Every chart must answer a specific operational question.
-
-Examples:
-- Where is congestion?
-- Is suitable spare capacity nearby?
-- Is the pattern recurring?
-- Is reliability reducing usable capacity?
-- What action could help?
-
-## 9. Motion and animation
-
-Use animation to explain state changes and guide attention.
-
-Examples:
-- Bottom-sheet expansion.
-- Selecting a station.
-- Opening recommendations.
-- Updating a route.
-- Switching between alternative stations.
-- Revealing network imbalance.
-
-Suggested motion durations:
-- Small interactions: 120–180 ms.
-- Panels/transitions: 180–280 ms.
-- Larger map transitions: appropriate to distance.
-
-These are initial guidelines, not strict constants.
-
-Avoid:
-- Unnecessary glowing effects.
-- Continuous animations that distract.
-- Layout shifts.
-- Heavy effects on every map marker.
-
-Respect reduced-motion preferences.
-
-## 10. Platform consistency
-
-Web and native must share:
-- Design tokens.
-- Product terminology.
-- Domain logic.
-- Recommendation content.
-- Main user flow.
-
-Platform-specific differences are allowed:
-- Map renderer.
-- Navigation controls.
-- Gestures.
-- Permissions.
-- Native device integrations.
-
-Aim for the same quality and behavior,
-not necessarily pixel-identical rendering.
-
-## 11. Responsive behavior
-
-Mobile:
-- Full-screen map.
-- Bottom sheet.
-- Thumb-friendly controls.
-- Minimal text.
-
-Tablet:
-- Map with expanded information panel.
-
-Desktop web:
-- Map plus persistent detail panel.
-- Suitable keyboard and pointer interactions.
-
-Operator view:
-- Prioritize desktop.
-- Mobile access is optional.
-
-## 12. Accessibility
-
-Required:
-- Readable contrast.
-- Meaningful button labels.
-- Screen-reader support where practical.
-- Keyboard navigation for web.
-- Visible focus indicators.
-- Text scaling.
-- Reduced-motion support.
-- Status icons plus text.
-
-Do not rely solely on red/green to communicate availability.
-
-## 13. States every screen must handle
-
-- Loading.
-- Success.
-- Empty result.
-- No compatible chargers.
-- No location permission.
-- Offline.
-- Stale data.
-- External API failure.
-- Unknown price.
-- Insufficient history.
-- Simulated demo scenario.
-
-Do not show fabricated information to fill empty states.
-
-## 14. Localization
-
-English is the initial development language.
-
-Prepare strings for localization.
-
-Lithuanian is a priority for public use in Vilnius.
-
-Avoid hardcoded user-visible text inside domain logic.
-
-Use appropriate local formats for:
-- Time.
-- Distance.
-- Currency.
-- Dates.
-
-## 15. Performance principles
-
-- Keep map interactions smooth.
-- Cluster markers where appropriate.
-- Use map-native symbol and circle layers.
-- Avoid unnecessary rerenders.
-- Cache suitable static information.
-- Lazy-load expensive screens.
-- Limit simultaneous route calculations.
-- Test on a real midrange Android phone.
-
-## 16. Design review checklist
-
-Before accepting a UI task:
-
-- Is the primary action obvious?
-- Can a new user understand the screen?
-- Are numbers backed by data?
-- Is source freshness visible?
-- Does the browser version work?
-- Does the Android version work?
-- Are loading and error states handled?
-- Is the map smooth?
-- Is the UI readable outdoors?
-- Does the design look consistent with Grow EV?
-
-## 17. Golden rule
-
-Grow EV should make a complicated charging decision
-feel simple without hiding important uncertainty.
+These inform Grow EV's own visual language; no brand interface or component library was copied.

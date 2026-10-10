@@ -1,0 +1,265 @@
+{
+  "kind": "recorded-historical-evidence",
+  "source": "TASK-008 saved actual DEV observations and TomTom estimates; TASK-009 saved capacity records",
+  "checkedAt": "2026-10-10T01:14:00.924Z",
+  "standard": "IEC_62196_T2_COMBO",
+  "selected": {
+    "station": {
+      "city": "Vilnius",
+      "name": "Norfa XXL Ateities g. 10, Vilnius",
+      "address": "10 Ateities g.",
+      "latitude": 54.7377663,
+      "longitude": 25.2701118,
+      "location_id": "14f4a10e-b1a2-4c44-8eda-e2793e95f426",
+      "max_power_kw": 47,
+      "operator_name": "Enefit, UAB",
+      "connector_types": [
+        "IEC_62196_T2",
+        "IEC_62196_T2_COMBO"
+      ],
+      "last_observed_at": "2026-10-10T00:46:01.044+00:00",
+      "total_evse_count": 4,
+      "unknown_evse_count": 0,
+      "charging_evse_count": 3,
+      "available_evse_count": 1,
+      "unavailable_evse_count": 0
+    },
+    "evses": [
+      {
+        "id": "079d3727-d0ac-4fa7-b05c-e2027f11c0c1",
+        "status": "AVAILABLE",
+        "observed_at": "2026-10-10T00:46:01.044+00:00",
+        "connector_standards": [
+          "IEC_62196_T2"
+        ]
+      },
+      {
+        "id": "1fd04980-165f-41c0-852b-05763e997792",
+        "status": "CHARGING",
+        "observed_at": "2026-10-10T00:46:01.044+00:00",
+        "connector_standards": [
+          "IEC_62196_T2"
+        ]
+      },
+      {
+        "id": "db8258c1-5916-428b-ac74-eb834c577066",
+        "status": "CHARGING",
+        "observed_at": "2026-10-10T00:46:01.044+00:00",
+        "connector_standards": [
+          "IEC_62196_T2_COMBO"
+        ]
+      },
+      {
+        "id": "f9f55d5e-7803-4cfb-9dd3-f1a74d054606",
+        "status": "CHARGING",
+        "observed_at": "2026-10-10T00:46:01.044+00:00",
+        "connector_standards": [
+          "IEC_62196_T2_COMBO"
+        ]
+      }
+    ]
+  },
+  "recommendations": [
+    {
+      "evidence": {
+        "station": {
+          "city": "Vilnius",
+          "name": "Rimi Jeruzalė",
+          "address": "Jeruzalės g. 2, Vilnius, Lithuania",
+          "latitude": 54.740739,
+          "longitude": 25.275899,
+          "location_id": "35a520e3-7ee0-4782-ab34-093b563a829b",
+          "max_power_kw": 60,
+          "operator_name": "Ignitis, UAB",
+          "connector_types": [
+            "IEC_62196_T2_COMBO"
+          ],
+          "last_observed_at": "2026-10-10T00:46:01.044+00:00",
+          "total_evse_count": 2,
+          "unknown_evse_count": 0,
+          "charging_evse_count": 0,
+          "available_evse_count": 2,
+          "unavailable_evse_count": 0
+        },
+        "evses": [
+          {
+            "id": "a396e5f4-5799-4659-b282-a0f512ad8b56",
+            "status": "AVAILABLE",
+            "observed_at": "2026-10-10T00:46:01.044+00:00",
+            "connector_standards": [
+              "IEC_62196_T2_COMBO"
+            ]
+          },
+          {
+            "id": "ab371c44-ecc5-490d-8913-e3860a81cd57",
+            "status": "AVAILABLE",
+            "observed_at": "2026-10-10T00:46:01.044+00:00",
+            "connector_standards": [
+              "IEC_62196_T2_COMBO"
+            ]
+          }
+        ]
+      },
+      "available": 2,
+      "distanceKm": 0.4972650030111676,
+      "route": {
+        "origin": {
+          "lat": 54.7377663,
+          "lng": 25.2701118
+        },
+        "destination": {
+          "lat": 54.740739,
+          "lng": 25.275899
+        },
+        "drivingDurationSeconds": 163,
+        "roadDistanceMeters": 744,
+        "trafficAware": true,
+        "provider": "tomtom",
+        "calculatedAt": "2026-10-10T01:14:00.728Z"
+      }
+    },
+    {
+      "evidence": {
+        "station": {
+          "city": "Vilnius",
+          "name": "Jeruzalė",
+          "address": "Jeruzalės g. 4",
+          "latitude": 54.740434,
+          "longitude": 25.275811,
+          "location_id": "9856ab89-209c-4345-9944-c93907721408",
+          "max_power_kw": 150,
+          "operator_name": "Eleport, UAB ",
+          "connector_types": [
+            "IEC_62196_T2",
+            "IEC_62196_T2_COMBO"
+          ],
+          "last_observed_at": "2026-10-10T00:46:04.628+00:00",
+          "total_evse_count": 4,
+          "unknown_evse_count": 0,
+          "charging_evse_count": 1,
+          "available_evse_count": 3,
+          "unavailable_evse_count": 0
+        },
+        "evses": [
+          {
+            "id": "2e455d8d-c20a-466e-a68b-dd0ba3aab354",
+            "status": "AVAILABLE",
+            "observed_at": "2026-10-10T00:46:04.628+00:00",
+            "connector_standards": [
+              "IEC_62196_T2"
+            ]
+          },
+          {
+            "id": "3d1fb6a9-a693-48d1-86a9-6118dd767b97",
+            "status": "AVAILABLE",
+            "observed_at": "2026-10-10T00:46:04.628+00:00",
+            "connector_standards": [
+              "IEC_62196_T2_COMBO"
+            ]
+          },
+          {
+            "id": "48818696-d5da-41ee-a7da-d96dd235a6e6",
+            "status": "AVAILABLE",
+            "observed_at": "2026-10-10T00:46:04.628+00:00",
+            "connector_standards": [
+              "IEC_62196_T2_COMBO"
+            ]
+          },
+          {
+            "id": "9154060a-4e8a-4d63-a9f3-35c8c2d53527",
+            "status": "CHARGING",
+            "observed_at": "2026-10-10T00:46:04.628+00:00",
+            "connector_standards": [
+              "IEC_62196_T2"
+            ]
+          }
+        ]
+      },
+      "available": 2,
+      "distanceKm": 0.4709964016791408,
+      "route": {
+        "origin": {
+          "lat": 54.7377663,
+          "lng": 25.2701118
+        },
+        "destination": {
+          "lat": 54.740434,
+          "lng": 25.275811
+        },
+        "drivingDurationSeconds": 173,
+        "roadDistanceMeters": 537,
+        "trafficAware": true,
+        "provider": "tomtom",
+        "calculatedAt": "2026-10-10T01:14:00.728Z"
+      }
+    },
+    {
+      "evidence": {
+        "station": {
+          "city": "Vilnius",
+          "name": "Baltupių turgus",
+          "address": "Didlaukio g. 80, 08321 Vilnius, Lithuania",
+          "latitude": 54.729457,
+          "longitude": 25.270717,
+          "location_id": "3343cb58-48f8-4fe7-98cd-2047ab368898",
+          "max_power_kw": 45,
+          "operator_name": "Ignitis, UAB",
+          "connector_types": [
+            "CHADEMO",
+            "IEC_62196_T2",
+            "IEC_62196_T2_COMBO"
+          ],
+          "last_observed_at": "2026-10-10T00:46:01.044+00:00",
+          "total_evse_count": 3,
+          "unknown_evse_count": 0,
+          "charging_evse_count": 0,
+          "available_evse_count": 3,
+          "unavailable_evse_count": 0
+        },
+        "evses": [
+          {
+            "id": "6b40bd01-2f6f-49ec-99ad-593d3b4a5a64",
+            "status": "AVAILABLE",
+            "observed_at": "2026-10-10T00:46:01.044+00:00",
+            "connector_standards": [
+              "IEC_62196_T2"
+            ]
+          },
+          {
+            "id": "7de7f462-943b-4697-b4be-5867a4238e60",
+            "status": "AVAILABLE",
+            "observed_at": "2026-10-10T00:46:01.044+00:00",
+            "connector_standards": [
+              "IEC_62196_T2_COMBO"
+            ]
+          },
+          {
+            "id": "e8b0cc3c-409f-4b9b-a22b-3b35365fad68",
+            "status": "AVAILABLE",
+            "observed_at": "2026-10-10T00:46:01.044+00:00",
+            "connector_standards": [
+              "CHADEMO"
+            ]
+          }
+        ]
+      },
+      "available": 1,
+      "distanceKm": 0.9247698976904505,
+      "route": {
+        "origin": {
+          "lat": 54.7377663,
+          "lng": 25.2701118
+        },
+        "destination": {
+          "lat": 54.729457,
+          "lng": 25.270717
+        },
+        "drivingDurationSeconds": 293,
+        "roadDistanceMeters": 1621,
+        "trafficAware": true,
+        "provider": "tomtom",
+        "calculatedAt": "2026-10-10T01:14:00.737Z"
+      }
+    }
+  ]
+}

@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { Coordinates, RouteOutcome } from '../../../../../packages/routing';
 import type { Alternative, ConnectorStandard, StationEvidence } from './congestion';
 import { fetchDrivingRoutes, routingCandidates, RoutingClientError } from './routingApi';
 import { recommendAlternatives } from './recommendations';
-import { colors, radii, spacing } from './tokens';
+import { ChargingRecommendationCard } from '../experience/ChargingRecommendationCard';
+import { ActionButton } from '../../components/CalmUI';
+import { CONNECTOR_OPTIONS } from './congestion';
+import { colors, spacing } from './tokens';
 import type { MapStation } from './types';
 
 /** Explicit shortlist comparison: map pan/zoom and clock ticks never request routes. */
@@ -16,6 +19,7 @@ export function AlternativeRouting({ target, alternatives, standard, now, onSele
   const { origin, destinations } = routingCandidates(station, alternatives, userOrigin);
   const key = JSON.stringify([station.location_id, standard, userOrigin === undefined ? 'selected-charger' : 'user-origin', origin, alternatives.map((a) => a.evidence.station.location_id), destinations]);
   const [state, setState] = useState<{ key: string; loading: boolean; receivedAt?: number; results?: RouteOutcome[]; failure?: string; retryAt?: number } | null>(null);
+  const [showAlternatives, setShowAlternatives] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
   useEffect(() => () => { controllerRef.current?.abort(); controllerRef.current = null; }, [key]);
   const current = state?.key === key ? state : null;
@@ -49,29 +53,20 @@ export function AlternativeRouting({ target, alternatives, standard, now, onSele
     <Text style={styles.muted}>{recommendation.rankingBasis === 'driving-time' ?
       'Shortest estimated drive first among these nearby options.' :
       'Nearest first by straight-line distance from the selected charger. Comparable driving times are incomplete.'}</Text>
-    <Pressable accessibilityRole="button" disabled={Boolean(current?.loading || fresh || coolingDown)} onPress={compare} style={{ minHeight: 48, justifyContent: 'center' }}>
-      <Text style={{ color: colors.accent }}>{current?.loading ? 'Checking driving times…' : fresh ? 'Driving comparison up to date' : coolingDown ? 'Routing rate limited · try later' : 'Compare driving times'}</Text>
-    </Pressable>
+    <ActionButton secondary label={current?.loading ? 'Checking driving times…' : fresh ? 'Driving comparison up to date' : coolingDown ? 'Routing rate limited · try later' : 'Compare driving times'} disabled={Boolean(current?.loading || fresh || coolingDown)} onPress={() => { void compare(); }} />
     {current?.failure ? <Text accessibilityRole="alert" style={{ color: colors.warning }}>{current.failure}</Text> : null}
-    {recommendation.recommendations.map((a, index) => <Pressable key={a.evidence.station.location_id}
-      accessibilityRole="button" accessibilityLabel={`Select ${a.evidence.station.name ?? a.evidence.station.address ?? 'alternative station'}`}
-      onPress={() => onSelect(a.evidence.station)} style={[styles.card, index === 0 && styles.primary]}>
-      <Text style={[styles.label, index === 0 && { color: colors.accent }]}>{index === 0 ? 'Recommended' : `Alternative ${index}`}</Text>
-      <Text style={styles.name}>{a.evidence.station.name ?? a.evidence.station.address ?? 'Charging station'}</Text>
-      <Text style={styles.muted}>{a.evidence.station.operator_name ?? 'Operator not reported'}</Text>
-      {a.reasons.map((reason) => <Text key={reason} style={styles.muted}>{reason}</Text>)}
-      {a.route ? <Text style={styles.muted}>TomTom · {a.route.trafficAware ? 'traffic-aware estimate' : 'estimate without traffic'} · calculated {new Date(a.route.calculatedAt).toLocaleTimeString()}</Text> : null}
-      <Text style={styles.muted}>Oldest available observation: {new Date(a.capacity.observedAt!).toLocaleString()}</Text>
-      <Text style={styles.label}>Select station →</Text>
-    </Pressable>)}
+    {recommendation.recommendations.slice(0, showAlternatives ? 3 : 1).map((a, index) => <ChargingRecommendationCard key={a.evidence.station.location_id}
+      station={a.evidence.station} available={a.capacity.available}
+      connector={CONNECTOR_OPTIONS.find((option) => option.value === standard)!.label}
+      route={a.route} distanceKm={a.distanceKm} origin={userOrigin ? 'your foreground location' : station.name ?? station.address ?? 'the selected station'}
+      observedAt={a.capacity.observedAt!} primary={index === 0}
+      reason={a.reasons.slice(0, 2).join(' ') + (a.capacity.stale || a.capacity.unknown ? ' ' + a.reasons[4] : '')}
+      onSelect={() => onSelect(a.evidence.station)} />)}
+    {recommendation.recommendations.length > 1 ? <ActionButton secondary label={showAlternatives ? 'Show recommended option' : 'Compare alternatives'} onPress={() => setShowAlternatives((value) => !value)} /> : null}
     <Text style={styles.muted}>Observed availability can change before arrival.</Text>
   </View>;
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.elevated, borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, borderWidth: 1, borderColor: colors.overlayBorder },
-  primary: { borderColor: colors.accent },
-  label: { color: colors.textSecondary, fontSize: 13, lineHeight: 20, fontWeight: '600' },
-  name: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
   muted: { color: colors.textSecondary, fontSize: 13, lineHeight: 19 },
 });

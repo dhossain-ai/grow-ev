@@ -57,7 +57,7 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
               onPress={() => toggleConnector(opt.value)}
               style={[styles.chip, active && styles.chipActive]}
               accessibilityRole="button"
-              accessibilityState={{ selected: active }}
+              accessibilityState={{ selected: active }} aria-pressed={active}
               accessibilityLabel={`Filter ${opt.label}`}
             >
               <Text style={[styles.chipText, active && styles.chipTextActive]}>
@@ -70,7 +70,7 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
           <Text style={styles.chipText}>{activePower ? activePower + '+ kW ●' : 'Power ▾'}</Text>
         </Pressable>
       </ScrollView>
-      {powerOpen ? <View style={styles.row}>
+      {powerOpen ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {POWER_OPTIONS.map((opt) => {
           const active = activePower === opt.value;
           return (
@@ -79,7 +79,7 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
               onPress={() => setPower(opt.value)}
               style={[styles.chip, active && styles.chipActive]}
               accessibilityRole="button"
-              accessibilityState={{ selected: active }}
+              accessibilityState={{ selected: active }} aria-pressed={active}
               accessibilityLabel={`Filter ${opt.label}`}
             >
               <Text style={[styles.chipText, active && styles.chipTextActive]}>
@@ -88,7 +88,7 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
             </Pressable>
           );
         })}
-      </View> : null}
+      </ScrollView> : null}
       {activeConnectors.length || activePower ? <Pressable accessibilityRole="button" accessibilityLabel="Clear filters" onPress={() => onFiltersChange({})} style={{ minHeight: 44, justifyContent: 'center' }}>
         <Text style={styles.chipText}>{activeConnectors.length + (activePower ? 1 : 0)} active filters · Clear</Text>
       </Pressable> : null}
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: colors.overlayBorder,
   },
   chipActive: {
     backgroundColor: colors.elevated,
@@ -130,6 +130,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   chipTextActive: {
-    color: colors.accent,
+    color: colors.accentInk,
   },
 });

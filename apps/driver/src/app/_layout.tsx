@@ -10,7 +10,7 @@ export default function RootLayout() {
     <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: colors.main }}>
       <AppNavigation />
       <View style={{ flex: 1 }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.main } }} /></View>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
     </SafeAreaView>
   );
 }

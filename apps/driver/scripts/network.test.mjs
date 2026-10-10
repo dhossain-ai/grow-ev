@@ -159,7 +159,7 @@ const render = (records, width = 1280, loading = false, error = null) => {
   return renderToStaticMarkup(React.createElement(NetworkDashboard));
 };
 test('dashboard renders loading, error and empty states with an explicit refresh action', () => {
-  assert.match(render([], 1280, true), /Loading sanitized station evidence/);
+  assert.match(render([], 1280, true), /Loading network observations/);
   assert.match(render([], 1280, false, 'Read failed'), /Read failed/);
   assert.match(render([]), /No compatible observations/);
   assert.match(render([]), /No CCS2 evidence/);

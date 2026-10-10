@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: stability committed; TASK-009 implemented locally, visual review pending
+Phase: TASK-009 checkpoint committed; TASK-010 local redesign awaiting visual review
 
 ## Verified foundation
 
@@ -19,7 +19,7 @@ Phase: stability committed; TASK-009 implemented locally, visual review pending
   bounded 30-second cache and cooldown handling reviewed; 41 tests/local checks
   passed. Modified Edge Function **not deployed** and still requires explicit
   deployment approval. Android Fabric SIGSEGV remains unresolved.
-- TASK-009 implemented locally and **uncommitted**: Driver / Network
+- TASK-009 provisionally checkpointed as `ca6ca98` (visual acceptance incomplete): Driver / Network
   navigation, foreground-only explicit user location, polished map controls and
   expandable station details, responsive read-only dashboard, connector-scoped distinct EVSE
   metrics, observation freshness and cross-operator compatible capacity pairs.
@@ -98,6 +98,19 @@ Phase: stability committed; TASK-009 implemented locally, visual review pending
   distributed/global budget enforcement is not established.
 - TomTom secrets stay server-side. Edge budgets are per isolate; distributed
   spending/abuse controls remain necessary before public deployment.
+
+## TASK-010 local redesign — 2026-10-10
+
+Light Calm Electric driver assistant, consistent connector selection, explicit station
+choice, recommendation hero, progressive station information and separately labeled
+recorded Norfa/Rimi case. Network Intelligence is secondary navigation with light
+paired opportunity cards; underlying calculations and coverage remain unchanged.
+TASK-010 remains uncommitted. Existing backend, routing contracts and location safety
+are preserved; no collector, TomTom requests, migrations or deployments.
+
+Final checks and screenshot review are recorded in `tasks/active/TASK-010.md` and
+`artifacts/task-010/README.md`. User visual acceptance, fresh live recommendation
+interaction, physical devices and Android startup reliability remain unverified.
 
 ## Latest local verification
 
@@ -207,9 +220,8 @@ Expo SDK 57. Installing expo-location reported the same 29 advisories; upstream 
 
 ## Next
 
-Review uncommitted TASK-009 screenshots from Chrome desktop/mobile and Pixel_8.
-User visual acceptance remains pending. Android Fabric startup reliability
-remains unresolved. Fresh balancing evidence needs a separately approved collector
-refresh; one-poll approval is consumed. Modified routing Edge Function requires
-explicit deployment approval. Nothing deployed in this task. Stop for review;
-do not start another task automatically.
+Review TASK-010 screenshots and uncommitted implementation. TASK-009 checkpoint is
+`ca6ca98`; its visual acceptance was incomplete. Do not commit TASK-010 until reviewed.
+Fresh observations require separately approved collection; provider comparison needs
+quota availability. Existing modified routing Edge Function remains undeployed, and
+Android Fabric startup reliability remains unresolved. Stop for review.

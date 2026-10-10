@@ -1,6 +1,6 @@
 # TASK-009 — Network overview, UI polish and foreground location
 
-Status: Implemented locally, uncommitted; awaiting review and interactive visual acceptance.
+Status: Provisional checkpoint `ca6ca98`; visual acceptance incomplete. TASK-010 supersedes the presentation.
 Date: 2026-10-10
 Prerequisite: routing stability checkpoint `968c567`, separate from TASK-008 `437efee`.
 
@@ -148,5 +148,5 @@ by using the authorized Chrome preview, without a security bypass.
 - `scripts/location.test.mjs`: fix/request/lifecycle regression coverage.
 - `docs/STATUS.md`, `PRODUCT.md`, `INTELLIGENCE.md`: actual implementation and limits.
 
-Not committed or deployed. Modified stability Edge Function still requires
+Provisionally checkpointed as `ca6ca98` for TASK-010; no deployment. Modified stability Edge Function still requires
 explicit deployment approval. Stop for user visual review of the captured Android/mobile/desktop UI.

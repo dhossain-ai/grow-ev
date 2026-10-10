@@ -9,6 +9,7 @@ import type { Coordinates } from '../../../../../packages/routing';
 import type { MapStation } from './types';
 import { formatAge, formatConnector, formatPower, getAvailability, isStale } from './types';
 import { availabilityColors, availabilityLabels, colors, radii, spacing } from './tokens';
+import type { ConnectorStandard } from './congestion';
 import { CongestionDetail } from './CongestionDetail';
 
 interface StationDetailProps {
@@ -17,15 +18,19 @@ interface StationDetailProps {
   onSelect: (station: MapStation) => void;
   userOrigin?: Coordinates;
   expanded: boolean;
+  standard: ConnectorStandard;
+  onStandardChange: (value: ConnectorStandard) => void;
+  onCase: () => void;
   onToggleExpanded: () => void;
 }
 
-export function StationDetail({ station, onClose, onSelect, userOrigin, expanded, onToggleExpanded }: StationDetailProps) {
+export function StationDetail({ station, onClose, onSelect, userOrigin, expanded, onToggleExpanded, standard, onStandardChange, onCase }: StationDetailProps) {
   const [routeFromUser, setRouteFromUser] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const availability = getAvailability(station);
   const stale = isStale(station);
   const occupiedCount = station.charging_evse_count;
-  const displayName = station.name ?? station.address ?? 'Charging Station';
+  const displayName = station.address && /^[A-Z0-9_-]{12,}$/.test(station.name ?? '') ? station.address : station.name ?? station.address ?? 'Charging Station';
   const connectors = station.connector_types ?? [];
 
   return (
@@ -53,7 +58,7 @@ export function StationDetail({ station, onClose, onSelect, userOrigin, expanded
         </Pressable>
       </View>
 
-      <Text style={styles.summary}>{stale ? 'Current availability unverified' : availabilityLabels[availability]} · {formatPower(station.max_power_kw)}</Text>
+      <Text style={styles.summary}>{stale ? 'Current availability unverified' : availabilityLabels[availability]} · Site max {formatPower(station.max_power_kw)}</Text>
       {expanded ? <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -64,7 +69,11 @@ export function StationDetail({ station, onClose, onSelect, userOrigin, expanded
           </Pressable>
           <Text style={styles.muted}>{routeFromUser ? 'Your foreground position is sent only when you explicitly compare road routes.' : 'Routes start at the selected charger.'}</Text>
         </View> : null}
-        <CongestionDetail station={station} onSelect={onSelect} userOrigin={routeFromUser ? userOrigin : undefined} />
+        <CongestionDetail station={station} onSelect={onSelect} userOrigin={routeFromUser ? userOrigin : undefined} standard={standard} onStandardChange={onStandardChange} onCase={onCase} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Station information" accessibilityState={{ expanded: showInfo }} onPress={() => setShowInfo((value) => !value)} style={styles.infoButton}>
+          <Text style={styles.sectionValue}>{showInfo ? 'Hide station information −' : 'Station information +'}</Text>
+        </Pressable>
+        {showInfo ? <View>
         {/* Availability summary */}
         <View style={styles.availabilityRow}>
           <View
@@ -136,6 +145,7 @@ export function StationDetail({ station, onClose, onSelect, userOrigin, expanded
             <Text style={styles.muted}>{new Date(station.last_observed_at).toLocaleString()}</Text>
           ) : null}
         </View>
+        </View> : null}
       </ScrollView> : null}
     </View>
   );
@@ -152,6 +162,7 @@ function EvseRow({ label, count, color }: { label: string; count: number; color:
 }
 
 const styles = StyleSheet.create({
+  infoButton: { minHeight: 48, justifyContent: 'center', borderTopWidth: 1, borderColor: colors.overlayBorder, marginTop: 12 },
   handleLabel: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
   handleButton: { height: 44, alignItems: 'center', justifyContent: 'center' },
   handle: { height: 4, width: 44, borderRadius: 4, backgroundColor: colors.textSecondary },
@@ -167,11 +178,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingHorizontal: spacing.base,
+    paddingHorizontal: 20,
     paddingTop: spacing.base,
     paddingBottom: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: colors.overlayBorder,
   },
   headerText: {
     flex: 1,
@@ -179,9 +190,9 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.textPrimary,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    lineHeight: 24,
+    lineHeight: 26,
   },
   operator: {
     color: colors.textSecondary,
@@ -189,7 +200,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   closeButton: {
-    width: 36,
+    width: 48,
     height: 44,
     borderRadius: radii.full,
     backgroundColor: colors.elevated,

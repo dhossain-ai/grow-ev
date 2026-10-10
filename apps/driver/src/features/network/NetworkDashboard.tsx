@@ -10,7 +10,7 @@ const timestamp = (value: number | string | null) => value === null ? 'Not repor
     hour: '2-digit', minute: '2-digit', second: '2-digit' });
 const stationName = (pair: NetworkPair, source: boolean) => {
   const station = (source ? pair.source : pair.alternative).station;
-  return station.name ?? station.address ?? 'Unnamed location';
+  return station.address && /^[A-Z0-9_-]{12,}$/.test(station.name ?? '') ? station.address : station.name ?? station.address ?? 'Unnamed location';
 };
 
 export function NetworkDashboard() {
@@ -54,10 +54,10 @@ export function NetworkDashboard() {
   return <ScrollView style={styles.screen} contentContainerStyle={styles.scroll}>
     <View style={styles.content}>
       <View style={styles.header}>
-        <View style={{ flex: 1, minWidth: 220, gap: spacing.sm }}>
+        <View style={{ flex: 1, minWidth: 0, gap: spacing.sm }}>
           <Text style={styles.eyebrow}>VILNIUS · NETWORK INTELLIGENCE</Text>
-          <Text accessibilityRole="header" style={[styles.title, !wide && { fontSize: 28, lineHeight: 34 }]}>Occupied here. Capacity nearby.</Text>
-          <Text style={styles.body}>See where compatible spare capacity could balance an occupied location.</Text>
+          <Text accessibilityRole="header" style={[styles.title, !wide && { fontSize: 28, lineHeight: 34 }]}>Make better use of the charging capacity Vilnius already has.</Text>
+          <Text style={styles.body}>Connect observed congestion to suitable spare capacity across charging networks.</Text>
         </View>
         <Pressable accessibilityRole="button" disabled={loading} onPress={() => {
           setLoading(true); setError(null); setData(null); setRefresh((value) => value + 1);
@@ -68,14 +68,14 @@ export function NetworkDashboard() {
       <View style={styles.filters}>
         <Text style={styles.body}>Connector</Text>
         {CONNECTOR_OPTIONS.map((option) => <Pressable key={option.value} accessibilityRole="button"
-          accessibilityState={{ selected: standard === option.value }}
+          accessibilityState={{ selected: standard === option.value }} aria-pressed={standard === option.value}
           onPress={() => { setStandard(option.value); setNow(Date.now()); }}
           style={[styles.chip, standard === option.value && styles.selectedChip]}>
-          <Text style={[styles.body, standard === option.value && { color: colors.accent }]}>{option.label}</Text>
+          <Text style={[styles.body, standard === option.value && { color: colors.accentInk }]}>{option.label}</Text>
         </Pressable>)}
         <Text style={styles.caption}>One EVSE counted once, even with multiple connectors.</Text>
       </View>
-      {loading ? <View style={styles.panel}><Text style={styles.body}>Loading sanitized station evidence…</Text></View> :
+      {loading ? <View style={styles.panel}><Text style={styles.body}>Loading network observations…</Text></View> :
         error ? <View style={styles.panel}><Text accessibilityRole="alert" style={styles.warning}>{error}</Text></View> : <>
           <View style={[styles.panel, { borderColor: overview.stale ? colors.warning : colors.overlayBorder }]}>
             <Text style={overview.stale ? styles.warning : styles.positive}>
@@ -89,10 +89,10 @@ export function NetworkDashboard() {
           {overview.evses === 0 ? <View style={styles.panel}><Text style={styles.sectionTitle}>No {connector} evidence</Text>
             <Text style={styles.body}>Choose another connector or reload saved observations. No capacity is inferred for missing records.</Text></View> :
             <View style={[styles.columns, wide && { flexDirection: 'row' }]}>
-              <View style={[styles.panel, { flex: wide ? 2 : undefined, borderColor: featured ? colors.accent : colors.overlayBorder }]}>
+              <View style={[styles.panel, { flex: wide ? 2 : undefined, borderColor: featured ? colors.overlayBorder : colors.overlayBorder }]}>
                 <Text style={styles.eyebrow}>{historical ? 'DATED SNAPSHOT PATTERN · NOT CURRENT AVAILABILITY' : 'COMPATIBLE CAPACITY OPPORTUNITIES'}</Text>
                 <Text accessibilityRole="header" style={styles.sectionTitle}>{featured ? featured.crossOperator ?
-                  'A full location. Spare capacity at another operator.' : 'A full location. Spare capacity nearby.' : 'No fresh balancing pair confirmed'}</Text>
+                  'Occupied here. Capacity at another operator.' : 'A full location. Spare capacity nearby.' : 'No fresh balancing pair confirmed'}</Text>
                 {featured ? <>
                   <PairCard pair={featured} connector={connector} wide={wide} />
                   <Text style={styles.body}>At the evaluated snapshot, {stationName(featured, true)} had no available {connector} EVSEs
@@ -100,7 +100,7 @@ export function NetworkDashboard() {
                     {' '}{featured.available} compatible AVAILABLE EVSEs{featured.crossOperator ? ' at a different reported operator' : ''}.</Text>
                   <Text style={styles.caption}>Evaluated {timestamp(featured.evaluatedAt)} Europe/Vilnius.
                     {' '}{historical ? 'Historical evidence illustrates the pattern; refresh source observations before acting.' : 'Availability may change before arrival.'}
-                    {' '}Geographic proximity does not establish road reachability. Driving time unavailable; this dashboard requests no routes.</Text>
+                    {' '}Straight-line proximity; driving time unavailable.</Text>
                 </> : <Text style={styles.body}>Congestion needs fresh compatible evidence. UNKNOWN, outages and stale observations cannot confirm current saturation or spare capacity.</Text>}
               </View>
               <View style={[styles.panel, { flex: wide ? 1 : undefined }]}>
@@ -111,7 +111,7 @@ export function NetworkDashboard() {
                 <Text style={styles.body}>{overview.operators} reported operator names in this connector selection.</Text>
                 <View style={styles.divider} />
                 <Text style={styles.body}>Grow EV links observed pressure to compatible nearby capacity across networks.</Text>
-                <Text style={styles.caption}>Pairs are candidate choices, not additive capacity or measured redistribution. No queues, waiting drivers, energy use or revenue inferred.</Text>
+                <Text style={styles.caption}>Each pair is an option to explore. It does not measure drivers moved or waiting time saved.</Text>
               </View>
             </View>}
           <Text style={styles.eyebrow}>LAST OBSERVED STATUS · {connector.toUpperCase()} EVSES</Text>
@@ -136,7 +136,7 @@ export function NetworkDashboard() {
             <Text style={styles.body}>{data?.records.length ?? 0} locations with detailed EVSE evidence. The map query returned {data?.mappedLocations ?? 0} location records in the area.</Text>
             <Text style={styles.caption}>Vilnius study window: 54.64–54.76° N, 25.20–25.36° E, intersected with the existing 10.1 km evidence radius around
               {' '}{data?.anchor?.name ?? data?.anchor?.address ?? 'the selected central location'}. Connector selection applies to all counts and pairs.</Text>
-            <Text style={styles.caption}>Via Lietuva observations · sanitized read-only APIs. This is fetched coverage, not a complete city or nationwide census. Reported operator names do not establish complete operator coverage.</Text>
+            <Text style={styles.caption}>Via Lietuva observations. This is fetched coverage, not a complete city or nationwide census. Reported operator names do not establish complete operator coverage.</Text>
           </View>
         </>}
     </View>
@@ -180,15 +180,15 @@ const styles = StyleSheet.create({
   buttonText: { color: colors.textPrimary, fontWeight: '600', fontSize: 14 },
   filters: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
   chip: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.overlayBorder, borderRadius: radii.full, paddingHorizontal: spacing.base, paddingVertical: spacing.md, minHeight: 44 },
-  selectedChip: { borderColor: colors.accent },
+  selectedChip: { borderColor: colors.accentInk, backgroundColor: colors.accentSoft },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   metric: { backgroundColor: colors.surface, borderRadius: radii.md, padding: spacing.base, gap: spacing.sm, flexGrow: 1 },
-  number: { color: colors.textPrimary, fontSize: 38, lineHeight: 46, fontWeight: '700' },
+  number: { color: colors.textPrimary, fontSize: 28, lineHeight: 36, fontWeight: '700' },
   panel: { backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: colors.overlayBorder, minWidth: 0 },
   columns: { gap: spacing.base },
   pair: { gap: spacing.base, marginVertical: spacing.sm },
   endpoint: { flex: 1, backgroundColor: colors.elevated, borderRadius: radii.md, padding: spacing.base, gap: spacing.sm, borderLeftWidth: 3, minWidth: 0 },
-  arrow: { color: colors.accent, fontSize: 32 },
+  arrow: { color: colors.accentInk, fontSize: 32 },
   divider: { height: 1, backgroundColor: colors.overlayBorder, marginVertical: spacing.sm },
   listRow: { borderTopWidth: 1, borderColor: colors.overlayBorder, paddingTop: spacing.md, gap: spacing.xs },
 });

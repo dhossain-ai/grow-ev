@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { Coordinates } from '../../../../../packages/routing';
 
 import { fetchStationCapacity } from './capacityApi';
 import { AlternativeRouting } from './AlternativeRouting';
-import { compatibleCapacity, CONNECTOR_OPTIONS, CONGESTION_EXPLANATIONS, findAlternatives,
+import { ConnectorSelector, ActionButton } from '../../components/CalmUI';
+import { compatibleCapacity, CONGESTION_EXPLANATIONS, findAlternatives,
   type ConnectorStandard, type StationEvidence } from './congestion';
-import { colors, radii, spacing } from './tokens';
+import { colors, spacing } from './tokens';
 import type { MapStation } from './types';
 
-interface Props { station: MapStation; onSelect: (station: MapStation) => void; userOrigin?: Coordinates }
+interface Props { station: MapStation; onSelect: (station: MapStation) => void; userOrigin?: Coordinates; standard: ConnectorStandard; onStandardChange: (value: ConnectorStandard) => void; onCase: () => void }
 
-export function CongestionDetail({ station, onSelect, userOrigin }: Props) {
-  const [standard, setStandard] = useState<ConnectorStandard>('IEC_62196_T2_COMBO');
+export function CongestionDetail({ station, onSelect, userOrigin, standard, onStandardChange, onCase }: Props) {
   const [result, setResult] = useState<{ id: string; retry: number; rows: StationEvidence[] } | null>(null);
   const [failure, setFailure] = useState<{ id: string; retry: number } | null>(null);
   const [retry, setRetry] = useState(0);
@@ -45,28 +45,20 @@ export function CongestionDetail({ station, onSelect, userOrigin }: Props) {
   const observationTimes = target?.evses.filter((e) => e.connector_standards.includes(standard))
     .map((e) => e.observed_at).sort((a, b) => Date.parse(a) - Date.parse(b)) ?? [];
   const observationRange = [...new Set([observationTimes[0], observationTimes[observationTimes.length - 1]])]
-    .filter((time): time is string => Boolean(time)).map((time) => new Date(time).toLocaleString()).join(' – ');
+    .filter((time): time is string => Boolean(time)).map((time) => new Date(time).toLocaleString('en-GB', { timeZone: 'Europe/Vilnius', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' Europe/Vilnius').join(' – ');
 
   return <View style={styles.container}>
-    <Text style={styles.title}>Your connector</Text>
-    <View style={styles.row}>
-      {CONNECTOR_OPTIONS.map((option) => <Pressable key={option.value}
-        accessibilityRole="button" accessibilityLabel={`Use ${option.label}`}
-        accessibilityState={{ selected: standard === option.value }}
-        onPress={() => setStandard(option.value)}
-        style={[styles.chip, standard === option.value && styles.selected]}>
-        <Text style={[styles.text, standard === option.value && styles.selectedText]}>{option.label}</Text>
-      </Pressable>)}
-    </View>
+    <Text style={styles.title}>Your charging need</Text>
+    <ConnectorSelector value={standard} onChange={onStandardChange} />
     {failed ? <>
       <Text accessibilityRole="alert" style={styles.muted}>Compatible capacity could not be checked. Please retry.</Text>
-      <Pressable accessibilityRole="button" onPress={() => setRetry((n) => n + 1)}><Text style={styles.action}>Retry capacity check</Text></Pressable>
+      <ActionButton secondary label="Retry capacity check" onPress={() => setRetry((n) => n + 1)} />
     </> : !capacity ? <Text style={styles.muted}>Checking compatible capacity…</Text> : <>
-      <Text style={styles.text}>{capacity.state === 'stale' || capacity.state === 'unknown' ? 'Current availability unverified' : `${capacity.available} compatible available EVSE${capacity.available === 1 ? '' : 's'} · fresh observations`}</Text>
-      <Text style={styles.muted}>{CONGESTION_EXPLANATIONS[capacity.state]}</Text>
+      <Text style={styles.text}>{capacity.state === 'stale' || capacity.state === 'unknown' ? 'Current availability unverified' : capacity.state === 'no-compatible' ? 'No matching connector here' : capacity.state === 'unavailable' ? 'Compatible chargers are unavailable' : `${capacity.available} compatible EVSE${capacity.available === 1 ? '' : 's'} observed available`}</Text>
+      <Text style={styles.muted}>{capacity.state === 'stale' ? 'The saved observations are dated. We can’t verify this connector’s availability right now.' : CONGESTION_EXPLANATIONS[capacity.state]}</Text>
+      {capacity.state === 'stale' ? <ActionButton secondary label="Explore the recorded case study" onPress={onCase} /> : null}
       {capacity.unknown > 0 ? <Text style={styles.muted}>{capacity.unknown} compatible EVSE status unknown.</Text> : null}
-      {capacity.stale > 0 ? <Text style={styles.warning}>{capacity.stale} compatible observations stale or invalid; excluded from availability.</Text> : null}
-      <Text style={styles.muted}>Compatible EVSEs observed: {observationRange || 'Not reported'}</Text>
+      <Text style={styles.muted}>Last observed · {observationRange || 'Not reported'}</Text>
       {capacity.state === 'congested' && target ? <>
         <Text style={styles.title}>Where to charge next</Text>
         <AlternativeRouting target={target} standard={standard} alternatives={alternatives} now={now} onSelect={onSelect} userOrigin={userOrigin} />
@@ -77,13 +69,7 @@ export function CongestionDetail({ station, onSelect, userOrigin }: Props) {
 
 const styles = StyleSheet.create({
   container: { paddingVertical: spacing.md, gap: spacing.sm },
-  row: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   title: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
   text: { color: colors.textPrimary, fontSize: 14 },
   muted: { color: colors.textSecondary, fontSize: 13, lineHeight: 19 },
-  warning: { color: colors.warning, fontSize: 13 },
-  action: { color: colors.accent, fontSize: 13, lineHeight: 20 },
-  chip: { backgroundColor: colors.elevated, borderRadius: radii.full, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, minHeight: 44, justifyContent: 'center' },
-  selected: { backgroundColor: colors.accent },
-  selectedText: { color: colors.accentForeground },
 });

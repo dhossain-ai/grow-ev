@@ -5,38 +5,45 @@
 
 export const colors = {
   // Background
-  main: '#101315',
-  surface: '#1B2023',
-  elevated: '#252C30',
+  main: '#F8FAF7',
+  surface: '#FFFFFF',
+  elevated: '#F0F4EF',
 
   // Text
-  textPrimary: '#F6F8F8',
-  textSecondary: '#A6B0B4',
-  textMuted: '#738087',
+  textPrimary: '#17211E',
+  textSecondary: '#52615A',
+  textMuted: '#607068',
 
   // Brand
   accent: '#C7F36B',
-  accentForeground: '#101315',
+  accentForeground: '#17211E',
+  accentSoft: '#F0F9E4',
+  accentInk: '#39551C',
+  markerAvailable: '#20B887',
+  markerOccupied: '#E8A23E',
+  markerUnavailable: '#E76E70',
+  locationHalo: 'rgba(50,141,255,0.16)',
+  shadow: 'rgba(23,33,30,0.10)',
 
   // Status - availability
-  available: '#39C891',
-  warning: '#F3B34C',
-  unavailable: '#EF6C73',
-  info: '#68B8EF',
-  location: '#2684FF',
+  available: '#13795B',
+  warning: '#8B590D',
+  unavailable: '#B23D47',
+  info: '#246CC0',
+  location: '#328DFF',
   white: '#FFFFFF',
-  cluster: '#354248',
+  cluster: '#FFFFFF',
 
   // Map overlay
-  overlayBackground: 'rgba(16, 19, 21, 0.92)',
-  overlayBorder: 'rgba(255, 255, 255, 0.08)',
+  overlayBackground: 'rgba(255,255,255,0.96)',
+  overlayBorder: '#E5EAE6',
 } as const;
 
 /** Map marker colors by availability category. */
 export const availabilityColors: Record<string, string> = {
-  available: colors.available,
-  occupied: colors.warning,
-  unavailable: colors.unavailable,
+  available: colors.markerAvailable,
+  occupied: colors.markerOccupied,
+  unavailable: colors.markerUnavailable,
   unknown: colors.textMuted,
 };
 
@@ -61,8 +68,11 @@ export const spacing = {
 
 /** Border radius values. */
 export const radii = {
-  sm: 6,
-  md: 10,
-  lg: 16,
+  sm: 12,
+  md: 18,
+  lg: 24,
   full: 9999,
 } as const;
+
+export const typography = { display: 30, section: 22, card: 20, body: 15, caption: 12 } as const;
+export const motion = { press: 120, selection: 160, card: 220, panel: 280 } as const;

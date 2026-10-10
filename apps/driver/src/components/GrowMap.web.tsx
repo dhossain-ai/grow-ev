@@ -3,7 +3,13 @@ import type { GeoJSONSource, MapMouseEvent } from 'maplibre-gl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
+import './calm.web.css';
+import { Pressable, Text, useWindowDimensions } from 'react-native';
 
+import capturedCase from '../features/experience/recordedCase.json';
+import { ExperiencePanel } from '../features/experience/ExperiencePanel';
+import { useReducedMotion } from './CalmUI';
+import type { ConnectorStandard } from '../features/map/congestion';
 import { useUserLocation } from '../features/location/useUserLocation';
 import { LocationControl } from '../features/location/LocationControl';
 import {
@@ -16,7 +22,6 @@ import {
 import {
   FilterBar,
   MapStatus,
-  StationDetail,
   useMapStations,
   availabilityColors,
   colors,
@@ -29,7 +34,7 @@ const STATIONS_SOURCE = 'stations';
 const CLUSTER_LAYER = 'station-clusters';
 const CLUSTER_COUNT_LAYER = 'cluster-count';
 const UNCLUSTERED_LAYER = 'unclustered-station';
-const UNCLUSTERED_GLOW_LAYER = 'unclustered-station-glow';
+const UNCLUSTERED_HALO_LAYER = 'unclustered-station-halo';
 
 export function GrowMap() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,6 +46,15 @@ export function GrowMap() {
   const [selectedStation, setSelectedStation] = useState<MapStation | null>(null);
   const location = useUserLocation();
   const [expanded, setExpanded] = useState(false);
+  const { width } = useWindowDimensions();
+  const wide = width >= 900;
+  const reduced = useReducedMotion();
+  const layoutRef = useRef({ wide, reduced });
+  useEffect(() => { layoutRef.current = { wide, reduced }; }, [wide, reduced]);
+  const [standard, setStandard] = useState<ConnectorStandard>('IEC_62196_T2_COMBO');
+  const [showCase, setShowCase] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [panelHeight, setPanelHeight] = useState(0);
   const [filters, setFilters] = useState<StationFilters>({});
   const { geojson, stations, loading, error, lastFetched, refresh } =
     useMapStations(bounds, filters);
@@ -101,7 +115,7 @@ export function GrowMap() {
           ],
           'circle-opacity': 0.85,
           'circle-stroke-width': 2,
-          'circle-stroke-color': 'rgba(0, 0, 0, 0.3)',
+          'circle-stroke-color': colors.overlayBorder,
         },
       });
 
@@ -121,9 +135,9 @@ export function GrowMap() {
         },
       });
 
-      // Individual station glow
+      // Individual station outline
       map.addLayer({
-        id: UNCLUSTERED_GLOW_LAYER,
+        id: UNCLUSTERED_HALO_LAYER,
         type: 'circle',
         source: STATIONS_SOURCE,
         filter: ['!', ['has', 'point_count']],
@@ -136,9 +150,8 @@ export function GrowMap() {
             'unavailable', availabilityColors.unavailable,
             availabilityColors.unknown,
           ],
-          'circle-radius': 12,
-          'circle-opacity': 0.2,
-          'circle-blur': 0.5,
+          'circle-radius': 14,
+          'circle-opacity': 0.15,
         },
       });
 
@@ -157,11 +170,16 @@ export function GrowMap() {
             'unavailable', availabilityColors.unavailable,
             availabilityColors.unknown,
           ],
-          'circle-radius': 7,
+          'circle-radius': 11,
           'circle-stroke-width': 2,
-          'circle-stroke-color': 'rgba(0, 0, 0, 0.4)',
+          'circle-stroke-color': colors.overlayBorder,
         },
       });
+
+      map.addLayer({ id: 'charging-symbol', type: 'symbol', source: STATIONS_SOURCE,
+        filter: ['!', ['has', 'point_count']], layout: { 'text-field': 'ϟ', 'text-size': 17, 'text-font': ['Noto Sans Regular'], 'text-allow-overlap': true }, paint: { 'text-color': colors.white } });
+      map.addSource('selected-station', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.addLayer({ id: 'selected-ring', type: 'circle', source: 'selected-station', paint: { 'circle-radius': 18, 'circle-color': colors.accent, 'circle-opacity': 0.18, 'circle-stroke-color': colors.accentInk, 'circle-stroke-width': 3 } });
 
       // Click cluster -> zoom in
       map.on('click', CLUSTER_LAYER, (e: MapMouseEvent) => {
@@ -177,7 +195,7 @@ export function GrowMap() {
           if (geometry.type === 'Point') {
             map.easeTo({
               center: geometry.coordinates as [number, number],
-              zoom,
+              zoom, duration: 0,
             });
           }
         });
@@ -215,6 +233,11 @@ export function GrowMap() {
           last_observed_at: props.last_observed_at as string | null,
         };
         setSelectedStation(station);
+        setExpanded(true);
+        setShowCase(false);
+        const layout = layoutRef.current;
+        map.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: layout.reduced ? 0 : 280,
+          offset: layout.wide ? [200, 0] : [0, -map.getContainer().clientHeight * 0.36 - 20] });
       });
 
       setMapReady(true);
@@ -247,8 +270,13 @@ export function GrowMap() {
 
   useEffect(() => {
     const controls = mapRef.current?.getContainer().querySelector<HTMLElement>('.maplibregl-ctrl-bottom-right');
-    if (controls) controls.style.bottom = selectedStation ? (expanded ? '62%' : '188px') : '0';
+    if (controls) controls.style.bottom = '0';
   }, [selectedStation, expanded, mapReady]);
+
+  useEffect(() => {
+    const source = mapRef.current?.getSource('selected-station') as GeoJSONSource | undefined;
+    source?.setData({ type: 'FeatureCollection', features: selectedStation ? [{ type: 'Feature', geometry: { type: 'Point', coordinates: [selectedStation.longitude, selectedStation.latitude] }, properties: {} }] : [] });
+  }, [selectedStation, mapReady]);
 
   // Update GeoJSON data when stations change
   useEffect(() => {
@@ -265,7 +293,7 @@ export function GrowMap() {
     if (!location.position || !mapRef.current || !mapReady) return;
     const dot = document.createElement('div');
     dot.setAttribute('aria-label', 'Your foreground location');
-    Object.assign(dot.style, { width: '16px', height: '16px', borderRadius: '50%', background: colors.location, border: '3px solid white', boxShadow: '0 0 0 7px rgba(38,132,255,0.18)' });
+    Object.assign(dot.style, { width: '16px', height: '16px', borderRadius: '50%', background: colors.location, border: `3px solid ${colors.white}`, boxShadow: `0 0 0 7px ${colors.locationHalo}` });
     markerRef.current = new Marker({ element: dot }).setLngLat([location.position.lng, location.position.lat]).addTo(mapRef.current);
     return () => { markerRef.current?.remove(); markerRef.current = null; };
   }, [location.position, mapReady]);
@@ -275,8 +303,17 @@ export function GrowMap() {
       <div ref={containerRef} style={webStyles.map} />
 
       {/* Overlay controls */}
-      <div style={webStyles.overlayTop}>
-        <FilterBar filters={filters} onFiltersChange={setFilters} />
+      <div style={{ ...webStyles.overlayTop, left: wide ? 448 : 16, maxWidth: 420 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Map filters" accessibilityState={{ expanded: filtersOpen }} onPress={() => setFiltersOpen((value) => !value)} style={{ minHeight: 48, alignSelf: 'flex-start', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.overlayBorder }}><Text style={{ color: colors.textPrimary, fontSize: 13 }}>Filters {filtersOpen ? '−' : '+'}</Text></Pressable>
+        {filtersOpen ? <FilterBar filters={filters} onFiltersChange={setFilters} /> : null}
+      {/* Legend */}
+      {filtersOpen ? <div style={{ ...webStyles.legend, position: 'static', marginTop: 8, flexWrap: 'wrap' }}>
+        <LegendItem color={availabilityColors.available} label="Available" />
+        <LegendItem color={availabilityColors.occupied} label="In Use" />
+        <LegendItem color={availabilityColors.unavailable} label="Unavailable" />
+        <LegendItem color={availabilityColors.unknown} label="Unverified" />
+      </div> : null}
+
         <div style={webStyles.statusContainer}>
           <MapStatus
             loading={loading}
@@ -288,35 +325,19 @@ export function GrowMap() {
         </div>
       </div>
 
-      <div style={{ position: 'absolute', right: 16, bottom: selectedStation ? (expanded ? 'calc(62% + 44px)' : 232) : 84, zIndex: 3 }}>
+      <div style={{ position: 'absolute', right: 16, bottom: wide ? 64 : panelHeight + 56, zIndex: 3 }}>
         <LocationControl busy={location.busy} error={location.error} onPress={() => {
-          void location.locate().then((fix) => { if (fix) mapRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, offset: [0, selectedStation ? -(expanded ? mapRef.current.getContainer().clientHeight * 0.31 : 94) : 0] }); });
+          void location.locate().then((fix) => { if (fix) mapRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, duration: reduced ? 0 : 280, offset: wide ? [200, 0] : [0, -panelHeight / 2] }); });
         }} />
       </div>
-      {/* Legend */}
-      <div style={webStyles.legend}>
-        <LegendItem color={availabilityColors.available} label="Available" />
-        <LegendItem color={availabilityColors.occupied} label="In Use" />
-        <LegendItem color={availabilityColors.unavailable} label="Unavailable" />
-        <LegendItem color={availabilityColors.unknown} label="Unverified" />
+      <div ref={(element) => { if (element && element.clientHeight !== panelHeight) setPanelHeight(element.clientHeight); }} style={{ ...webStyles.detailPanel,
+        ...(wide ? { top: 24, bottom: 48, left: 24, right: 'auto', width: 400, height: 'auto', maxHeight: !selectedStation && !showCase ? 500 : undefined } : { left: 12, right: 12, bottom: 40, height: showCase || (selectedStation && expanded) ? '72%' : selectedStation ? 200 : '64%', maxHeight: !selectedStation && !showCase ? 440 : undefined }) }}>
+        <ExperiencePanel selected={selectedStation} standard={standard} onStandardChange={setStandard}
+          expanded={expanded} onToggle={() => setExpanded((value) => !value)} onClose={() => setSelectedStation(null)}
+          onSelect={(station) => { setSelectedStation(station); setExpanded(true); setShowCase(false); mapRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: reduced ? 0 : 280, offset: wide ? [200, 0] : [0, -(mapRef.current.getContainer().clientHeight * 0.72) / 2 - 20] }); }}
+          stations={stations} loading={loading} error={error} userOrigin={location.position ? { lat: location.position.lat, lng: location.position.lng } : undefined}
+          showCase={showCase} onCase={() => { setShowCase(true); mapRef.current?.easeTo({ center: [capturedCase.selected.station.longitude, capturedCase.selected.station.latitude], zoom: 14.5, duration: reduced ? 0 : 280, offset: wide ? [200, 0] : [0, -(mapRef.current.getContainer().clientHeight * 0.72) / 2 - 20] }); }} onCloseCase={() => setShowCase(false)} />
       </div>
-
-      {/* Station detail panel */}
-      {selectedStation ? (
-        <div style={{ ...webStyles.detailPanel, height: expanded ? '62%' : 188 }}>
-          <StationDetail
-            station={selectedStation}
-            userOrigin={location.position ? { lat: location.position.lat, lng: location.position.lng } : undefined}
-            expanded={expanded}
-            onToggleExpanded={() => setExpanded((value) => !value)}
-            onSelect={(station) => {
-              setSelectedStation(station);
-              mapRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15 });
-            }}
-            onClose={() => setSelectedStation(null)}
-          />
-        </div>
-      ) : null}
 
       {hasLoadingError ? (
         <div role="alert" style={webStyles.error}>
@@ -348,9 +369,9 @@ const webStyles = {
   },
   overlayTop: {
     position: 'absolute',
-    top: 8,
-    left: 8,
-    right: 60,
+    top: 16,
+    left: 16,
+    right: 72,
     zIndex: 1,
     pointerEvents: 'auto' as const,
   },
@@ -365,7 +386,7 @@ const webStyles = {
     display: 'flex',
     flexDirection: 'row' as const,
     gap: 8,
-    backgroundColor: 'rgba(16, 19, 21, 0.88)',
+    backgroundColor: colors.overlayBackground,
     borderRadius: 8,
     padding: '6px 12px',
     zIndex: 1,
@@ -381,11 +402,10 @@ const webStyles = {
     borderRadius: 4,
   },
   legendText: {
-    color: '#A6B0B4',
+    color: colors.textSecondary,
     fontSize: 11,
   },
   detailPanel: {
-    height: '50%',
     display: 'flex',
     position: 'absolute',
     bottom: 0,
