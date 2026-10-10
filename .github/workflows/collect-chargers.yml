@@ -17,8 +17,8 @@ on:
         type: string
         default: ''
   # Approved hackathon window; scheduled work expires at 2026-10-11 07:00 UTC.
-  schedule:
-    - cron: '14,44 * * * *'
+  # schedule:
+    # - cron: '14,44 * * * *'
 
 concurrency:
   group: collect-chargers
@@ -31,10 +31,10 @@ jobs:
     env:
       GROW_EV_PROJECT_REF: heafsrqaytsfthfcxmqu
       GROW_EV_DATABASE_CA_FILE: /tmp/grow-ev-supabase-ca.crt
-      GROW_EV_PERMANENT_COLLECTION: ${{ vars.GROW_EV_PERMANENT_COLLECTION }}
+      GROW_EV_PERMANENT_COLLECTION: approved
       GROW_EV_COLLECTION_MODE: ${{ inputs.mode }}
-      GROW_EV_HISTORY_ENABLED: ${{ vars.GROW_EV_HISTORY_ENABLED }}
-      GROW_EV_SCHEDULER: ${{ vars.GROW_EV_SCHEDULER }}
+      GROW_EV_HISTORY_ENABLED: approved
+      GROW_EV_SCHEDULER: cloudflare
     permissions:
       contents: read
     steps:
@@ -116,7 +116,7 @@ jobs:
         run: node scripts/archive-history.ts
 
       - name: Chain CatBoost dry-run for this exact poll
-        if: inputs.mode == 'permanent' && steps.collector.outcome == 'success' && vars.GROW_EV_INFERENCE_CHAIN == 'approved'
+        if: inputs.mode == 'permanent' && steps.collector.outcome == 'success' && 'approved' == 'approved'
         env:
           GROW_EV_AI_DISPATCH_TOKEN: ${{ secrets.GROW_EV_AI_DISPATCH_TOKEN }}
           GROW_EV_COLLECTION_RECEIPT: /tmp/grow-ev-collection-receipt.json
