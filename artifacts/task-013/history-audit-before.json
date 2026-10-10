@@ -1,0 +1,239 @@
+{
+  "auditedAt": "2026-10-10T13:58:42.532Z",
+  "evidence": [
+    {
+      "name": "dev-first-state.json",
+      "sha256": "78303fc3e76174d1557e3a3516c9924f56128c72f8663aef371f106c98b5f4de"
+    },
+    {
+      "name": "task012-approved-baseline.json",
+      "sha256": "e504b80cf7aae2c996812ecccffee1b449a045d23e1ab98f1fee2e43eeb5494b"
+    },
+    {
+      "name": "task012-approved-after.json",
+      "sha256": "05fe228a97d518f88bcdc859aeca2f69da7ee04348981e86b1a5c4f124a742da"
+    }
+  ],
+  "snapshots": [
+    {
+      "name": "dev-first-state.json",
+      "pollId": "dcea556f-9796-41da-8764-69146f0844af",
+      "completedAt": "2026-10-09T21:51:05.330Z",
+      "observationRange": [
+        "2026-10-09T21:50:50.105Z",
+        "2026-10-09T21:50:53.903Z"
+      ],
+      "evses": 5836,
+      "stationConnectorGroups": 2445,
+      "labelsAtObservation": {
+        "positive": 333,
+        "negative": 2103,
+        "unknown": 9
+      },
+      "statuses": {
+        "AVAILABLE": 5020,
+        "CHARGING": 350,
+        "OUTOFORDER": 224,
+        "INOPERATIVE": 198,
+        "UNKNOWN": 30,
+        "REMOVED": 14
+      },
+      "byConnector": [
+        {
+          "standard": "IEC_62196_T2",
+          "groups": 1428
+        },
+        {
+          "standard": "CHADEMO",
+          "groups": 182
+        },
+        {
+          "standard": "IEC_62196_T2_COMBO",
+          "groups": 835
+        }
+      ]
+    },
+    {
+      "name": "task012-approved-baseline.json",
+      "pollId": "125766b8-62ec-45d9-8af0-c3467437558a",
+      "completedAt": "2026-10-10T00:46:23.917Z",
+      "observationRange": [
+        "2026-10-10T00:46:01.044Z",
+        "2026-10-10T00:46:04.628Z"
+      ],
+      "evses": 5836,
+      "stationConnectorGroups": 2445,
+      "labelsAtObservation": {
+        "positive": 328,
+        "negative": 2105,
+        "unknown": 12
+      },
+      "statuses": {
+        "AVAILABLE": 5034,
+        "CHARGING": 331,
+        "OUTOFORDER": 226,
+        "INOPERATIVE": 200,
+        "UNKNOWN": 31,
+        "REMOVED": 14
+      },
+      "byConnector": [
+        {
+          "standard": "IEC_62196_T2",
+          "groups": 1428
+        },
+        {
+          "standard": "CHADEMO",
+          "groups": 182
+        },
+        {
+          "standard": "IEC_62196_T2_COMBO",
+          "groups": 835
+        }
+      ]
+    },
+    {
+      "name": "task012-approved-after.json",
+      "pollId": "f8ed5750-a7e0-45c4-96f0-79fc21055503",
+      "completedAt": "2026-10-10T13:31:32.677Z",
+      "observationRange": [
+        "2026-10-10T13:29:17.038Z",
+        "2026-10-10T13:29:20.841Z"
+      ],
+      "evses": 5836,
+      "stationConnectorGroups": 2445,
+      "labelsAtObservation": {
+        "positive": 699,
+        "negative": 1733,
+        "unknown": 13
+      },
+      "statuses": {
+        "AVAILABLE": 4420,
+        "CHARGING": 515,
+        "OUTOFORDER": 651,
+        "INOPERATIVE": 197,
+        "BLOCKED": 1,
+        "UNKNOWN": 38,
+        "REMOVED": 14
+      },
+      "byConnector": [
+        {
+          "standard": "IEC_62196_T2",
+          "groups": 1428
+        },
+        {
+          "standard": "IEC_62196_T2_COMBO",
+          "groups": 835
+        },
+        {
+          "standard": "CHADEMO",
+          "groups": 182
+        }
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "from": "dcea556f-9796-41da-8764-69146f0844af",
+      "to": "125766b8-62ec-45d9-8af0-c3467437558a",
+      "gapSeconds": 10518.587,
+      "positive": 328,
+      "negative": 2105,
+      "excludedUnknownTarget": 12,
+      "persistenceConfusion": {
+        "tp": 317,
+        "tn": 2092,
+        "fp": 13,
+        "fn": 11,
+        "abstain": 0
+      },
+      "evseStatusPairs": 5836,
+      "compatibleEvsePairs": 5837,
+      "topologyStableAcrossSavedSnapshots": true
+    },
+    {
+      "from": "125766b8-62ec-45d9-8af0-c3467437558a",
+      "to": "f8ed5750-a7e0-45c4-96f0-79fc21055503",
+      "gapSeconds": 45908.76,
+      "positive": 699,
+      "negative": 1733,
+      "excludedUnknownTarget": 13,
+      "persistenceConfusion": {
+        "tp": 290,
+        "tn": 1695,
+        "fp": 38,
+        "fn": 406,
+        "abstain": 3
+      },
+      "evseStatusPairs": 5836,
+      "compatibleEvsePairs": 5837,
+      "topologyStableAcrossSavedSnapshots": true
+    }
+  ],
+  "total": {
+    "positive": 1027,
+    "negative": 3838,
+    "excludedUnknownTarget": 25,
+    "genuineSnapshotTimes": 3,
+    "timeSeparatedPairs": 2,
+    "eligible30MinutePairs": 0
+  },
+  "databaseAudit": {
+    "checked_at": "2026-10-10T13:51:57.339Z",
+    "database_bytes": "28948147",
+    "read_only": "on",
+    "publicRelations": [
+      {
+        "schemaname": "public",
+        "relname": "charging_evses",
+        "total_bytes": "3768320",
+        "heap_bytes": "2048000",
+        "index_bytes": "1679360",
+        "n_live_tup": "5836",
+        "n_dead_tup": "0"
+      },
+      {
+        "schemaname": "public",
+        "relname": "charging_connectors",
+        "total_bytes": "3080192",
+        "heap_bytes": "2236416",
+        "index_bytes": "802816",
+        "n_live_tup": "5838",
+        "n_dead_tup": "0"
+      },
+      {
+        "schemaname": "public",
+        "relname": "charging_locations",
+        "total_bytes": "2088960",
+        "heap_bytes": "1155072",
+        "index_bytes": "892928",
+        "n_live_tup": "1984",
+        "n_dead_tup": "0"
+      },
+      {
+        "schemaname": "public",
+        "relname": "evse_status_transitions",
+        "total_bytes": "499712",
+        "heap_bytes": "204800",
+        "index_bytes": "253952",
+        "n_live_tup": "1067",
+        "n_dead_tup": "0"
+      },
+      {
+        "schemaname": "public",
+        "relname": "source_poll_runs",
+        "total_bytes": "65536",
+        "heap_bytes": "8192",
+        "index_bytes": "49152",
+        "n_live_tup": "4",
+        "n_dead_tup": "10"
+      }
+    ],
+    "historyTables": [],
+    "successfulPollRecords": 4,
+    "genuineSourcePolls": 3,
+    "replayPollIds": [
+      "fe99a329-3d21-44b8-90c3-7abd0b19ef49"
+    ],
+    "statusTransitions": 1067
+  }
+}

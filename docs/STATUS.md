@@ -1,7 +1,7 @@
 # Grow EV — Current Project Status
 
 Updated: 2026-10-10
-Phase: TASK-012 recurring hackathon schedule approved and validated, main activation pending; TASK-013 read-only audit/planning
+Phase: TASK-012 recurring hackathon schedule active on main, first scheduled execution pending; TASK-013 read-only audit/proposal ready
 
 ## Verified foundation
 
@@ -293,11 +293,36 @@ expensive work. Already-started polls finish transactionally. Manual dispatch re
 The previously successful client TLS check is promoted from diagnostics; strict
 CA/hostname verification, DEV guards, concurrency, advisory lock and collector
 behavior preserved. Local TypeScript, 16 tests, six cutoff tests and actionlint
-passed; DB integration suite skipped in this verification.
+passed. Default DB suite skipped; explicit Windows attempt failed WSL loopback
+connectivity, then unchanged WSL PostgreSQL suite passed all ten DB checks.
 
 Source permits reuse with attribution but publishes no numeric polling quota.
-Private GitHub allowance/spending cap inaccessible to current CLI scope; 34
+Signed-in billing review: GitHub Pro, 25 / 3,000 included Actions minutes used,
+$0 billed; $0 Actions budget with Stop usage Yes and included usage alerts On.
+CLI billing lacked scope; browser read verified these settings without changes. 34
 intended slots cost approximately 102 runner minutes at the observed duration,
 with 340-minute timeout-based estimate. Expired check jobs still consume brief
-runner time; remove cron after demo. Main activation/first scheduled run pending.
-TASK-013 is read-only audit/proposal; no schema, model or prediction writes.
+runner time; remove cron after demo. Main `8740830` and active workflow/exact cron
+verified by API; first scheduled run pending. No substitute manual poll dispatched.
+At 14:18 UTC / 17:18 Vilnius, no `event=schedule` run was listed after the first
+14:14 UTC slot. Actions permissions enabled; no scheduled success, refreshed
+scheduled timestamps or completion claim. TASK-012 remains awaiting that evidence.
+
+## TASK-013 read-only historical audit/proposal — 2026-10-10
+
+Strict TLS READ ONLY audit measured 28,948,147 database bytes (27.607 MiB).
+Four SUCCESS/COMPLETE records include one explicit replay: three genuine collection
+times, 1,067 transitions, no historical snapshot table. Three immutable private
+saved full snapshots prove membership/connector topology; reversing transition
+chains matched all 17,508 saved normalized/original statuses. DB change history
+alone cannot prove historical per-poll membership or unchanged timestamps.
+
+2,445 station/connector groups per time yield 4,865 genuine next-observation
+binary examples: 1,027 positive, 3,838 negative, 25 UNKNOWN target exclusions.
+Only two temporal intervals (2h55m / 12h45m), zero near-30-minute pairs;
+not enough for defensible chronological model evaluation. No training performed.
+`tasks/active/TASK-013.md` proposes seven-day compact hot aggregates, compressed
+private full snapshots, versioned Colab export, leakage-safe chronological
+CatBoost/persistence evaluation and separately approved inference/prediction storage.
+No migration files, DB schema changes, model artifacts or prediction writes.
+Stop for review before retention migrations or AI implementation.

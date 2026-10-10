@@ -1,6 +1,6 @@
 # TASK-012 — Automatic Charging Observations
 
-Status: Recurring hackathon collection approved; activation changes validated, awaiting main publication and first actual scheduled execution. Earlier evidence below is chronological and superseded by the current authorization section.
+Status: Recurring hackathon collection activated and verified on main; first actual scheduled execution pending. Earlier evidence below is chronological and superseded by the current authorization section.
 Date: 2026-10-10
 
 ## Scope and authorization
@@ -335,8 +335,11 @@ Inspect unfinished/uncertain runs by ID before another collector execution.
   approximately 102 minutes if this duration repeats, conservative 340 minutes at
   timeout (runner teardown can add overhead). These are estimates, not charges.
   Monthly perpetual polling would use about 4,320 minutes at this duration.
-- GitHub billing API returned 404/missing `user` scope; actual owner plan,
-  remaining included allowance and hard spending cap are **unverified**. Timing
+- GitHub billing API returned 404/missing `user` scope. Subsequent signed-in
+  read-only browser review verified **GitHub Pro**, **25 / 3,000 included Actions
+  minutes used** (2,975 remaining as displayed), $0.26 consumed/discounted and
+  **$0 billed**. Account Actions budget is **$0, Stop usage: Yes**; included usage
+  alerts On. No billing settings changed; dashboard usage may lag. Timing
   API `billable.total_ms=0` does not establish free execution. Official current
   standard Linux 2-core rate is $0.006/min beyond allowance: approximately $0.612
   for 102 minutes or $2.04 for 340 minutes if all are overage. Other workflows count.
@@ -344,12 +347,34 @@ Inspect unfinished/uncertain runs by ID before another collector execution.
 - Expired runs still allocate one brief checkout/check job, potentially one rounded
   minute each (48/day). Remove only the cron after the demo to eliminate this cost;
   retain manual support. This safeguard bounds expensive work, not account spend.
-- Local ingestion TypeScript passed; 16 tests passed, zero failed, disposable DB
-  suite skipped. Six cutoff tests passed, including equality, invalid clock,
+- Local ingestion TypeScript passed; 16 tests passed, zero failed, default DB
+  suite skipped. Explicit Windows DB test failed ECONNREFUSED to WSL loopback;
+  running the unchanged suite through WSL Linux Node passed all ten DB checks.
+  Six cutoff tests passed, including equality, invalid clock,
   dispatch after cutoff and unsupported events. actionlint passed (shellcheck and
   pyflakes unavailable/disabled); diff whitespace check passed.
-- Main publication and first scheduled-run evidence pending. No manual poll is
+- Main activation commit **`8740830f660247cde0ae1dc490c650f7af48666f`** pushed safely
+  without force. GitHub API confirmed main SHA, exact cron in its workflow and
+  workflow state **active**. `[skip ci]` prevented an unrelated push-triggered web
+  deployment; it does not suppress scheduled/manual triggers. TASK-011 pending
+  changes and untracked nested directory left outside the explicit commit allowlist.
+- First scheduled-run evidence pending. No manual poll is
   dispatched as a substitute for a schedule. TASK-012 is not fully complete until
   actual schedule execution and fresh public observations are verified.
+  At **2026-10-10 14:18 UTC / 17:18 Europe/Vilnius**, after the first intended
+  14:14 UTC slot, GitHub still listed no `event=schedule` run. Repository Actions
+  permissions are enabled with allowed_actions=all; workflow state remains active.
+  This is pending scheduler execution, not a verified collector failure or success.
+  Existing public observations inspected at 16:52 were from the earlier manual
+  16:29 poll; no new scheduled public freshness is claimed.
+
+First-run follow-up (read-only until the already authorized schedule executes):
+verify `event=schedule`, main SHA and successful collector step; match its logged
+poll ID to SUCCESS/COMPLETE metadata; capture a new immutable read-only after-state;
+compare canonical identities, timestamps, actual counts and transitions against
+`.scratch/task013-audit-before.json`; reload public Network observations and
+verify their genuinely later observed range, counts and freshness. Failed/cancelled
+runs require poll-state inspection, not a blind dispatch or retry. Record actual
+run link and evidence in this task before changing its status to complete.
 
 Stop for review before TASK-013 migrations or prediction writes.
