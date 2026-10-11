@@ -201,6 +201,7 @@ const searchStub = dataUrl('export const useDriverSearch=()=>globalThis.premiumF
 const voiceStub = dataUrl('export const VoiceControl=()=>null;');
 const actionsUrl = await compile('../src/features/voice/actions.ts', { '../map/types': types });
 const { ExperiencePanel } = await import(await compile('../src/features/experience/ExperiencePanel.tsx', {
+  '../../components/useHydratedWindowDimensions': dataUrl('export const useHydratedWindowDimensions=()=>({width:390,height:844});'),
   ...cardDeps, './PremiumStationCard': cardUrl, './PremiumStationDetails': detailsUrl, './useDriverSearch': searchStub,
   '../voice/VoiceControl': voiceStub, '../voice/actions': actionsUrl,
 }));

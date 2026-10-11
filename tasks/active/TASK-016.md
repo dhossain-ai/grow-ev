@@ -69,3 +69,13 @@ interactions verified. Preserve both completed commits; one focused additions
 commit and normal feature-branch push are authorized. Stop after push and report;
 main merge, deployment, TASK-015 and Voice Worker changes remain out of scope.
 See `artifacts/task-016/RESPONSIBLE-CHARGING.md` for evidence and safe future gates.
+
+## Responsive release hotfix — 2026-10-11
+
+Premium main merge failed fresh desktop hydration acceptance and was rolled back.
+A shared hydration-aware viewport hook preserves server/client initial styles and
+applies desktop/narrow/compact layout automatically. Cold and hard production-export
+loads pass at 1440/1280/768/390/320px; 95 tests, TypeScript, zero-warning ESLint
+and web export pass. 106 local evidence/temp files are archived and individually
+excluded locally with no deletion. Existing native and infrastructure behavior is
+unchanged. Public deployment/acceptance will be recorded after the approved push.

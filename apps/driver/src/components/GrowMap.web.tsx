@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './calm.web.css';
-import { Pressable, Text, useWindowDimensions } from 'react-native';
+import { Pressable, Text } from 'react-native';
+import { useHydratedWindowDimensions } from './useHydratedWindowDimensions';
 
 import { ExperiencePanel } from '../features/experience/ExperiencePanel';
 import { useReducedMotion } from './CalmUI';
@@ -44,7 +45,7 @@ export function GrowMap() {
   const [selectedStation, setSelectedStation] = useState<MapStation | null>(null);
   const location = useUserLocation();
   const [expanded, setExpanded] = useState(false);
-  const { width } = useWindowDimensions();
+  const { width } = useHydratedWindowDimensions();
   const wide = width >= 900;
   const reduced = useReducedMotion();
   const layoutRef = useRef({ wide, reduced });

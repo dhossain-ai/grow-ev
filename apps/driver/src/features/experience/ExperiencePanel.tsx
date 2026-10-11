@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, BackHandler, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useHydratedWindowDimensions } from '../../components/useHydratedWindowDimensions';
 import type { Coordinates } from '../../../../../packages/routing';
 import { ActionButton, CardReveal, ConnectorSelector } from '../../components/CalmUI';
 import { ConnectorIcon } from '../../components/DriverIcons';
@@ -27,7 +28,7 @@ export function ExperiencePanel({ selected, standard, onStandardChange, onClose,
   const [voiceActive, setVoiceActive] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [navigationError, setNavigationError] = useState<string | null>(null);
-  const compactViewport = useWindowDimensions().height < 700;
+  const compactViewport = useHydratedWindowDimensions().height < 700;
   const search = useDriverSearch(standard, bounds);
   const operations = useRef(search);
   useEffect(() => { operations.current = search; }, [search]);

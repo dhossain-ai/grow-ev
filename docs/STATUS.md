@@ -1,5 +1,22 @@
 # Grow EV — Current Project Status
 
+## TASK-016 responsive hotfix preflight — 2026-10-11
+
+Premium merge `b2f75ef` deployed successfully but failed fresh desktop acceptance
+and was rolled back to `40f44261-6217-459b-811c-0120353e7f4b`.
+The hotfix aligns initial server/browser viewport snapshots using React's hydration
+snapshot mechanism, then applies actual dimensions without resizing. Native first
+render uses actual dimensions. Approved layout and integration logic are preserved.
+Production-export Chrome cold loads and hard reloads pass at 1440, 1280, 768,
+390 and 320 CSS pixels, without horizontal overflow. Genuine Type 2 search and
+stale-observation labels were checked at 320px. TypeScript, zero-warning ESLint,
+all 95 automated tests and production web export pass. Infrastructure trees are
+unchanged. Main deployment and public acceptance remain pending this commit's push.
+106 TASK-016 local files were individually audited, archived with SHA-256
+verification outside Git, and retained through exact local exclusions; none deleted.
+No credentials or generated exports are included. Original task status histories
+below are retained. Rollback command remains documented in the release preflight.
+
 ## TASK-016 controlled release preparation — 2026-10-11
 
 Latest main `8f99561` and approved feature `20d0627` integrated on an isolated

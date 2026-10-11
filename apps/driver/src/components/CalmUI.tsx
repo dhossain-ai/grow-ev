@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewProps } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, Text, View, type ViewProps } from 'react-native';
+import { useHydratedWindowDimensions } from './useHydratedWindowDimensions';
 import { colors, motion, radii } from '../features/map/tokens';
 import { CONNECTOR_OPTIONS, type ConnectorStandard } from '../features/map/congestion';
 import { ConnectorIcon } from './DriverIcons';
@@ -42,7 +43,7 @@ export function ActionButton({ label, onPress, secondary = false, disabled = fal
 }
 
 export function ConnectorSelector({ value, onChange }: { value: ConnectorStandard; onChange: (value: ConnectorStandard) => void }) {
-  const narrow = useWindowDimensions().width < 360;
+  const narrow = useHydratedWindowDimensions().width < 360;
   return <View style={styles.connectors}>{CONNECTOR_OPTIONS.map((option) =>
     <Pressable key={option.value} accessibilityRole="button" accessibilityLabel={`Use ${option.label}`}
       accessibilityState={{ selected: value === option.value }} aria-pressed={value === option.value} onPress={() => onChange(option.value)}
