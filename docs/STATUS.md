@@ -2,21 +2,24 @@
 
 ## Final core intelligence completion — 2026-10-11
 
-Ordinary web Search now requests one bounded route comparison; Results exposes
-destination cards and prominent actual minutes, with the charger origin named.
-Compare alternatives reuses valid routes and requests missing ones through the
-existing guarded client. Native search initiation and recommendation ranking
-remain unchanged. 101 driver tests, TypeScript, zero-warning lint and web export
-pass; 42 AI tests pass. Controlled public release acceptance is pending.
+Driver release 91a6af6 deployed to grow-ev-demo, Cloudflare version
+428c3d19-a9c7-40c5-b0f0-1e44ba2dcada. Ordinary Search initiates bounded routes;
+public 1440/1280/390/320 Results/Comparison/Details expose genuine destination
+minutes and named charger origin. Ranking, filters and native initiation preserved.
+Driver 101 tests, TypeScript, zero-warning lint and export passed; AI 60 tests passed.
 
-Authenticated GitHub settings verify Pro plus a private AI repository, where
-required deployment reviewers are unsupported. Database secret names exist;
-publication environment and enabling variables are absent. A concrete one-shot
-owner approval replacement is prepared, awaiting explicit approval. Publication
-and recurring writes remain disabled. Current read-only audit at 08:39 UTC:
-poll c97d35c5-9922-4ce7-ae5a-bb968f2ff6b0, 2445 fresh eligible groups, zero
-published rows. See `tasks/active/FINAL-CORE-INTELLIGENCE.md` and
-`artifacts/core-intelligence-completion/PUBLICATION-APPROVAL.md`.
+The owner approved one replacement publication control after the private-Pro
+reviewer limitation was verified. AI main 29b2e4f enforces authenticated owner,
+main, exact SHA/poll/reference, first manual attempt and existing data guards.
+Run 38127431753 wrote 2445 genuine availability_v1 rows for poll
+c97d35c5-9922-4ce7-ae5a-bb968f2ff6b0. Public RPC and Results/Comparison/Opera
+Details showed actual Outlook; automatic expiry and expired RPC exclusion passed.
+All four enabling variables removed. Recurring publication remains disabled.
+
+Status C, partial acceptance: fresh AI Outlook at 390/320 px was not visually
+accepted before the single batch expired. Another publication requires new
+approval. See tasks/active/FINAL-CORE-INTELLIGENCE.md and
+artifacts/core-intelligence-completion/REPORT.md for exact evidence and limits.
 
 ## Final AI Outlook and TomTom release — 2026-10-11
 

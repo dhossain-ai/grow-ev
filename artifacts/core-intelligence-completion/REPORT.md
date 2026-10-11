@@ -42,67 +42,99 @@ displayed 6 minutes. These are local browser integration evidence, not public
 release acceptance. No fixture responses were used. The origin is a real charger,
 not a claim about the tester's position.
 
-## CatBoost approval and data evidence
+## Authorized CatBoost publication
 
-Authenticated account billing verifies GitHub Pro; AI repository is private.
-Only `prediction-dry-run` exists. Its editor offers branch/tag restrictions,
-secrets/variables, but no required reviewer control. Repository variables and
-environment variables are empty. Repository secrets by NAME:
-`GROW_EV_DATABASE_URL`, `GROW_EV_DATABASE_CA`; values were not inspected.
-Owner `dhossain-ai` can view repository settings and manual workflow controls.
-The mandatory reviewer requirement is README.md's explicit publication policy;
-there is no supported reviewer environment configured on this private Pro repo.
-[GitHub's documented limitation](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments).
+The previous blocker was GitHub Pro's unavailable deployment reviewers for this
+private repository, confirmed in authenticated settings and official GitHub docs.
+The owner explicitly approved replacing that requirement for ONE attempt only.
+Approval reference: `CORE-INTELLIGENCE-20261011-OWNER-ONE-ATTEMPT`.
 
-The exact blocker is a private-repository GitHub plan limitation plus an
-unapproved replacement of the mandatory reviewer policy, not a failed model,
-missing named database secret or failed inference. `prediction-publication`
-and its enabling variable are absent. Do not create them unprotected implicitly.
-The concrete supported owner-only one-publication alternative and exact UI
-instructions are in `PUBLICATION-APPROVAL.md`; explicit approval was requested.
-No answer/approval is inferred from elapsed time. AI code/settings stay unchanged.
-The connection validator currently only accepts postgres; least-privilege
-credential provisioning would require a separately reviewed role/secret change.
+AI main: `29b2e4fb67f0b2ba7b32487467d1aee9e20a7ed0`, verified against origin/main.
+The first credential-free publication guard requires authenticated actor AND
+triggering actor dhossain-ai, manual event, main, attempt 1, exact approved SHA,
+canonical poll UUID/reference, enabling flag and pinned model checksum. Environment
+allows one branch main and zero tags. Existing TLS, immutable archive/membership,
+model, freshness, latest-poll, locks, expiry and publisher checks are preserved.
+Only the existing publisher writes; no role/grant/schema/secret/collector changes.
+The existing server-side DEV postgres credential remains administrative; this is
+not proof of credential-level least privilege. GitHub token remains contents:read.
 
-Latest genuine completed cloud inference inspected:
-https://github.com/dhossain-ai/grow-ev-ai/actions/runs/38124172790
-Code 3627454; dry-run; 2445 records; real_catboost_inference=true;
-database_writes=false; model availability_v1. SHA256 verified locally:
-`c14082644ae49b617501dd052bdf36ad35092506f21bb13bbaac7a4d430e7e42`.
-No retraining or MLP publication.
+Single authorized run (succeeded in 42s):
+https://github.com/dhossain-ai/grow-ev-ai/actions/runs/38127431753
+Job 114434605808. Owner dhossain-ai; verified SHA above; run attempt 1.
+Source poll `c97d35c5-9922-4ce7-ae5a-bb968f2ff6b0` was the latest poll at dispatch,
+SUCCESS/COMPLETE, verified=true, duplicates=0, no replay; 1984 locations,
+5824 source-poll EVSEs, 5826 source-poll connectors. Retained database totals differ
+legitimately and immutable archive membership is separately verified by inference.
+Read-only preflight 09:09:28 UTC confirmed archived=true, 2445 groups, all fresh.
+Cloud preflight 09:11:10 UTC confirmed strict verify-full client TLS/read-only extraction.
+Genuine CatBoost availability_v1 generated at 09:11:14.228616 UTC.
+SHA256 `c14082644ae49b617501dd052bdf36ad35092506f21bb13bbaac7a4d430e7e42`.
+Eligible=2445; actual cursor affected rows=2445; rejected=0.
+Source observations 08:14:28.185–08:14:32.830 UTC.
+Expiry 09:14:28.185–09:14:32.830 UTC (12:14:28–12:14:32 Vilnius).
+Read-only postflight 09:15:08 UTC independently confirms 2445 stored matching rows,
+correct model/checksum/source UUID and zero unexpired rows.
 
-Read-only repeatable-read DEV SQL audit, 2026-10-11T08:39:13.935028Z:
-poll `c97d35c5-9922-4ce7-ae5a-bb968f2ff6b0`, start 08:14:25.896876Z,
-completion 08:15:25.407362Z; SUCCESS/COMPLETE, verified=true, duplicates=0,
-no replay; 1984 locations/5824 EVSEs/5826 connectors. Current-poll compatible
-groups=2445, fresh eligible=2445, stale=0, future=0. Observation range
-08:14:28.185–08:14:32.830Z; corresponding expiry 09:14:28.185–09:14:32.830Z.
-This count is timestamped evidence and must be revalidated before publication.
-The cloud extraction/inference path validates immutable archive membership;
-the SQL group count alone is not an independent decoded-archive certification.
-Published rows=0; no publication run or insert count exists.
+All FOUR temporary variables were removed immediately after publication:
+GROW_EV_ALLOW_PUBLISH, GROW_EV_APPROVED_POLL, GROW_EV_APPROVED_SHA,
+GROW_EV_APPROVAL_REFERENCE. Authenticated settings show no environment variables;
+main-only restriction and audit history retained. No retries occurred.
+Recurring publication stays disabled; scheduled inference remains dry-run.
+No retraining or MLP publication was performed.
 
-Supabase table RLS=true; anon/authenticated INSERT=false; bounded public RPC
-EXECUTE=true. Existing publisher uses approval flag, transaction plus collector
-advisory locks, latest genuine verified poll recheck, validated fixed fields and
-ON CONFLICT DO NOTHING. Expiry derives from observation time. No schema, ACL,
-collector or publication changes were applied.
+Public HTTP 200 RPC returned a genuine bounded 12-field prediction for location
+`5ba5c7bc-2565-471d-a8c0-ec8b5147cae4`, matching poll/model/checksum and expiry.
+Results and Comparison visibly showed Experimental AI Outlook for Opera, CUP and
+Santuokų rūmai. Live Opera Details DOM at the expiry boundary showed the matching
+Outlook. Details browser viewport was restored to normal during interaction;
+its screenshot was captured after expiry and is expiry evidence, not fresh-Outlook
+visual evidence. At 09:14:50 UTC the same foreground Details view automatically
+removed Outlook; at 09:15:48 UTC the same public RPC returned HTTP 200 [].
+No fixture, synthetic prediction or clock override was used.
 
-Driver Outlook contract inspected: exact station/connector/model/checksum,
-source timestamp matching, bounded RPC, cancellation and expiry removal remain.
-Missing rows legitimately hide Outlook. Genuine visible Outlook and production
-expiry acceptance are unrun while publication remains blocked; synthetic tests
-are not production evidence. Recurring publication stays disabled; existing
-hourly collector/archive/inference dry-run chain is preserved.
+Evidence JSON/PNG files in this folder contain RPC, route, DOM, screenshots,
+pre/postflight, publication log, cleanup and expiry captures. Raw captures remain
+local artifacts; tracked reports summarize them without credentials.
 
-## Checks
+## Public release and routing acceptance
 
-Executed final driver TypeScript, `npm run lint -- --max-warnings 0`, all
-`npm test` (101 passed), and `npm run build:web` (4 static routes): passed.
-AI `.venv/Scripts/python.exe -m pytest -q`: 42 passed.
-`git diff --check`: passed. Infrastructure trees and AI tracked files unchanged.
-Built JS scan: no server-secret markers or privileged-role JWTs detected;
-public Supabase configuration is intentionally bundled. No credential values
-were printed. Earlier callback lint failure and an overlapping export EEXIST
-were resolved; final clean checks passed. Export's NO_COLOR notice is unrelated
-to application lint warnings. Final public release evidence follows below.
+Driver deployed release commit: `91a6af6a1aacda2080868a9da2ef854a6db4f98c`.
+Deployment: https://github.com/dhossain-ai/grow-ev/actions/runs/38126112204
+Cloudflare version: `428c3d19-a9c7-40c5-b0f0-1e44ba2dcada`.
+Public asset entry-d44b86910fad66a81381c1a2afb422b0.js matches its job log.
+Rollback: `2c226bd0-81ac-40e7-b3fd-a74c38732eaa` (baseline deployment above).
+Only grow-ev-demo was deployed through the existing deploy-web workflow.
+
+Fresh public ordinary CCS2 Search genuine HTTP 200 routes:
+1440 px, 08:50:39 UTC: Opera→CUP 244 seconds/951m (5 min);
+Opera→Santuokų rūmai 346 seconds/1744m (6 min).
+390 px, 08:56:44 UTC: respective 245 seconds/951m and 347 seconds/1744m.
+1280 px: genuine HTTP 200 and visible 5/6-minute Results and Comparison;
+a second fresh session at 09:17:42 UTC returned 249 seconds/951m and
+352 seconds/1744m. 320 px repeat at 09:15:59 UTC returned 249 seconds/951m and 352 seconds/1744m; both routes and CUP Details passed.
+Initial 320 px session returned a transient HTTP 503 and correctly showed
+unavailable; there was no automatic retry. A later fresh manual session passed.
+Routes appear prominently in Results/Comparison and on the matching destination
+Details with named Opera origin. Origin itself honestly has no destination ETA.
+1440/1280/390/320 screenshots were inspected; no horizontal overflow at 320.
+Captured successful session console errors: none. Native/device acceptance unrun.
+
+## Checks and final limitations
+
+Driver: npm run typecheck; npm run lint -- --max-warnings 0; npm test
+(101 passed); npm run build:web (4 routes): all passed.
+AI: python -m pytest -q (60 passed locally and in the publication workflow).
+git diff --check passed. Build secret-marker/privileged-JWT scan passed.
+Driver infrastructure unchanged; AI changes confined to publication guard,
+workflow, actual affected-row audit, tests and approval documentation.
+
+Final status: C. PARTIAL FAILURE, WITH VERIFIED DETAILS.
+Both genuine features were visible together publicly, and actual expiry passed.
+However, fresh AI Outlook was not visually accepted at 390/320 px before this
+single batch expired. Do not claim complete desktop/mobile AI acceptance or A.
+No further publication is authorized; another attempt requires new approval.
+After expiry there are legitimately no visible fresh forecasts; ordinary routing
+continues. No collector, Voice Worker or premium design changes were made.
+
+Final evidence documentation is committed separately with [skip ci] to avoid an unnecessary second web deployment. The deployed code SHA/version above remains the release identity.

@@ -1,4 +1,4 @@
-# First-publication replacement control — awaiting owner approval
+# First-publication replacement control — approved and consumed
 
 Verified 2026-10-11 through authenticated GitHub settings: the personal account
 `dhossain-ai` uses GitHub Pro; `grow-ev-ai` is private. Only
@@ -12,7 +12,7 @@ https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deploymen
 
 ## Concrete proposed replacement, ONE publication only
 
-After explicit owner approval of this replacement:
+Approved once on 2026-10-11; the implemented and executed control:
 
 1. Keep the existing `predict.yml` publisher and its data, TLS, model, expiry,
    collector-lock and idempotency checks. Add an owner-only manual publication
@@ -21,7 +21,7 @@ After explicit owner approval of this replacement:
    reference. Reject publication before loading database credentials otherwise.
 2. Create `prediction-publication` with selected deployment branch `main` only.
    Add variables `GROW_EV_ALLOW_PUBLISH=approved`, `GROW_EV_APPROVED_POLL`
-   (one freshly verified UUID) and `GROW_EV_APPROVAL_REFERENCE` (this approval's
+   (one freshly verified UUID) , `GROW_EV_APPROVED_SHA` (verified main SHA), and `GROW_EV_APPROVAL_REFERENCE` (this approval's
    recorded reference). Require dispatch input poll/reference to match these.
    Do not grant GitHub token write permissions or expose database credentials.
    Check the existing database role's grants; any required credential or role
@@ -35,7 +35,7 @@ After explicit owner approval of this replacement:
 3. Record approval, code SHA, model checksum, membership audit, freshness,
    generated/expiry window and actual inserted count. Dispatch once. Failed
    guards stop the operation; no automatic retry and no stale batch substitution.
-4. Remove all three enabling variables after the run. Record the run URL and
+4. Remove all four enabling variables after the run. Record the run URL and
    public read/visible UI acceptance. Keep the environment and audit history.
 
 This is owner authorization with recorded controls, not an independent reviewer
@@ -54,9 +54,9 @@ cycle; one subsequent scheduled cycle must be verified before claiming it works.
 
 Repository Settings → Environments → New environment →
 `prediction-publication` → Deployment branches and tags → Selected branches
-and tags → add branch `main`. Add the three variables above only after approval
+and tags → add branch `main`. Add the four variables above only after approval
 and fresh poll validation. Actions → Predict Charging Availability → Run workflow
 on `main`, mode `publish`, exact approved poll/reference. Remove the variables
 after the single run. Never paste database credentials into dispatch inputs.
 
-No publication settings or mandatory reviewer requirement have been changed.
+The owner explicitly approved this replacement. The single run 38127431753 succeeded on verified AI main 29b2e4f, writing 2445 rows. Exact code SHA was additionally pinned by GROW_EV_APPROVED_SHA. All four temporary variables were removed. Approval is consumed; no retry or recurring publication is authorized. Full evidence is in REPORT.md.

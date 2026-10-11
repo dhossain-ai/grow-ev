@@ -1,42 +1,24 @@
 # Final core intelligence completion
 
-Status: IN PROGRESS — web routing release preparation; publication approval pending.
+Status: PARTIAL ACCEPTANCE — one approved publication succeeded; narrow mobile AI visual acceptance remains unverified.
 
-Scope: ordinary driver journey, genuine TomTom ETA visibility, and genuine
-CatBoost publication through an explicitly approved replacement control if needed.
-Preserve ranking, filters, native search behavior, collector and Voice infrastructure.
+Implemented ordinary web Search route initiation and visible destination minutes,
+without changing ranking, filters, native route initiation, collector or Voice.
+Driver release 91a6af6 deployed successfully. Public 1440/1280/390/320 ordinary
+searches returned genuine routes, with Comparison and destination Details verified.
 
-## Findings and implementation
+Owner explicitly approved ONE CatBoost publication using the main-only owner guard.
+AI main 29b2e4f; run 38127431753 succeeded; poll
+c97d35c5-9922-4ce7-ae5a-bb968f2ff6b0; 2445 eligible, 2445 written, 0 rejected.
+Actual public RPC and Results/Comparison/Opera Details showed genuine Outlook;
+automatic UI expiry and expired RPC exclusion passed. All four enabling variables
+removed. Recurring publication remains disabled. No retry is authorized.
 
-Ordinary Search and Compare alternatives did not initiate routes. Results only
-showed the origin charger, while destination estimates required a separate action.
-Web searches now opt into a single bounded routing batch. Results expose the
-same destination cards and show actual minutes prominently near the top. Origin
-is named and identified as a charger rather than inferred driver position.
-Existing routing cache, cooldown, cancellation and validation remain in use.
+Tests: driver 101 and AI 60 passed; TypeScript, zero-warning lint, export passed.
 
-Account settings verify GitHub Pro and a private AI repository; required
-environment reviewers are unsupported on that combination. Only dry-run
-environment exists; both database secret names exist; no approval variables exist.
-The proposed owner-only one-publication replacement is documented in
-`artifacts/core-intelligence-completion/PUBLICATION-APPROVAL.md` and awaits
-explicit owner approval. No enabling settings, AI workflow or prediction writes
-have been changed. Recurring publication remains disabled.
+Remaining: fresh AI Outlook visual acceptance at 390/320 px was not completed
+before the approved batch expired. Any new publication attempt requires new
+approval. Final status C; do not claim full acceptance or start another task.
 
-## Current evidence
-
-Read-only DEV audit at 2026-10-11T08:39:13.935028Z: source poll
-`c97d35c5-9922-4ce7-ae5a-bb968f2ff6b0`, SUCCESS/COMPLETE, verified, duplicates 0,
-1984 locations, 5824 EVSEs, 5826 connectors. 2445 eligible groups, stale/future 0,
-prediction rows 0. Source observation range 08:14:28.185–08:14:32.830Z;
-expiry would be 09:14:28.185–09:14:32.830Z. Eligibility must be rechecked before
-any publication. Cloud dry-run 38124172790 inferred 2445 genuine CatBoost records
-using availability_v1; database_writes=false. Model SHA256
-`c14082644ae49b617501dd052bdf36ad35092506f21bb13bbaac7a4d430e7e42`.
-
-## Acceptance still required
-
-Final clean checks, controlled deployment and public 1440/1280/390/320 acceptance.
-After owner approval: fresh identity/membership validation, one publication,
-actual written count, public RPC, genuine visible Outlook and expiry acceptance.
-Do not claim dual-feature completion before these pass.
+Detailed release, model, poll, routes, tests, expiry and limitations:
+artifacts/core-intelligence-completion/REPORT.md.
