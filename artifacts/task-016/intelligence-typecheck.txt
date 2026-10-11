@@ -1,0 +1,4 @@
+Review copy: trailing whitespace normalized; raw log retained locally.
+
+> @grow-ev/driver@1.0.0 typecheck
+> tsc --noEmit

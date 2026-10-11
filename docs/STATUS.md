@@ -1,5 +1,22 @@
 # Grow EV — Current Project Status
 
+## TASK-016 driver intelligence integration — 2026-10-11
+
+Follow-up to preserved premium UI commit `ec21628` in `E:\Grow EV-task016`.
+Shared CatBoost Beta outlooks use the reviewed public prediction RPC and exact
+identity/model/observation/expiry checks; absent or stale forecasts stay hidden.
+Expiry/background/late-response behavior is tested. Driver-origin age starts before
+I/O. Production ranking and verified web voice fix are preserved; power ranking
+remains an unused tested proposal. No TASK-015/backend/schema changes.
+
+90 tests, TypeScript, zero-warning lint, final web/Android exports and offline
+x86_64 debug build passed. Chrome and Pixel_8 real CCS2 search screenshots captured.
+Prediction RPC HTTP 200 returned no forecast for the checked station; anonymous
+private-table access returned HTTP 401. Web 4/5-minute and Android 2-minute routing
+evidence retained. Live forecast rendering, fresh-congestion acceptance, physical
+driver GPS/devices and Android human voice remain unverified. No deployment or merge.
+See `artifacts/task-016/INTELLIGENCE-INTEGRATION.md` and `tasks/active/TASK-016.md`.
+
 ## TASK-016 premium driver implementation — 2026-10-11
 
 Isolated `E:\Grow EV-task016`, branch `task-016-driver-experience`, baseline

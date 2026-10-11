@@ -34,6 +34,7 @@ export function useDriverSearch(standard: ConnectorStandard, bounds: BoundingBox
   const reset = useCallback(() => { generation.current++; controller.current?.abort(); setPhase('idle'); setRows([]); setAnchor(null); setSearchOrigin(undefined); setOutcomes({}); setError(null); setRouting(false); }, []);
 
   const search = async (options: { station?: MapStation; connector?: ConnectorStandard; origin?: Coordinates; minPowerKw?: number; signal?: AbortSignal } = {}) => {
+    const requestedAt = Date.now();
     controller.current?.abort();
     const current = new AbortController(); controller.current = current;
     const id = ++generation.current;
@@ -57,7 +58,7 @@ export function useDriverSearch(standard: ConnectorStandard, bounds: BoundingBox
         setRows([]); setAnchor(null); setPhase('empty'); return false;
       }
       setRows(evidence); setAnchor(evidence.find((row) => row.station.location_id === station.location_id)!);
-      setSearchOrigin(options.origin); setOriginAt(Date.now()); setMinimumPower(options.minPowerKw);
+      setSearchOrigin(options.origin); setOriginAt(requestedAt); setMinimumPower(options.minPowerKw);
       setNow(Date.now()); setPhase('ready'); return true;
     } catch (failure) {
       if (id === generation.current) { setPhase('error'); setError(failure instanceof Error ? failure.message : 'Charging data unavailable. Please retry.'); }
@@ -65,12 +66,13 @@ export function useDriverSearch(standard: ConnectorStandard, bounds: BoundingBox
     } finally { clearTimeout(timer); options.signal?.removeEventListener('abort', cancel); }
   };
   const suitableRows = rows.filter((row) => minimumPower === undefined || (compatiblePower(row.station, standard) ?? -1) >= minimumPower);
-  const effectiveOrigin = searchOrigin && now - originAt <= 120000 ? searchOrigin : undefined;
+  const effectiveOrigin = searchOrigin && now >= originAt && now - originAt <= 120000 ? searchOrigin : undefined;
   const displayOrigin = effectiveOrigin ?? (anchor ? { lat: anchor.station.latitude, lng: anchor.station.longitude } : null);
   const result = anchor ? recommendAlternatives(anchor, suitableRows, standard, now, outcomes, effectiveOrigin) : null;
   const options = result?.recommendations.length ? result.recommendations.map(item => item.evidence) : displayOrigin ? searchOptions(suitableRows, standard, displayOrigin) : [];
   const routeFor = (station: MapStation) => displayOrigin && (!searchOrigin || effectiveOrigin) ? displayedRoute(outcomes[station.location_id], station, displayOrigin, now) : null;
   const compareDriving = async (origin?: Coordinates) => {
+    const requestedAt = Date.now();
     if (!anchor || !options.length || routing || now < retryAt) return;
     if (searchOrigin && !effectiveOrigin && !origin) { setError('Location expired. Request your location again.'); return; }
     const routeOrigin = origin ?? effectiveOrigin ?? { lat: anchor.station.latitude, lng: anchor.station.longitude };
@@ -86,7 +88,7 @@ export function useDriverSearch(standard: ConnectorStandard, bounds: BoundingBox
         destinations: candidates.map((item) => ({ lat: item.station.latitude, lng: item.station.longitude })) }, current.signal);
       if (id !== generation.current) return;
       if (current.signal.aborted) throw new Error('Routing interrupted');
-      if (origin) { setSearchOrigin(origin); setOriginAt(Date.now()); }
+      if (origin) { setSearchOrigin(origin); setOriginAt(requestedAt); }
       setOutcomes(Object.fromEntries(candidates.map((item, i) => [item.station.location_id, routes[i]])));
       if (routes.some(route => 'error' in route)) setError('Some driving times are unavailable. External navigation remains available.');
       if (routes.some((route) => 'error' in route && ['RATE_LIMITED', 'EXTERNAL_RATE_LIMITED'].includes(route.error.code))) setRetryAt(Date.now() + 60000);

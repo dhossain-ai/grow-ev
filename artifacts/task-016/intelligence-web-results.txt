@@ -1,0 +1,46 @@
+- link "Grow EV charging assistant":
+  - /url: /
+  - text: grow ev
+- generic "Interactive map of EV charging stations":
+  - region "Map"
+  - button "Zoom in"
+  - button "Zoom out"
+  - link "OpenFreeMap":
+    - /url: https://openfreemap.org
+  - link "© OpenMapTiles":
+    - /url: https://www.openmaptiles.org/
+  - text: Data from
+  - link "OpenStreetMap":
+    - /url: https://www.openstreetmap.org/copyright
+  - button "Map filters":
+    - generic: Filters
+  - button "Locate me":
+    - generic: ⊙
+  - button "Collapse charging sheet"
+  - button "‹ Back":
+    - generic: ‹ Back
+  - button "Close charging results":
+    - generic: ×
+  - heading "Charging options nearby" [level=1]
+  - generic: CCS2 · Fast DC
+  - button "Change ›":
+    - generic: Change ›
+  - generic: Compatible stations · Current observations do not support a ranked alternative.
+  - generic: ϟ
+  - heading "Opera" [level=1]
+  - generic: Operated by Ignitis, UAB
+  - generic: CCS2 · Up to 60 kW
+  - generic: Current availability unverified
+  - generic: Observed 2h ago · Stale
+  - generic: Driving time unavailable
+  - button "Get directions →":
+    - generic: Get directions →
+  - button "Details":
+    - generic: Details
+  - button "Compare alternatives":
+    - generic: Compare alternatives
+  - button "Compare driving times":
+    - generic: Compare driving times
+  - button "Driving times from my location":
+    - generic: Driving times from my location
+  - generic: Availability is last observed and can change before arrival.

@@ -1,4 +1,5 @@
 import type { DrivingRoute } from '../../../../../packages/routing';
+import { PredictionOutlook } from '../predictions/PredictionOutlook';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
@@ -38,6 +39,7 @@ export function PremiumStationDetails({ evidence, standard, now, recommendation,
       <ActionButton label="Get directions  →" onPress={onDirections} />
       <ActionButton label="Compare alternatives" secondary onPress={onCompare} />
     </> : null}
+    <PredictionOutlook evidence={evidence} standard={standard} now={now} />
     <Pressable accessibilityRole="button" accessibilityState={{ expanded }} onPress={() => setExpanded((value) => !value)} style={styles.disclosure}><Text style={styles.heading}>More station information</Text><Text style={styles.heading}>{expanded ? '⌃' : '›'}</Text></Pressable>
     {expanded ? <>
       <Text style={styles.label}>CHARGING EQUIPMENT</Text><View style={styles.box}>{(station.connector_types ?? []).map((connector) => <View key={connector} style={styles.between}><Text style={styles.body}>{formatConnector(connector)}</Text><Text style={styles.body}>{compatiblePower(station, connector) === null ? 'Power not reported' : `Up to ${compatiblePower(station, connector)} kW`}</Text><Text style={styles.caption}>{new Set(evidence.evses.filter((evse) => evse.connector_standards.includes(connector)).map((evse) => evse.id)).size} distinct points</Text></View>)}

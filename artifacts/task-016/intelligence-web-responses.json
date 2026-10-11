@@ -1,0 +1,26 @@
+[
+  {
+    "url": "https://heafsrqaytsfthfcxmqu.supabase.co/rest/v1/rpc/get_map_stations?limit=1000&offset=0",
+    "status": 200
+  },
+  {
+    "url": "https://heafsrqaytsfthfcxmqu.supabase.co/rest/v1/rpc/get_station_capacity?limit=1000&offset=0",
+    "status": 200
+  },
+  {
+    "url": "https://heafsrqaytsfthfcxmqu.supabase.co/rest/v1/rpc/get_station_capacity?limit=1000&offset=0",
+    "status": 200
+  },
+  {
+    "url": "https://heafsrqaytsfthfcxmqu.supabase.co/rest/v1/rpc/get_charging_prediction",
+    "status": 200
+  },
+  {
+    "url": "https://heafsrqaytsfthfcxmqu.supabase.co/rest/v1/rpc/get_charging_prediction",
+    "status": 200
+  },
+  {
+    "url": "https://heafsrqaytsfthfcxmqu.supabase.co/rest/v1/rpc/get_map_stations?limit=1000&offset=0",
+    "status": 200
+  }
+]

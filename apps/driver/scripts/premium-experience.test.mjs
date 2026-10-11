@@ -118,7 +118,7 @@ export const CardReveal=({children})=>React.createElement('div',null,children);
 export const ActionButton=({label,onPress})=>React.createElement('button',{onClick:onPress},label);
 export const ConnectorSelector=({value,onChange})=>React.createElement('button',{onClick:()=>onChange('IEC_62196_T2'), 'aria-label':'Use Type 2', 'aria-pressed':value==='IEC_62196_T2'},'Type 2');`);
 const icons = await compile('../src/components/DriverIcons.tsx', { ...common, '../features/map/tokens': tokens });
-const cardDeps = { ...common, '../../components/CalmUI': ui, '../../components/DriverIcons': icons, '../map/types': types, './presentation': presentationUrl };
+const cardDeps = { '../predictions/PredictionOutlook': dataUrl('export const PredictionOutlook=()=>null;'), ...common, '../../components/CalmUI': ui, '../../components/DriverIcons': icons, '../map/types': types, './presentation': presentationUrl };
 const cardUrl = await compile('../src/features/experience/PremiumStationCard.tsx', cardDeps);
 const { PremiumStationCard } = await import(cardUrl);
 const detailsUrl = await compile('../src/features/experience/PremiumStationDetails.tsx', { ...cardDeps, 'expo-clipboard': dataUrl('export const setStringAsync=async()=>true;') });
@@ -267,4 +267,122 @@ test('uncongested search sends bounded real routes and displays them without inv
   const html = render(React.createElement(PremiumStationCard, { evidence: rows[0], standard: ccs, now: at, route,
     originKind: 'user-origin', onDetails() {}, onDirections() {} }));
   assert.match(html, /8 min drive/); assert.match(html, /requested location/); assert.doesNotMatch(html, /Top match/);
+});
+
+const predictionUrl = await compile('../src/features/predictions/prediction.ts');
+const { parsePrediction, outlookText, MODEL_SHA256, fetchPrediction } = await import(predictionUrl);
+const { PredictionOutlook } = await import(await compile('../src/features/predictions/PredictionOutlook.tsx', {
+  ...common, '../experience/presentation': presentationUrl, './prediction': predictionUrl,
+}));
+const predictionId = '20000000-0000-0000-0000-000000000001';
+const forecast = { prediction_id: 'a'.repeat(64), location_id: predictionId, connector_standard: ccs,
+  source_poll_id: '10000000-0000-0000-0000-000000000001', source_observed_at: new Date(now).toISOString(),
+  generated_at: new Date(now).toISOString(), expires_at: new Date(now+3600000).toISOString(),
+  horizon: 'next_observation', probability_zero_capacity: .7, model_version: 'availability_v1',
+  model_sha256: MODEL_SHA256, experimental: true };
+test('forecast validates exact station, connector, poll, model and chronology', () => {
+  assert.ok(parsePrediction(forecast, predictionId, ccs, now));
+  for (const change of [{ location_id: 'other' }, { connector_standard: ac }, { source_poll_id: 'invalid' },
+    { model_version: 'mlp' }, { model_sha256: 'b'.repeat(64) }, { horizon: 'arrival' },
+    { generated_at: new Date(now+1).toISOString() }, { expires_at: new Date(now).toISOString() },
+    { expires_at: new Date(now+3600001).toISOString() }, { experimental: false },
+    { probability_zero_capacity: NaN }, { probability_zero_capacity: -1 }, { probability_zero_capacity: 1.1 }]) {
+    assert.equal(parsePrediction({ ...forecast, ...change }, predictionId, ccs, now), null);
+  }
+});
+test('actual forecast view renders only matching fresh observations and rejects missing/expired records', () => {
+  const evidence = { ...row, station: station(predictionId) };
+  reset([forecast, false]);
+  const html = render(PredictionOutlook({ evidence, standard: ccs, now }));
+  assert.match(html, /AI outlook.*Beta/); assert.match(html, /Higher model risk/); assert.doesNotMatch(html, /accuracy|70%/);
+  for (const props of [{ evidence, standard: ac, now }, { evidence, standard: ccs, now: now+3600000 },
+    { evidence: { ...evidence, evses: [evse('old', 'AVAILABLE', ccs, now-1)] }, standard: ccs, now },
+    { evidence: { ...evidence, evses: [evse('future', 'AVAILABLE', ccs, now+1)] }, standard: ccs, now }]) {
+    reset([forecast, false]); assert.equal(render(PredictionOutlook(props)), '');
+  }
+  reset([null, false]); assert.equal(render(PredictionOutlook({ evidence, standard: ccs, now })), '');
+  reset([null, true]); assert.match(render(PredictionOutlook({ evidence, standard: ccs, now })), /AI outlook unavailable/);
+  assert.match(outlookText(.65), /Higher/); assert.match(outlookText(.35), /Lower/); assert.match(outlookText(.5), /Uncertain/);
+});
+test('public forecast RPC uses only public credentials and distinguishes missing from HTTP or contract errors', async () => {
+  const original = globalThis.fetch;
+  const oldUrl = process.env.EXPO_PUBLIC_SUPABASE_URL, oldKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://example.invalid'; process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'public-test';
+  try {
+    globalThis.fetch = async (url, init) => { assert.match(url, /rpc\/get_charging_prediction$/);
+      assert.deepEqual(JSON.parse(init.body), { target_location_id: predictionId, target_connector_standard: ccs });
+      assert.equal(init.headers.apikey, 'public-test'); assert.equal(init.headers.Authorization, undefined);
+      return { ok: true, json: async () => [] }; };
+    assert.equal(await fetchPrediction(predictionId, ccs), null);
+    for (const data of [{}, [forecast, forecast]]) {
+      globalThis.fetch = async () => ({ ok: true, json: async () => data });
+      await assert.rejects(fetchPrediction(predictionId, ccs), /Invalid AI/);
+    }
+    globalThis.fetch = async () => ({ ok: false }); await assert.rejects(fetchPrediction(predictionId, ccs), /unavailable/);
+  } finally { globalThis.fetch = original;
+    if (oldUrl === undefined) delete process.env.EXPO_PUBLIC_SUPABASE_URL; else process.env.EXPO_PUBLIC_SUPABASE_URL = oldUrl;
+    if (oldKey === undefined) delete process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY; else process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = oldKey;
+  }
+});
+test('review-only power proposal keeps unknown-power positions and does not mutate the shortlist', async () => {
+  const { proposedPowerTieBreak } = await import(await compile('../src/features/experience/powerRankingProposal.ts', { './presentation': presentationUrl }));
+  const low = { ...row, station: { ...station('low'), max_power_kw: 22 } };
+  const high = { ...row, station: { ...station('high'), max_power_kw: 150 } };
+  const unknown = { ...row, station: station('unknown', [ccs, ac]) };
+  assert.deepEqual(proposedPowerTieBreak([low, unknown, high], ccs).map(row => row.station.location_id), ['high', 'unknown', 'low']);
+  assert.deepEqual([low, unknown, high].map(row => row.station.location_id), ['low', 'unknown', 'high']);
+});
+test('selected-charger and explicit user routes preserve exact origins and reject cross-origin results', async () => {
+  const at = Date.now(), anchor = { ...row, station: station('anchor'), evses: [evse('anchor', 'AVAILABLE', ccs, at)] };
+  const next = { ...row, station: { ...station('next'), latitude: 54.701 }, evses: [evse('next', 'AVAILABLE', ccs, at)] };
+  for (const userOrigin of [undefined, { lat: 54.69, lng: 25.24 }]) {
+    reset(); const f = globalThis.premiumFixture;
+    const origin = userOrigin ?? { lat: anchor.station.latitude, lng: anchor.station.longitude };
+    f.capacityRead = async () => [anchor, next];
+    f.routeRead = async request => {
+      assert.deepEqual(request.origin, origin);
+      return request.destinations.map(destination => ({ route: { origin, destination, drivingDurationSeconds: 120,
+        roadDistanceMeters: 600, trafficAware: true, provider: 'tomtom', calculatedAt: new Date().toISOString() } }));
+    };
+    let search = useDriverSearch(ccs, null); await search.search({ station: anchor.station });
+    rerender(); search = useDriverSearch(ccs, null); await search.compareDriving(userOrigin);
+    rerender(); search = useDriverSearch(ccs, null);
+    assert.deepEqual(search.routeFor(next.station).origin, origin);
+    assert.equal(search.result.originKind, userOrigin ? 'user-origin' : 'selected-charger');
+    f.routeRead = async request => request.destinations.map(destination => ({ route: { origin: { lat: 54, lng: 25 }, destination,
+      drivingDurationSeconds: 120, roadDistanceMeters: 600, trafficAware: true, provider: 'tomtom', calculatedAt: new Date().toISOString() } }));
+    await search.compareDriving(userOrigin); rerender(); search = useDriverSearch(ccs, null);
+    assert.equal(search.routeFor(next.station), null);
+  }
+});
+
+test('forecast lifecycle clears at expiry/background and ignores a late canceled RPC', async () => {
+  const f = globalThis.premiumFixture;
+  const effectHooks = dataUrl(`export { useState } from ${JSON.stringify(hooks)}; export const useEffect=fn=>globalThis.premiumFixture.predictionEffects.push(fn);`);
+  const lifecycleNative = dataUrl(`export const {StyleSheet,Text,View}=globalThis.premiumFixture.native;
+    export const AppState={addEventListener:(event,fn)=>{globalThis.premiumFixture.predictionBackground=fn;return {remove(){}};}};`);
+  const fakePrediction = dataUrl(`export { parsePrediction,outlookText } from ${JSON.stringify(predictionUrl)};
+    export const fetchPrediction=(...args)=>globalThis.premiumFixture.predictionRead(...args);`);
+  const { PredictionOutlook: LifecycleOutlook } = await import(await compile('../src/features/predictions/PredictionOutlook.tsx', {
+    ...common, react: effectHooks, 'react-native': lifecycleNative,
+    '../experience/presentation': presentationUrl, './prediction': fakePrediction,
+  }));
+  const originalSetTimeout=globalThis.setTimeout, originalClearTimeout=globalThis.clearTimeout;
+  const timers=[];
+  globalThis.setTimeout=(fn,delay)=>{const t={fn,delay};timers.push(t);return t;};
+  globalThis.clearTimeout=t=>{if(t)t.cleared=true;};
+  let cleanup;
+  try {
+    const props={evidence:{...row,station:station(predictionId)},standard:ccs,now};
+    reset([null,false]); f.predictionEffects=[]; f.predictionRead=async()=>forecast;
+    LifecycleOutlook(props); cleanup=f.predictionEffects[0](); await Promise.resolve(); await Promise.resolve();
+    rerender(); f.predictionEffects=[]; assert.match(render(LifecycleOutlook(props)),/AI outlook.*Beta/);
+    const expiryCleanup=f.predictionEffects[1](); timers.at(-1).fn(); rerender();
+    assert.equal(render(LifecycleOutlook(props)), ''); expiryCleanup(); cleanup();
+    reset([null,false]); f.predictionEffects=[]; let release;
+    f.predictionRead=()=>new Promise(resolve=>release=resolve);
+    LifecycleOutlook(props); cleanup=f.predictionEffects[0]();
+    f.predictionBackground('background'); release(forecast); await Promise.resolve(); await Promise.resolve();
+    rerender(); assert.equal(render(LifecycleOutlook(props)), ''); cleanup();
+  } finally {cleanup?.();globalThis.setTimeout=originalSetTimeout;globalThis.clearTimeout=originalClearTimeout;}
 });

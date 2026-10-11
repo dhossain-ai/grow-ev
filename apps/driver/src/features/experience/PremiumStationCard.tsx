@@ -1,4 +1,5 @@
 import type { DrivingRoute } from '../../../../../packages/routing';
+import { PredictionOutlook } from '../predictions/PredictionOutlook';
 import { StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../../components/CalmUI';
 import { ChargingPin } from '../../components/DriverIcons';
@@ -24,6 +25,7 @@ export function PremiumStationCard({ evidence, standard, now, recommendation, ro
     <Text style={styles.caption}>Observed {formatAge(observation.observedAt)}{observation.stale ? ' · Stale' : ''}</Text>
     <Text style={styles.metric}>{route ? `${Math.ceil(route.drivingDurationSeconds / 60)} min drive · TomTom · ${originKind === 'user-origin' ? 'from your requested location' : 'from selected charger'}` : 'Driving time unavailable'}</Text>
     {recommendation ? <Text style={styles.reason}>{route ? 'Estimated road travel with observed spare capacity' : 'Nearby with observed spare capacity'}</Text> : null}
+    <PredictionOutlook evidence={evidence} standard={standard} now={now} />
     <View style={styles.row}>{featured ? <View style={{ flex: 1 }}><ActionButton label="Get directions  →" onPress={onDirections} /></View> : null}<View style={{ flex: featured ? .6 : 1 }}><ActionButton secondary label={featured ? 'Details' : 'View station  ›'} onPress={onDetails} /></View></View>
   </View>;
 }
