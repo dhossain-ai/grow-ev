@@ -239,6 +239,19 @@ test('comparison selection opens correct details and close returns home', () => 
   assert.equal(globalThis.premiumFixture.state[0], 'home');
 });
 
+test('driving comparison opens the destination cards even without a congestion recommendation', () => {
+  reset(['results', null, false, false, null]);
+  const other = { ...row, station: station('destination') };
+  let requests = 0;
+  globalThis.premiumFixture.search = { ...searchState('ready', [row, other]), compareDriving: () => { requests++; } };
+  const tree = ExperiencePanel(panelProps);
+  nodes(tree).find(node => node.props.label === 'Compare driving times').props.onPress();
+  assert.equal(requests, 1);
+  assert.equal(globalThis.premiumFixture.state[0], 'compare');
+  rerender();
+  assert.ok(nodes(ExperiencePanel(panelProps)).some(node => node.type === PremiumStationCard && node.props.evidence === other));
+});
+
 const recommendationsUrl = await compile('../src/features/map/recommendations.ts', { './congestion': congestion, '../../../../../packages/routing': routing });
 const fakeReads = dataUrl(`export const fetchMapStations=(...args)=>globalThis.premiumFixture.mapRead(...args); export const fetchStationCapacity=(...args)=>globalThis.premiumFixture.capacityRead(...args);`);
 const fakeRoutes = dataUrl(`export class RoutingClientError extends Error {} export const fetchDrivingRoutes=(...args)=>globalThis.premiumFixture.routeRead(...args);`);
@@ -342,7 +355,8 @@ test('actual forecast view renders only matching fresh observations and rejects 
   const evidence = { ...row, station: station(predictionId) };
   reset([forecast, false]);
   const html = render(PredictionOutlook({ evidence, standard: ccs, now }));
-  assert.match(html, /AI outlook.*Beta/); assert.match(html, /Higher model risk/); assert.doesNotMatch(html, /accuracy|70%/);
+  assert.match(html, /Experimental AI Outlook/); assert.match(html, /Higher model risk/); assert.doesNotMatch(html, /accuracy|70%/);
+  assert.match(html, /Source .*Expires/); assert.match(html, /Model availability_v1/);
   for (const props of [{ evidence, standard: ac, now }, { evidence, standard: ccs, now: now+3600000 },
     { evidence: { ...evidence, evses: [evse('old', 'AVAILABLE', ccs, now-1)] }, standard: ccs, now },
     { evidence: { ...evidence, evses: [evse('future', 'AVAILABLE', ccs, now+1)] }, standard: ccs, now }]) {
@@ -424,7 +438,7 @@ test('forecast lifecycle clears at expiry/background and ignores a late canceled
     const props={evidence:{...row,station:station(predictionId)},standard:ccs,now};
     reset([null,false]); f.predictionEffects=[]; f.predictionRead=async()=>forecast;
     LifecycleOutlook(props); cleanup=f.predictionEffects[0](); await Promise.resolve(); await Promise.resolve();
-    rerender(); f.predictionEffects=[]; assert.match(render(LifecycleOutlook(props)),/AI outlook.*Beta/);
+    rerender(); f.predictionEffects=[]; assert.match(render(LifecycleOutlook(props)),/Experimental AI Outlook/);
     const expiryCleanup=f.predictionEffects[1](); timers.at(-1).fn(); rerender();
     assert.equal(render(LifecycleOutlook(props)), ''); expiryCleanup(); cleanup();
     reset([null,false]); f.predictionEffects=[]; let release;

@@ -1,5 +1,21 @@
 # Grow EV — Current Project Status
 
+## Final AI Outlook and TomTom release — 2026-10-11
+
+Live TomTom responses work: the comparison button fetched alternative routes
+but left Results on the origin charger. A minimal transition now opens Comparison
+so destination ETAs are visible. Outlook captions now expose source/expiry/model
+with the label "Experimental AI Outlook". Ranking and all data guards are preserved.
+96 driver tests, strict TypeScript, zero-warning project lint, web export and
+42 AI tests pass. Production deployment/acceptance remains pending.
+
+Live read-only SQL confirms 2,445 fresh eligible groups at 05:48:31 UTC from poll
+`cdcff5c1-2d8d-4888-b630-79d5d8f5a186`; zero published predictions. The required
+reviewer-protected publication environment is missing; GitHub private Pro reviewer
+controls are unavailable. Publication and automatic publication remain disabled.
+The genuine hourly collector/archive/inference dry-run chain remains functioning.
+See `tasks/active/FINAL-LIVE-RELEASE.md` and `artifacts/final-live-release/REPORT.md`.
+
 ## TASK-016 responsive hotfix preflight — 2026-10-11
 
 Premium merge `b2f75ef` deployed successfully but failed fresh desktop acceptance

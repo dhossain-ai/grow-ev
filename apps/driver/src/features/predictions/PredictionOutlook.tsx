@@ -33,9 +33,11 @@ export function PredictionOutlook({ evidence, standard, now }: { evidence: Stati
   if (unavailable) return <Text style={styles.caption}>AI outlook unavailable</Text>;
   if (!valid || observation.stale || Date.parse(valid.source_observed_at) !== Date.parse(observation.observedAt ?? '')) return null;
   return <View style={styles.box}>
-    <Text style={styles.title}>AI outlook · Beta</Text>
+    <Text style={styles.title}>Experimental AI Outlook</Text>
     <Text style={styles.body}>{outlookText(valid.probability_zero_capacity)}</Text>
     <Text style={styles.caption}>Issued {new Date(valid.generated_at).toLocaleTimeString()} · Next observation</Text>
+    <Text style={styles.caption}>Source {new Date(valid.source_observed_at).toLocaleTimeString()} · Expires {new Date(valid.expires_at).toLocaleTimeString()}</Text>
+    <Text style={styles.caption}>Model {valid.model_version}</Text>
     <Text style={styles.caption}>Experimental outlook for the next check; availability on arrival can differ.</Text>
   </View>;
 }
