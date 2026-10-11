@@ -10,10 +10,9 @@ import type {
   PressEventWithFeatures,
   ViewStateChangeEvent,
 } from '@maplibre/maplibre-react-native';
-import { useCallback, useRef, useState } from 'react';
-import { NativeSyntheticEvent, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Easing, NativeSyntheticEvent, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
-import capturedCase from '../features/experience/recordedCase.json';
 import { ExperiencePanel } from '../features/experience/ExperiencePanel';
 import { useReducedMotion } from './CalmUI';
 import type { ConnectorStandard } from '../features/map/congestion';
@@ -22,12 +21,11 @@ import { LocationControl } from '../features/location/LocationControl';
 import {
   MAP_ERROR_BACKGROUND_COLOR,
   MAP_ERROR_TEXT_COLOR,
-  OPENFREEMAP_STYLE_URL,
+  PREMIUM_MAP_STYLE,
   VILNIUS_CENTER,
   VILNIUS_INITIAL_ZOOM,
 } from './mapConfig';
 import {
-  FilterBar,
   MapStatus,
   useMapStations,
   availabilityColors,
@@ -52,11 +50,20 @@ export function GrowMap() {
   const wide = width >= 900;
   const reduced = useReducedMotion();
   const [standard, setStandard] = useState<ConnectorStandard>('IEC_62196_T2_COMBO');
-  const [showCase, setShowCase] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [panelHeight, setPanelHeight] = useState(0);
+  const [highlightedStation, setHighlightedStation] = useState<MapStation | null>(null);
+  const [filterRequest, setFilterRequest] = useState(0);
+  const [sheetCollapsed, setSheetCollapsed] = useState(false);
   const [mapHeight, setMapHeight] = useState(0);
-  const [filters, setFilters] = useState<StationFilters>({});
+  const [sheetHeight] = useState(() => new Animated.Value(300));
+  const targetHeight = sheetCollapsed ? 48 : wide ? (expanded ? mapHeight * .86 : 300) : expanded ? mapHeight * .72 : Math.min(300, mapHeight * .65);
+  const panelHeight = targetHeight;
+  useEffect(() => {
+    if (!mapHeight) return;
+    const animation = Animated.timing(sheetHeight, { toValue: targetHeight, duration: reduced ? 0 : 240, easing: Easing.out(Easing.cubic), useNativeDriver: false });
+    animation.start();
+    return () => animation.stop();
+  }, [sheetHeight, targetHeight, reduced, mapHeight]);
+  const [filters, setFilters] = useState<StationFilters>({ connectorStandards: ['IEC_62196_T2_COMBO'] });
   const { geojson, stations, loading, error, lastFetched, refresh } =
     useMapStations(bounds, filters);
 
@@ -109,11 +116,16 @@ export function GrowMap() {
       };
       setSelectedStation(station);
       setExpanded(true);
-      setShowCase(false);
       cameraRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: mapHeight * 0.72 + 80 } });
     },
     [reduced, wide, mapHeight],
   );
+
+  const highlight = useCallback((station: MapStation | null) => {
+    setHighlightedStation(station);
+    if (station) cameraRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 14.5,
+      duration: reduced ? 0 : 240, padding: wide ? { left: 460 } : { bottom: mapHeight * .72 } });
+  }, [wide, reduced, mapHeight]);
 
   return (
     <View style={styles.container} onLayout={(event) => setMapHeight(event.nativeEvent.layout.height)}>
@@ -121,7 +133,7 @@ export function GrowMap() {
         attribution
         attributionPosition={{ bottom: 8, left: 8 }}
         dragPan
-        mapStyle={OPENFREEMAP_STYLE_URL}
+        mapStyle={PREMIUM_MAP_STYLE}
         onDidFailLoadingMap={() => setHasLoadingError(true)}
         onDidFinishLoadingMap={() => setHasLoadingError(false)}
         onRegionDidChange={onRegionDidChange}
@@ -213,19 +225,15 @@ export function GrowMap() {
           <Layer id="charging-symbol" type="symbol" filter={['!', ['has', 'point_count']]}
             layout={{ 'text-field': 'ϟ', 'text-size': 17, 'text-font': ['Noto Sans Regular'], 'text-allow-overlap': true }} paint={{ 'text-color': colors.white }} />
         </GeoJSONSource>
-        {selectedStation ? <GeoJSONSource id="selected-station" data={{ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [selectedStation.longitude, selectedStation.latitude] }, properties: {} }] }}>
+        {highlightedStation ? <GeoJSONSource id="selected-station" data={{ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [highlightedStation.longitude, highlightedStation.latitude] }, properties: {} }] }}>
           <Layer id="selected-ring" type="circle" paint={{ 'circle-radius': 18, 'circle-color': colors.accent, 'circle-opacity': 0.18, 'circle-stroke-color': colors.accentInk, 'circle-stroke-width': 3 }} />
         </GeoJSONSource> : null}
       </Map>
 
       {/* Overlay controls */}
-      <View style={[styles.overlayTop, { left: wide ? 448 : 16, maxWidth: 420 }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Map filters" accessibilityState={{ expanded: filtersOpen }} onPress={() => setFiltersOpen((value) => !value)} style={{ minHeight: 48, alignSelf: 'flex-start', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.overlayBorder }}><Text style={{ color: colors.textPrimary, fontSize: 13 }}>Filters {filtersOpen ? '−' : '+'}</Text></Pressable>
-        {filtersOpen ? <FilterBar filters={filters} onFiltersChange={setFilters} /> : null}
-      {filtersOpen ? <View style={{ padding: 8, backgroundColor: colors.overlayBackground, borderRadius: 12 }}>
-        <Text style={styles.legendText}>● Available · In use · Unavailable · Unverified</Text>
-      </View> : null}
-        <View style={styles.statusContainer}>
+      <View style={[styles.overlayTop, { left: undefined, right: 80, top: undefined, bottom: wide ? 20 : panelHeight + 12, maxWidth: 280 }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Map filters" onPress={() => setFilterRequest((value) => value + 1)} style={{ minHeight: 48, alignSelf: 'flex-start', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.overlayBorder }}><Text style={{ color: colors.textPrimary, fontSize: 13 }}>Filters</Text></Pressable>
+        {error ? <View style={styles.statusContainer}>
           <MapStatus
             loading={loading}
             error={error}
@@ -233,26 +241,26 @@ export function GrowMap() {
             lastFetched={lastFetched}
             onRetry={refresh}
           />
-        </View>
+        </View> : null}
       </View>
 
-      <View style={{ position: 'absolute', right: 16, bottom: wide ? 64 : panelHeight + 56, zIndex: 3 }}>
+      <View style={{ position: 'absolute', right: 16, bottom: wide ? 20 : panelHeight + 12, zIndex: 3 }}>
         <LocationControl busy={location.busy} error={location.error} onPress={() => {
           void location.locate().then((fix) => { if (fix) cameraRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: panelHeight } }); });
         }} />
       </View>
-      <View onLayout={(event) => setPanelHeight(event.nativeEvent.layout.height)} style={[styles.detailPanel,
-        wide ? { top: 24, bottom: 48, left: 24, right: undefined, width: 400, height: undefined, maxHeight: !selectedStation && !showCase ? 500 : undefined } : { left: 12, right: 12, bottom: 40, height: showCase || (selectedStation && expanded) ? '72%' : selectedStation ? 340 : '64%', maxHeight: !selectedStation && !showCase ? 440 : undefined }]}>
-        <ExperiencePanel selected={selectedStation} standard={standard} onStandardChange={setStandard}
-          filters={filters} onFiltersChange={setFilters} onLocate={async (signal) => {
-            const fix = await location.locate(); if (!fix || signal.aborted) return false;
-            cameraRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: panelHeight } }); return true;
+      <Animated.View style={[styles.detailPanel,
+        wide ? { top: 20, left: 20, right: undefined, width: 440, height: sheetHeight } : { left: 0, right: 0, bottom: 0, height: sheetHeight }]}>
+        <ExperiencePanel onCollapseChange={setSheetCollapsed} filterRequest={filterRequest} selected={selectedStation} standard={standard} onStandardChange={setStandard}
+          bounds={bounds} onFiltersChange={setFilters} onPresentationChange={setExpanded}
+          onLocate={async (signal) => {
+            const fix = await location.locate(); if (!fix || signal.aborted) return null;
+            cameraRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 14, duration: reduced ? 0 : 240, padding: wide ? { left: 460 } : { bottom: panelHeight } });
+            return { lat: fix.lat, lng: fix.lng };
           }}
-          expanded={expanded} onToggle={() => setExpanded((value) => !value)} onClose={() => setSelectedStation(null)}
-          onSelect={(station) => { setSelectedStation(station); setExpanded(true); setShowCase(false); cameraRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: mapHeight * 0.72 + 80 } }); }}
-          stations={stations} loading={loading} error={error} userOrigin={location.position ? { lat: location.position.lat, lng: location.position.lng } : undefined}
-          showCase={showCase} onCase={() => { setShowCase(true); cameraRef.current?.easeTo({ center: [capturedCase.selected.station.longitude, capturedCase.selected.station.latitude], zoom: 14.5, duration: reduced ? 0 : 280, padding: wide ? { left: 424 } : { bottom: mapHeight * 0.72 + 80 } }); }} onCloseCase={() => setShowCase(false)} />
-      </View>
+          onClose={() => setSelectedStation(null)} onHighlight={highlight}
+          onWiden={() => { cameraRef.current?.easeTo({ center: bounds ? [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2] : VILNIUS_CENTER, zoom: 11, duration: reduced ? 0 : 240 }); }} />
+      </Animated.View>
 
       {hasLoadingError ? (
         <View accessibilityRole="alert" style={styles.error}>
@@ -264,7 +272,6 @@ export function GrowMap() {
 }
 
 const styles = StyleSheet.create({
-  legendText: { color: colors.textSecondary, fontSize: 11 },
   container: {
     flex: 1,
   },

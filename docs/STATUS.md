@@ -1,5 +1,25 @@
 # Grow EV — Current Project Status
 
+## TASK-016 premium driver implementation — 2026-10-11
+
+Isolated `E:\Grow EV-task016`, branch `task-016-driver-experience`, baseline
+`226c7a0`: shared home/results/comparison/details, compact voice action and
+command-to-search flow implemented. Driver Network header link removed;
+separate Network Intelligence retained. Canonical compatibility, status/freshness
+and existing ranking preserved. Mixed-connector power and unpublished forecasts
+stay unavailable. No TASK-015, schema, collector or backend changes/deployment.
+
+TypeScript, zero-warning lint, 84 tests, separate web/Android exports and native
+x86_64 debug build passed. Chrome responsive home/search/results/comparison/details
+and Pixel_8 home/search/details/expanded information/clipboard, microphone denial,
+recording cancellation and Google Maps launch were exercised separately.
+Both platforms now share a restrained sage/blue Positron map palette with unchanged
+OpenFreeMap sources and geographic behavior. Native labels rendered after reboot.
+The old web interface at localhost:8082 comes from the main workspace; the task
+preview at localhost:8167 serves dist-task016-parity with no-store caching.
+Human web speech-to-results verified; Safari/Android Chrome device acceptance and full visual
+acceptance remain pending. See `tasks/active/TASK-016.md` and `artifacts/task-016`.
+
 ## TASK-014 isolated voice implementation and production verification
 
 In `E:\Grow EV-task014`, branch `task-014-cloudflare-voice`, the existing
@@ -353,3 +373,7 @@ private full snapshots, versioned Colab export, leakage-safe chronological
 CatBoost/persistence evaluation and separately approved inference/prediction storage.
 No migration files, DB schema changes, model artifacts or prediction writes.
 Stop for review before retention migrations or AI implementation.
+
+TASK-016 reconnect follow-up: user's Pixel_8 accepted the bundle, but black captures and unchanged controls prevented further native interaction proof. Android Studio/emulator remain open. See artifacts/task-016/README.md; acceptance remains pending.
+
+TASK-016 Pixel_8 recovery: reboot restored native interaction. Real Type 2 search, details/expanded information, copy action, microphone denial, recording and Back cancellation verified. Fixed navigation by directly opening URLs; Google Maps launch verified. All 82 tests, TypeScript and lint pass after fix. Spoken-command success, real mobile browsers and full visual/live-routing acceptance remain pending. See task-016 evidence.

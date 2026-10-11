@@ -13,7 +13,7 @@ export function LocationControl({ busy, error, onPress }: { busy: boolean; error
 const styles = StyleSheet.create({
   container: { alignItems: 'flex-end', gap: 8 },
   button: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface,
-    borderWidth: 1, borderColor: colors.overlayBorder, borderRadius: 16 },
-  icon: { fontSize: 32, color: colors.info, lineHeight: 36 },
+    borderWidth: 1, borderColor: colors.overlayBorder, borderRadius: 24 },
+  icon: { fontSize: 32, color: colors.textPrimary, lineHeight: 36 },
   error: { maxWidth: 280, padding: 12, borderRadius: 12, backgroundColor: colors.surface, color: colors.textPrimary, fontSize: 13 },
 });

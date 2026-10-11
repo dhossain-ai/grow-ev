@@ -1,0 +1,17 @@
+{
+  "url": "http://localhost:8167/?build=task016-parity",
+  "humanSpeech": true,
+  "permissionDenied": "user observed Microphone access is off",
+  "worker": "https://grow-ev-voice.dhossain.workers.dev/transcribe",
+  "workerStatus": 200,
+  "transcript": "Show type 2 chargers.",
+  "mapRpcStatus": 200,
+  "capacityRpcStatus": 200,
+  "resultHeading": "Charging options nearby",
+  "station": "Eldrive Lithuania VILNIUS TECH Centriniai Rūmai",
+  "connector": "Type 2",
+  "observation": "stale; current availability unverified",
+  "earlierTranscript": "Show type 2 charges.",
+  "earlierOutcome": "unrecognized; exact grammar corrected and regression tested",
+  "note": "Human pipeline exercised before final source isolation and export. Same voice action/search contracts retained. No raw audio saved."
+}

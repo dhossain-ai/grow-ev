@@ -10,7 +10,7 @@ export const colors = {
   elevated: '#F0F4EF',
 
   // Text
-  textPrimary: '#17211E',
+  textPrimary: '#17221B',
   textSecondary: '#52615A',
   textMuted: '#607068',
 
@@ -18,7 +18,7 @@ export const colors = {
   accent: '#C7F36B',
   accentForeground: '#17211E',
   accentSoft: '#F0F9E4',
-  accentInk: '#39551C',
+  accentInk: '#36512B',
   markerAvailable: '#20B887',
   markerOccupied: '#E8A23E',
   markerUnavailable: '#E76E70',
