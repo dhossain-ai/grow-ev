@@ -9,7 +9,7 @@ import { colors } from '../map/tokens';
 import { formatConnector, type BoundingBox, type MapStation, type StationFilters } from '../map/types';
 import { executeVoiceCommand } from '../voice/actions';
 import { VoiceControl } from '../voice/VoiceControl';
-import { connectorKind, navigationUrls } from './presentation';
+import { connectorKind, navigationUrls, stationTitle } from './presentation';
 import { PremiumStationCard } from './PremiumStationCard';
 import { PremiumStationDetails } from './PremiumStationDetails';
 import { useDriverSearch } from './useDriverSearch';
@@ -63,7 +63,7 @@ export function ExperiencePanel({ selected, standard, onStandardChange, onClose,
   const featured = screen === 'compare' ? options[0] : search.rows.find((row) => row.station.location_id === focusId) ?? options[0];
   const highlighted = featured?.station;
   useEffect(() => { if (search.phase === 'ready' && highlighted) onHighlight(highlighted); }, [highlighted, search.phase, onHighlight]);
-  const find = async (options?: Parameters<typeof search.search>[0]) => { setCollapsed(false); setScreen('results'); setFocusId(null); return operations.current.search(options); };
+  const find = async (options?: Parameters<typeof search.search>[0]) => { setCollapsed(false); setScreen('results'); setFocusId(null); return operations.current.search({ ...options, withDrivingTimes: Platform.OS === 'web' }); };
   const directions = async (station: MapStation) => {
     setNavigationError(null);
     try {
@@ -76,6 +76,8 @@ export function ExperiencePanel({ selected, standard, onStandardChange, onClose,
     } catch (failure) { setNavigationError(failure instanceof Error ? failure.message : 'Navigation unavailable. Please retry.'); }
   };
   const chip = <View style={styles.chip}><ConnectorIcon combo={standard === 'IEC_62196_T2_COMBO'} /><Text style={styles.chipText}>{formatConnector(standard)} · {connectorKind(standard)}</Text></View>;
+  const originLabel = search.result?.originKind === 'user-origin' ? 'your requested location' : search.anchor ? stationTitle(search.anchor.station) : 'selected charger';
+  const compare = () => { setScreen('compare'); if (Platform.OS === 'web' && !options.some(row => search.routeFor(row.station))) void search.compareDriving(); };
   const details = (station: MapStation) => { setFocusId(station.location_id); setScreen('details'); setCollapsed(false); onHighlight(station); };
   return <View style={styles.panel}>
     <Pressable accessibilityRole="button" disabled={voiceActive} accessibilityState={{ disabled: voiceActive }} accessibilityLabel={collapsed ? 'Expand charging sheet' : 'Collapse charging sheet'} onPress={() => setCollapsed((value) => !value)} style={[styles.handleButton, collapsed && { height: 48 }]}><View style={styles.handle} /></Pressable>
@@ -83,17 +85,24 @@ export function ExperiencePanel({ selected, standard, onStandardChange, onClose,
       {home ? <View style={[styles.home, compactViewport && { gap: 10, paddingBottom: 14 }]}>
         <Text accessibilityRole="header" style={[styles.title, compactViewport && { fontSize: 24, lineHeight: 28 }]}>Find your next charge</Text>
         <Text style={[styles.body, compactViewport && { fontSize: 13, lineHeight: 18 }]}>Choose your connector to explore compatible charging options.</Text>
+        {Platform.OS === 'web' ? <Text style={styles.caption}>Driving estimates start at the selected charger.</Text> : null}
         <ConnectorSelector value={standard} onChange={changeConnector} />
         <View style={{ paddingRight: 68 }}><ActionButton label="Find charging options  →" onPress={() => { void find(); }} /></View>
       </View> : <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.toolbar}><Pressable accessibilityRole="button" style={styles.touch} onPress={() => { if (screen === 'details' || screen === 'compare') setScreen('results'); else close(); }}><Text style={styles.body}>‹  Back</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Close charging results" style={styles.touch} onPress={close}><Text style={styles.close}>×</Text></Pressable></View>
-        {search.phase === 'loading' ? <><Text accessibilityRole="header" style={styles.title}>Finding your charging options</Text>{chip}<Text style={styles.body}>Checking compatible chargers nearby.</Text><ActivityIndicator accessibilityLabel="Loading compatible charging data" color={colors.accentInk} />{[0, 1, 2].map((i) => <View key={i} style={styles.skeleton}><View style={styles.skeletonDot} /><View style={{ flex: 1, gap: 9 }}><View style={styles.skeletonLine} /><View style={[styles.skeletonLine, { width: '60%' }]} /></View></View>)}</> : search.phase === 'error' ? <><Text accessibilityRole="header" style={styles.title}>Charging data unavailable</Text><Text accessibilityRole="alert" style={styles.body}>{search.error}</Text>{chip}<ActionButton label="Try again  →" onPress={() => { void find(); }} /><ActionButton secondary label="Change connector" onPress={close} /></> : search.phase === 'empty' || !featured ? <><Text accessibilityRole="header" style={styles.title}>No matching chargers nearby</Text><Text style={styles.body}>Try a wider area or change your connector.</Text>{chip}<ActionButton label="Search a wider area  →" onPress={() => { onWiden(); close(); }} /><ActionButton secondary label="Change connector" onPress={close} /></> : screen === 'details' ? <PremiumStationDetails route={search.routeFor(featured.station)} originKind={search.result?.originKind} key={`${featured.station.location_id}-${standard}`} evidence={featured} standard={standard} now={search.now}
-          recommendation={ranked.find((item) => item.evidence.station.location_id === featured.station.location_id)} onDirections={() => { void directions(featured.station); }} onCompare={() => setScreen('compare')} /> : <>
+        {search.phase === 'loading' ? <><Text accessibilityRole="header" style={styles.title}>Finding your charging options</Text>{chip}<Text style={styles.body}>Checking compatible chargers nearby.</Text><ActivityIndicator accessibilityLabel="Loading compatible charging data" color={colors.accentInk} />{[0, 1, 2].map((i) => <View key={i} style={styles.skeleton}><View style={styles.skeletonDot} /><View style={{ flex: 1, gap: 9 }}><View style={styles.skeletonLine} /><View style={[styles.skeletonLine, { width: '60%' }]} /></View></View>)}</> : search.phase === 'error' ? <><Text accessibilityRole="header" style={styles.title}>Charging data unavailable</Text><Text accessibilityRole="alert" style={styles.body}>{search.error}</Text>{chip}<ActionButton label="Try again  →" onPress={() => { void find(); }} /><ActionButton secondary label="Change connector" onPress={close} /></> : search.phase === 'empty' || !featured ? <><Text accessibilityRole="header" style={styles.title}>No matching chargers nearby</Text><Text style={styles.body}>Try a wider area or change your connector.</Text>{chip}<ActionButton label="Search a wider area  →" onPress={() => { onWiden(); close(); }} /><ActionButton secondary label="Change connector" onPress={close} /></> : screen === 'details' ? <PremiumStationDetails route={search.routeFor(featured.station)} originKind={search.result?.originKind} originLabel={originLabel} routing={search.routing} key={`${featured.station.location_id}-${standard}`} evidence={featured} standard={standard} now={search.now}
+          recommendation={ranked.find((item) => item.evidence.station.location_id === featured.station.location_id)} onDirections={() => { void directions(featured.station); }} onCompare={compare} /> : <>
           <Text accessibilityRole="header" style={styles.title}>{screen === 'compare' ? 'Compare charging options' : 'Charging options nearby'}</Text>
           <View style={styles.toolbar}>{chip}<Pressable accessibilityRole="button" style={styles.touch} onPress={close}><Text style={styles.body}>Change ›</Text></Pressable></View>
           {ranked.length ? <Text style={styles.caption}>{search.result?.rankingBasis === 'driving-time' ? 'Shortest estimated drive first.' : 'Nearest eligible alternatives to the selected charger.'}</Text> : <Text style={styles.caption}>Compatible stations · Current observations do not support a ranked alternative.</Text>}
-          <PremiumStationCard route={search.routeFor(featured.station)} originKind={search.result?.originKind} evidence={featured} standard={standard} now={search.now} featured recommendation={ranked.find((item) => item.evidence.station.location_id === featured.station.location_id)} onDetails={() => details(featured.station)} onDirections={() => { void directions(featured.station); }} />
-          {screen !== 'compare' ? <ActionButton secondary label="Compare alternatives" onPress={() => setScreen('compare')} /> : options.filter((row) => row.station.location_id !== featured.station.location_id).slice(0, 2).map((row) => <PremiumStationCard route={search.routeFor(row.station)} originKind={search.result?.originKind} key={row.station.location_id} evidence={row} standard={standard} now={search.now} recommendation={ranked.find((item) => item.evidence.station.location_id === row.station.location_id)} onDetails={() => details(row.station)} onDirections={() => { void directions(row.station); }} />)}
+          <Text style={styles.caption}>Driving estimates from {originLabel}. {search.result?.originKind !== 'user-origin' ? 'This is a charger origin, not your location.' : ''}</Text>
+          {Platform.OS === 'web' ? <View style={{ gap: 4 }}>{search.routing ? <Text style={styles.caption}>Checking road-driving estimates…</Text> : options.flatMap(row => {
+            const route = search.routeFor(row.station);
+            return route ? [<Text key={row.station.location_id} style={styles.drive}>{stationTitle(row.station)} · {Math.ceil(route.drivingDurationSeconds / 60)} min drive</Text>] : [];
+          })}</View> : null}
+          <PremiumStationCard route={search.routeFor(featured.station)} originKind={search.result?.originKind} originLabel={originLabel} routing={search.routing} evidence={featured} standard={standard} now={search.now} featured recommendation={ranked.find((item) => item.evidence.station.location_id === featured.station.location_id)} onDetails={() => details(featured.station)} onDirections={() => { void directions(featured.station); }} />
+          {screen !== 'compare' ? <ActionButton secondary label="Compare alternatives" onPress={compare} /> : null}
+          {screen === 'compare' || Platform.OS === 'web' ? options.filter((row) => row.station.location_id !== featured.station.location_id).slice(0, 2).map((row) => <PremiumStationCard route={search.routeFor(row.station)} originKind={search.result?.originKind} originLabel={originLabel} routing={search.routing} key={row.station.location_id} evidence={row} standard={standard} now={search.now} recommendation={ranked.find((item) => item.evidence.station.location_id === row.station.location_id)} onDetails={() => details(row.station)} onDirections={() => { void directions(row.station); }} />) : null}
           {options.length ? <ActionButton secondary disabled={search.routing || search.now < search.retryAt} label={search.routing ? 'Checking driving times…' : search.now < search.retryAt ? 'Routing rate limited · try later' : 'Compare driving times'} onPress={() => { setScreen('compare'); void search.compareDriving(); }} /> : null}
           <ActionButton secondary disabled={search.routing || search.now < search.retryAt} label="Driving times from my location" onPress={() => { void (async () => { const fix = await onLocate(new AbortController().signal); if (fix) await operations.current.compareDriving(fix); })(); }} />
           {search.error ? <Text accessibilityRole="alert" style={styles.caption}>{search.error}</Text> : null}
@@ -117,6 +126,7 @@ const styles = StyleSheet.create({
   title: { color: colors.textPrimary, fontSize: 27, fontWeight: '700', lineHeight: 32, letterSpacing: -.9 },
   body: { color: colors.textSecondary, fontSize: 15, lineHeight: 22 },
   caption: { color: colors.textSecondary, fontSize: 12, lineHeight: 18 },
+  drive: { color: colors.accentInk, fontSize: 18, lineHeight: 24, fontWeight: '700' },
   toolbar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   touch: { minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   close: { fontSize: 30, color: colors.textPrimary },

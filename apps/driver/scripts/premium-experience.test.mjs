@@ -252,6 +252,34 @@ test('driving comparison opens the destination cards even without a congestion r
   assert.ok(nodes(ExperiencePanel(panelProps)).some(node => node.type === PremiumStationCard && node.props.evidence === other));
 });
 
+test('ordinary web search opts into routing and Results exposes destination cards with a named origin', async () => {
+  reset(); let request;
+  globalThis.premiumFixture.search = { ...searchState('idle'), search: async options => { request = options; return true; } };
+  nodes(ExperiencePanel(panelProps)).find(node => node.props.label === 'Find charging options  →').props.onPress();
+  await Promise.resolve(); assert.equal(request.withDrivingTimes, true);
+  const other = { ...row, station: station('destination') };
+  globalThis.premiumFixture.search = searchState('ready', [row, other]); rerender();
+  const tree = ExperiencePanel(panelProps);
+  assert.match(render(tree), /Driving estimates from Synthetic a.*charger origin, not your location/);
+  assert.ok(nodes(tree).some(node => node.type === PremiumStationCard && node.props.evidence === other));
+});
+
+test('Compare alternatives requests missing routes but reuses valid displayed routes', () => {
+  for (const available of [false, true]) {
+    reset(['results', null, false, false, null]); let calls = 0;
+    globalThis.premiumFixture.search = { ...searchState('ready', [row]), routeFor: () => available ? {} : null, compareDriving: () => calls++ };
+    nodes(ExperiencePanel(panelProps)).find(node => node.props.label === 'Compare alternatives').props.onPress();
+    assert.equal(calls, available ? 0 : 1); assert.equal(globalThis.premiumFixture.state[0], 'compare');
+  }
+});
+
+test('route loading never invents minutes and returned route captions name the origin', () => {
+  reset(); const props = { evidence: row, standard: ccs, now, originLabel: 'Explicit charger', onDetails() {}, onDirections() {} };
+  assert.match(render(React.createElement(PremiumStationCard, { ...props, routing: true })), /Checking driving time/);
+  assert.doesNotMatch(render(React.createElement(PremiumStationCard, { ...props, routing: true })), /min drive/);
+  assert.match(render(React.createElement(PremiumStationCard, { ...props, route: { drivingDurationSeconds: 217 } })), /4 min drive.*TomTom road estimate.*Explicit charger/);
+});
+
 const recommendationsUrl = await compile('../src/features/map/recommendations.ts', { './congestion': congestion, '../../../../../packages/routing': routing });
 const fakeReads = dataUrl(`export const fetchMapStations=(...args)=>globalThis.premiumFixture.mapRead(...args); export const fetchStationCapacity=(...args)=>globalThis.premiumFixture.capacityRead(...args);`);
 const fakeRoutes = dataUrl(`export class RoutingClientError extends Error {} export const fetchDrivingRoutes=(...args)=>globalThis.premiumFixture.routeRead(...args);`);
@@ -259,6 +287,33 @@ const { useDriverSearch } = await import(await compile('../src/features/experien
   react: hooks, 'react-native': native, '../map/api': fakeReads, '../map/capacityApi': fakeReads, '../map/congestion': congestion,
   '../map/recommendations': recommendationsUrl, '../map/routingApi': fakeRoutes, './presentation': presentationUrl,
 }));
+
+test('search routing is opt-in, bounded, skips the charger origin and survives provider failure', async () => {
+  for (const withDrivingTimes of [false, true]) {
+    reset(); const at = Date.now(), f = globalThis.premiumFixture; let calls = 0;
+    const rows = Array.from({ length: 5 }, (_, i) => ({ station: { ...station(String(i)), latitude: 54.7+i*.001 }, evses: [evse(String(i), 'AVAILABLE', ccs, at)] }));
+    f.capacityRead = async () => rows;
+    f.routeRead = async request => { calls++; assert.ok(request.destinations.length <= 3); assert.ok(request.destinations.every(d => d.lat !== request.origin.lat)); throw new Error('Provider unavailable'); };
+    let search = useDriverSearch(ccs, null);
+    assert.equal(await search.search({ station: rows[0].station, withDrivingTimes }), true);
+    rerender(); search = useDriverSearch(ccs, null);
+    assert.equal(calls, withDrivingTimes ? 1 : 0); assert.equal(search.phase, 'ready'); assert.equal(search.routing, false);
+    assert.equal(search.routeFor(rows[1].station), null);
+    if (withDrivingTimes) assert.equal(search.error, 'Provider unavailable');
+  }
+});
+
+test('reset rejects delayed search-route responses without reopening Results', async () => {
+  reset(); const at = Date.now(), f = globalThis.premiumFixture; let release;
+  const other = { station: { ...station('b'), latitude: 54.71 }, evses: [evse('b', 'AVAILABLE', ccs, at)] };
+  f.capacityRead = async () => [{ ...row, evses: [evse('a', 'AVAILABLE', ccs, at)] }, other];
+  f.routeRead = () => new Promise(resolve => { release = resolve; });
+  const search = useDriverSearch(ccs, null);
+  const pending = search.search({ station: row.station, withDrivingTimes: true });
+  await Promise.resolve(); await Promise.resolve(); search.reset(); release([]);
+  assert.equal(await pending, false); rerender(); const after = useDriverSearch(ccs, null);
+  assert.equal(after.phase, 'idle'); assert.equal(after.routeFor(other.station), null);
+});
 test('real search hook keeps power-ineligible alternatives out and routes from explicit near-me origin', async () => {
   reset(); const at = Date.now(), origin = { lat: 54.7, lng: 25.24 };
   const anchor = { station: station('anchor'), evses: [evse('anchor1', 'CHARGING', ccs, at)] };

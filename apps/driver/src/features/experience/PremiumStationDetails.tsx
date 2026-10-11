@@ -12,10 +12,10 @@ import { colors } from '../map/tokens';
 import { formatAge, formatConnector } from '../map/types';
 import { compatibleObservation, compatiblePower, connectorKind, stationTitle } from './presentation';
 
-export function PremiumStationDetails({ evidence, standard, now, recommendation, route, onDirections, onCompare, originKind = 'selected-charger' }: {
+export function PremiumStationDetails({ evidence, standard, now, recommendation, route, onDirections, onCompare, originKind = 'selected-charger', originLabel, routing = false }: {
   evidence: StationEvidence; standard: ConnectorStandard; now: number; recommendation?: Recommendation; route?: DrivingRoute | null;
   onDirections: () => void; onCompare: () => void;
-  originKind?: 'selected-charger' | 'user-origin';
+  originKind?: 'selected-charger' | 'user-origin'; originLabel?: string; routing?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export function PremiumStationDetails({ evidence, standard, now, recommendation,
     {!expanded ? <>
       <View style={styles.box}><View style={styles.row}><ConnectorIcon combo={standard === 'IEC_62196_T2_COMBO'} /><View style={{ flex: 1 }}><Text style={styles.power}>{power === null ? 'Power not reported' : `Up to ${power} kW`}</Text><Text style={styles.body}>{formatConnector(standard)} · {connectorKind(standard)}</Text></View></View><Text style={styles.body}>{observation.compatible} compatible charging point{observation.compatible === 1 ? '' : 's'}</Text></View>
       <View style={styles.box}><Text style={styles.heading}>Charging availability</Text><Text style={styles.body}>{observation.label}</Text><Text style={styles.caption}>Observed {formatAge(observation.observedAt)}{observation.stale ? ' · Stale observation' : ''}</Text></View>
-      <View style={styles.box}><Text style={styles.heading}>{route ? `${Math.ceil(route.drivingDurationSeconds / 60)} min drive` : 'Driving time unavailable'}</Text><Text style={styles.caption}>{route ? `TomTom road estimate · ${originKind === 'user-origin' ? 'from your requested location' : 'from selected charger'}` : 'Use external navigation for turn-by-turn directions.'}</Text></View>
+      <View style={styles.box}><Text style={styles.heading}>{route ? `${Math.ceil(route.drivingDurationSeconds / 60)} min drive` : routing ? 'Checking driving time…' : 'Driving time unavailable'}</Text><Text style={styles.caption}>{route ? `TomTom road estimate · from ${originLabel ?? (originKind === 'user-origin' ? 'your requested location' : 'selected charger')}` : 'Use external navigation for turn-by-turn directions.'}</Text></View>
       <ActionButton label="Get directions  →" onPress={onDirections} />
       <ActionButton label="Compare alternatives" secondary onPress={onCompare} />
     </> : null}

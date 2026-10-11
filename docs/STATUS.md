@@ -1,5 +1,23 @@
 # Grow EV — Current Project Status
 
+## Final core intelligence completion — 2026-10-11
+
+Ordinary web Search now requests one bounded route comparison; Results exposes
+destination cards and prominent actual minutes, with the charger origin named.
+Compare alternatives reuses valid routes and requests missing ones through the
+existing guarded client. Native search initiation and recommendation ranking
+remain unchanged. 101 driver tests, TypeScript, zero-warning lint and web export
+pass; 42 AI tests pass. Controlled public release acceptance is pending.
+
+Authenticated GitHub settings verify Pro plus a private AI repository, where
+required deployment reviewers are unsupported. Database secret names exist;
+publication environment and enabling variables are absent. A concrete one-shot
+owner approval replacement is prepared, awaiting explicit approval. Publication
+and recurring writes remain disabled. Current read-only audit at 08:39 UTC:
+poll c97d35c5-9922-4ce7-ae5a-bb968f2ff6b0, 2445 fresh eligible groups, zero
+published rows. See `tasks/active/FINAL-CORE-INTELLIGENCE.md` and
+`artifacts/core-intelligence-completion/PUBLICATION-APPROVAL.md`.
+
 ## Final AI Outlook and TomTom release — 2026-10-11
 
 Live TomTom responses work: the comparison button fetched alternative routes
