@@ -1,5 +1,18 @@
 # Grow EV — Current Project Status
 
+## TASK-016 controlled release preparation — 2026-10-11
+
+Latest main `8f99561` and approved feature `20d0627` integrated on an isolated
+release branch. The sole documentation conflict below preserves both task status
+histories verbatim. TASK-015 workflow/collector/Supabase and Voice Worker trees
+remain unchanged from main. Combined-tree TypeScript, zero-warning ESLint, all
+92 tests, production web export and diff checks passed. Existing web workflow
+targets grow-ev-demo and is active; main push will trigger the single deployment.
+Pre-release rollback version: `40f44261-6217-459b-811c-0120353e7f4b`.
+Actual production deployment/acceptance will be verified after the approved push;
+the retained earlier task sections describe their historical verification state.
+See `artifacts/task-016/PREPITCH-RELEASE-PREFLIGHT.md` for gates and rollback.
+
 ## TASK-015 isolated pipeline — activation approved, secrets pending
 
 `E:\Grow EV-task015` (`task-015-permanent-pipeline`) prepares an explicitly gated
@@ -22,6 +35,61 @@ for genuine remote archive verification. GitHub billing is verified at 39/3,000
 minutes with the existing $0 Stop usage budget preserved. Missing server-side
 credentials prevent activation; details and bounded archive export/rotation
 planning are in `tasks/active/TASK-015.md`.
+
+## TASK-016 responsible charging — 2026-10-11
+
+Expanded station details now include charging etiquette, a station-linked unsent
+report preview (five categories, optional 240-character description), and Grow
+Points information labeled "Rewards program · Coming soon". No reporting endpoint
+exists in the inspected application; no submission, storage, rewards or accounts
+were added. Premium UI and intelligence commits `ec21628` and `2e6f6d2` preserved.
+
+92 tests, TypeScript, zero-warning ESLint, web/Android exports and offline x86_64
+debug assembly passed. Chrome desktop/320/390 layouts and Pixel_8 report/rewards
+sheets were exercised with real station identity; Android keyboard and Back close
+checked. Original 76 untracked evidence files audited individually and retained
+outside the commit. Feature branch pushed; no main merge or deployment.
+See `artifacts/task-016/RESPONSIBLE-CHARGING.md` and its untracked-file audit.
+Real reporting/rewards, published live forecasts and physical-device acceptance
+remain future work. Main pushes currently trigger deployment; gate that workflow
+before a separately approved merge if deployment has not also been approved.
+
+## TASK-016 driver intelligence integration — 2026-10-11
+
+Follow-up to preserved premium UI commit `ec21628` in `E:\Grow EV-task016`.
+Shared CatBoost Beta outlooks use the reviewed public prediction RPC and exact
+identity/model/observation/expiry checks; absent or stale forecasts stay hidden.
+Expiry/background/late-response behavior is tested. Driver-origin age starts before
+I/O. Production ranking and verified web voice fix are preserved; power ranking
+remains an unused tested proposal. No TASK-015/backend/schema changes.
+
+90 tests, TypeScript, zero-warning lint, final web/Android exports and offline
+x86_64 debug build passed. Chrome and Pixel_8 real CCS2 search screenshots captured.
+Prediction RPC HTTP 200 returned no forecast for the checked station; anonymous
+private-table access returned HTTP 401. Web 4/5-minute and Android 2-minute routing
+evidence retained. Live forecast rendering, fresh-congestion acceptance, physical
+driver GPS/devices and Android human voice remain unverified. No deployment or merge.
+See `artifacts/task-016/INTELLIGENCE-INTEGRATION.md` and `tasks/active/TASK-016.md`.
+
+## TASK-016 premium driver implementation — 2026-10-11
+
+Isolated `E:\Grow EV-task016`, branch `task-016-driver-experience`, baseline
+`226c7a0`: shared home/results/comparison/details, compact voice action and
+command-to-search flow implemented. Driver Network header link removed;
+separate Network Intelligence retained. Canonical compatibility, status/freshness
+and existing ranking preserved. Mixed-connector power and unpublished forecasts
+stay unavailable. No TASK-015, schema, collector or backend changes/deployment.
+
+TypeScript, zero-warning lint, 84 tests, separate web/Android exports and native
+x86_64 debug build passed. Chrome responsive home/search/results/comparison/details
+and Pixel_8 home/search/details/expanded information/clipboard, microphone denial,
+recording cancellation and Google Maps launch were exercised separately.
+Both platforms now share a restrained sage/blue Positron map palette with unchanged
+OpenFreeMap sources and geographic behavior. Native labels rendered after reboot.
+The old web interface at localhost:8082 comes from the main workspace; the task
+preview at localhost:8167 serves dist-task016-parity with no-store caching.
+Human web speech-to-results verified; Safari/Android Chrome device acceptance and full visual
+acceptance remain pending. See `tasks/active/TASK-016.md` and `artifacts/task-016`.
 
 ## TASK-014 isolated voice implementation and production verification
 
@@ -376,3 +444,7 @@ private full snapshots, versioned Colab export, leakage-safe chronological
 CatBoost/persistence evaluation and separately approved inference/prediction storage.
 No migration files, DB schema changes, model artifacts or prediction writes.
 Stop for review before retention migrations or AI implementation.
+
+TASK-016 reconnect follow-up: user's Pixel_8 accepted the bundle, but black captures and unchanged controls prevented further native interaction proof. Android Studio/emulator remain open. See artifacts/task-016/README.md; acceptance remains pending.
+
+TASK-016 Pixel_8 recovery: reboot restored native interaction. Real Type 2 search, details/expanded information, copy action, microphone denial, recording and Back cancellation verified. Fixed navigation by directly opening URLs; Google Maps launch verified. All 82 tests, TypeScript and lint pass after fix. Spoken-command success, real mobile browsers and full visual/live-routing acceptance remain pending. See task-016 evidence.

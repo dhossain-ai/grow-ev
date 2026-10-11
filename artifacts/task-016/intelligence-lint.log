@@ -1,0 +1,6 @@
+
+> @grow-ev/driver@1.0.0 lint
+> expo lint --max-warnings 0
+
+env: load .env.local
+env: export EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY EXPO_PUBLIC_SUPABASE_URL

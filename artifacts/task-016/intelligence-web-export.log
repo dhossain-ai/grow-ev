@@ -1,0 +1,23 @@
+env: load .env.local
+env: export EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY EXPO_PUBLIC_SUPABASE_URL
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+Static rendering is enabled. Learn more: https://docs.expo.dev/router/web/static-rendering/
+| (node:25968) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+λ Bundled 4830ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (897 modules)
+Web Bundled 5547ms node_modules\expo-router\entry.js (857 modules)
+
+› web bundles (3):
+_expo/static/css/calm.web-022ae030599ca1a48f5a550cb1c2a372.css (560B)
+_expo/static/css/maplibre-gl-1087f32ac90561d22e082126880c64a5.css (83KB)
+_expo/static/js/web/entry-5c3e419dd58bd350ca1ba09921f9ebf2.js (2.4MB)
+
+› Static routes (4):
+/ (index) (32KB)
+/network (28KB)
+/_sitemap (25KB)
+/+not-found (25KB)
+
+Exported: dist-task016-intelligence

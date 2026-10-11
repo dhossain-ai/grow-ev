@@ -1,0 +1,107 @@
+{
+  "checkedAt": "2026-10-10T23:59:46.259Z",
+  "anchor": {
+    "location_id": "14f4a10e-b1a2-4c44-8eda-e2793e95f426",
+    "name": "Norfa XXL Ateities g. 10, Vilnius",
+    "operator_name": "Enefit, UAB",
+    "address": "10 Ateities g.",
+    "city": "Vilnius",
+    "latitude": 54.7377663,
+    "longitude": 25.2701118,
+    "total_evse_count": 2,
+    "available_evse_count": 2,
+    "charging_evse_count": 0,
+    "unavailable_evse_count": 0,
+    "unknown_evse_count": 0,
+    "connector_types": [
+      "IEC_62196_T2_COMBO"
+    ],
+    "max_power_kw": 47,
+    "last_observed_at": "2026-10-10T21:59:40.353+00:00"
+  },
+  "destination": {
+    "location_id": "0894f2e9-91bd-42f8-ad2c-3e5b5b02c76e",
+    "name": "Simbiocity Nova",
+    "operator_name": "Enefit, UAB",
+    "address": "Gerulaičio, 10",
+    "city": "Vilnius",
+    "latitude": 54.7170768,
+    "longitude": 25.2777396,
+    "total_evse_count": 2,
+    "available_evse_count": 2,
+    "charging_evse_count": 0,
+    "unavailable_evse_count": 0,
+    "unknown_evse_count": 0,
+    "connector_types": [
+      "IEC_62196_T2_COMBO"
+    ],
+    "max_power_kw": 47,
+    "last_observed_at": "2026-10-10T21:59:41.763+00:00"
+  },
+  "capacityStatus": 200,
+  "capacityStationFields": [
+    "city",
+    "name",
+    "address",
+    "latitude",
+    "longitude",
+    "location_id",
+    "max_power_kw",
+    "operator_name",
+    "connector_types",
+    "last_observed_at",
+    "total_evse_count",
+    "unknown_evse_count",
+    "charging_evse_count",
+    "available_evse_count",
+    "unavailable_evse_count"
+  ],
+  "capacityEvseFields": [
+    "id",
+    "status",
+    "observed_at",
+    "connector_standards"
+  ],
+  "prediction": {
+    "status": 200,
+    "cors": null,
+    "body": []
+  },
+  "routeRequest": {
+    "origin": {
+      "lat": 54.7377663,
+      "lng": 25.2701118
+    },
+    "destinations": [
+      {
+        "lat": 54.7170768,
+        "lng": 25.2777396
+      }
+    ]
+  },
+  "route": {
+    "status": 200,
+    "cors": "*",
+    "body": {
+      "results": [
+        {
+          "route": {
+            "origin": {
+              "lat": 54.7377663,
+              "lng": 25.2701118
+            },
+            "destination": {
+              "lat": 54.7170768,
+              "lng": 25.2777396
+            },
+            "drivingDurationSeconds": 438,
+            "roadDistanceMeters": 4924,
+            "trafficAware": true,
+            "provider": "tomtom",
+            "calculatedAt": "2026-10-10T23:59:46.081Z"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,12 +1,11 @@
 import { Map, Marker, NavigationControl, setWorkerUrl } from 'maplibre-gl';
-import type { GeoJSONSource, MapMouseEvent } from 'maplibre-gl';
+import type { GeoJSONSource, MapMouseEvent, StyleSpecification } from 'maplibre-gl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './calm.web.css';
 import { Pressable, Text, useWindowDimensions } from 'react-native';
 
-import capturedCase from '../features/experience/recordedCase.json';
 import { ExperiencePanel } from '../features/experience/ExperiencePanel';
 import { useReducedMotion } from './CalmUI';
 import type { ConnectorStandard } from '../features/map/congestion';
@@ -15,12 +14,11 @@ import { LocationControl } from '../features/location/LocationControl';
 import {
   MAP_ERROR_BACKGROUND_COLOR,
   MAP_ERROR_TEXT_COLOR,
-  OPENFREEMAP_STYLE_URL,
+  PREMIUM_MAP_STYLE,
   VILNIUS_CENTER,
   VILNIUS_INITIAL_ZOOM,
 } from './mapConfig';
 import {
-  FilterBar,
   MapStatus,
   useMapStations,
   availabilityColors,
@@ -52,10 +50,12 @@ export function GrowMap() {
   const layoutRef = useRef({ wide, reduced });
   useEffect(() => { layoutRef.current = { wide, reduced }; }, [wide, reduced]);
   const [standard, setStandard] = useState<ConnectorStandard>('IEC_62196_T2_COMBO');
-  const [showCase, setShowCase] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [highlightedStation, setHighlightedStation] = useState<MapStation | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [filterRequest, setFilterRequest] = useState(0);
+  const [sheetCollapsed, setSheetCollapsed] = useState(false);
   const [panelHeight, setPanelHeight] = useState(0);
-  const [filters, setFilters] = useState<StationFilters>({});
+  const [filters, setFilters] = useState<StationFilters>({ connectorStandards: ['IEC_62196_T2_COMBO'] });
   const { geojson, stations, loading, error, lastFetched, refresh } =
     useMapStations(bounds, filters);
 
@@ -71,7 +71,7 @@ export function GrowMap() {
       attributionControl: {},
       center: VILNIUS_CENTER,
       container: containerRef.current,
-      style: OPENFREEMAP_STYLE_URL,
+      style: JSON.parse(PREMIUM_MAP_STYLE) as StyleSpecification,
       zoom: VILNIUS_INITIAL_ZOOM,
     });
 
@@ -234,7 +234,6 @@ export function GrowMap() {
         };
         setSelectedStation(station);
         setExpanded(true);
-        setShowCase(false);
         const layout = layoutRef.current;
         map.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: layout.reduced ? 0 : 280,
           offset: layout.wide ? [200, 0] : [0, -map.getContainer().clientHeight * 0.36 - 20] });
@@ -275,8 +274,8 @@ export function GrowMap() {
 
   useEffect(() => {
     const source = mapRef.current?.getSource('selected-station') as GeoJSONSource | undefined;
-    source?.setData({ type: 'FeatureCollection', features: selectedStation ? [{ type: 'Feature', geometry: { type: 'Point', coordinates: [selectedStation.longitude, selectedStation.latitude] }, properties: {} }] : [] });
-  }, [selectedStation, mapReady]);
+    source?.setData({ type: 'FeatureCollection', features: highlightedStation ? [{ type: 'Feature', geometry: { type: 'Point', coordinates: [highlightedStation.longitude, highlightedStation.latitude] }, properties: {} }] : [] });
+  }, [highlightedStation, mapReady]);
 
   // Update GeoJSON data when stations change
   useEffect(() => {
@@ -298,23 +297,26 @@ export function GrowMap() {
     return () => { markerRef.current?.remove(); markerRef.current = null; };
   }, [location.position, mapReady]);
 
+  const highlight = useCallback((station: MapStation | null) => {
+    setHighlightedStation(station);
+    if (station) mapRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 14.5,
+      duration: reduced ? 0 : 240, offset: wide ? [220, 0] : [0, -mapRef.current.getContainer().clientHeight * .36] });
+  }, [wide, reduced]);
+  useEffect(() => {
+    if (!panelRef.current) return;
+    const observer = new ResizeObserver((entries) => setPanelHeight(entries[0].contentRect.height));
+    observer.observe(panelRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div aria-label="Interactive map of EV charging stations" style={webStyles.container}>
       <div ref={containerRef} style={webStyles.map} />
 
       {/* Overlay controls */}
-      <div style={{ ...webStyles.overlayTop, left: wide ? 448 : 16, maxWidth: 420 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Map filters" accessibilityState={{ expanded: filtersOpen }} onPress={() => setFiltersOpen((value) => !value)} style={{ minHeight: 48, alignSelf: 'flex-start', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.overlayBorder }}><Text style={{ color: colors.textPrimary, fontSize: 13 }}>Filters {filtersOpen ? '−' : '+'}</Text></Pressable>
-        {filtersOpen ? <FilterBar filters={filters} onFiltersChange={setFilters} /> : null}
-      {/* Legend */}
-      {filtersOpen ? <div style={{ ...webStyles.legend, position: 'static', marginTop: 8, flexWrap: 'wrap' }}>
-        <LegendItem color={availabilityColors.available} label="Available" />
-        <LegendItem color={availabilityColors.occupied} label="In Use" />
-        <LegendItem color={availabilityColors.unavailable} label="Unavailable" />
-        <LegendItem color={availabilityColors.unknown} label="Unverified" />
-      </div> : null}
-
-        <div style={webStyles.statusContainer}>
+      <div style={{ ...webStyles.overlayTop, left: 'auto', right: 80, top: 'auto', bottom: wide ? 20 : panelHeight + 12, maxWidth: wide ? 420 : 280 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Map filters" onPress={() => setFilterRequest((value) => value + 1)} style={{ minHeight: 48, alignSelf: 'flex-start', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.overlayBorder }}><Text style={{ color: colors.textPrimary, fontSize: 13 }}>Filters</Text></Pressable>
+        {error ? <div style={webStyles.statusContainer}>
           <MapStatus
             loading={loading}
             error={error}
@@ -322,25 +324,25 @@ export function GrowMap() {
             lastFetched={lastFetched}
             onRetry={refresh}
           />
-        </div>
+        </div> : null}
       </div>
 
-      <div style={{ position: 'absolute', right: 16, bottom: wide ? 64 : panelHeight + 56, zIndex: 3 }}>
+      <div style={{ position: 'absolute', right: 16, bottom: wide ? 20 : panelHeight + 12, zIndex: 3 }}>
         <LocationControl busy={location.busy} error={location.error} onPress={() => {
           void location.locate().then((fix) => { if (fix) mapRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, duration: reduced ? 0 : 280, offset: wide ? [200, 0] : [0, -panelHeight / 2] }); });
         }} />
       </div>
-      <div ref={(element) => { if (element && element.clientHeight !== panelHeight) setPanelHeight(element.clientHeight); }} style={{ ...webStyles.detailPanel,
-        ...(wide ? { top: 24, bottom: 48, left: 24, right: 'auto', width: 400, height: 'auto', maxHeight: !selectedStation && !showCase ? 500 : undefined } : { left: 12, right: 12, bottom: 40, height: showCase || (selectedStation && expanded) ? '72%' : selectedStation ? 340 : '64%', maxHeight: !selectedStation && !showCase ? 440 : undefined }) }}>
-        <ExperiencePanel selected={selectedStation} standard={standard} onStandardChange={setStandard}
-          filters={filters} onFiltersChange={setFilters} onLocate={async (signal) => {
-            const fix = await location.locate(); if (!fix || signal.aborted) return false;
-            mapRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 15, duration: reduced ? 0 : 280, offset: wide ? [200, 0] : [0, -panelHeight / 2] }); return true;
+      <div ref={panelRef} className="driver-sheet" style={{ ...webStyles.detailPanel,
+        ...(wide ? { top: 20, bottom: 'auto', left: 20, right: 'auto', width: 440, height: sheetCollapsed ? 48 : expanded ? '86%' : 300, borderRadius: 24 } : { left: 0, right: 0, bottom: 0, height: sheetCollapsed ? 48 : expanded ? '72%' : 300, maxHeight: expanded ? '85%' : '65%' }) }}>
+        <ExperiencePanel onCollapseChange={setSheetCollapsed} filterRequest={filterRequest} selected={selectedStation} standard={standard} onStandardChange={setStandard}
+          bounds={bounds} onFiltersChange={setFilters} onPresentationChange={setExpanded}
+          onLocate={async (signal) => {
+            const fix = await location.locate(); if (!fix || signal.aborted) return null;
+            mapRef.current?.easeTo({ center: [fix.lng, fix.lat], zoom: 14, duration: reduced ? 0 : 240, offset: wide ? [220, 0] : [0, -panelHeight / 2] });
+            return { lat: fix.lat, lng: fix.lng };
           }}
-          expanded={expanded} onToggle={() => setExpanded((value) => !value)} onClose={() => setSelectedStation(null)}
-          onSelect={(station) => { setSelectedStation(station); setExpanded(true); setShowCase(false); mapRef.current?.easeTo({ center: [station.longitude, station.latitude], zoom: 15, duration: reduced ? 0 : 280, offset: wide ? [200, 0] : [0, -(mapRef.current.getContainer().clientHeight * 0.72) / 2 - 20] }); }}
-          stations={stations} loading={loading} error={error} userOrigin={location.position ? { lat: location.position.lat, lng: location.position.lng } : undefined}
-          showCase={showCase} onCase={() => { setShowCase(true); mapRef.current?.easeTo({ center: [capturedCase.selected.station.longitude, capturedCase.selected.station.latitude], zoom: 14.5, duration: reduced ? 0 : 280, offset: wide ? [200, 0] : [0, -(mapRef.current.getContainer().clientHeight * 0.72) / 2 - 20] }); }} onCloseCase={() => setShowCase(false)} />
+          onClose={() => setSelectedStation(null)} onHighlight={highlight}
+          onWiden={() => { mapRef.current?.easeTo({ zoom: 11, duration: reduced ? 0 : 240 }); }} />
       </div>
 
       {hasLoadingError ? (
@@ -348,15 +350,6 @@ export function GrowMap() {
           Map could not be loaded.
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function LegendItem({ color, label }: { color: string; label: string }) {
-  return (
-    <div style={webStyles.legendItem}>
-      <div style={{ ...webStyles.legendDot, backgroundColor: color }} />
-      <span style={webStyles.legendText}>{label}</span>
     </div>
   );
 }
@@ -383,32 +376,6 @@ const webStyles = {
     marginTop: 4,
     paddingHorizontal: 8,
   },
-  legend: {
-    position: 'absolute',
-    bottom: 32,
-    left: 8,
-    display: 'flex',
-    flexDirection: 'row' as const,
-    gap: 8,
-    backgroundColor: colors.overlayBackground,
-    borderRadius: 8,
-    padding: '6px 12px',
-    zIndex: 1,
-  },
-  legendItem: {
-    display: 'flex',
-    alignItems: 'center' as const,
-    gap: 5,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    color: colors.textSecondary,
-    fontSize: 11,
-  },
   detailPanel: {
     display: 'flex',
     position: 'absolute',
@@ -416,7 +383,7 @@ const webStyles = {
     left: 0,
     right: 0,
     zIndex: 2,
-    maxWidth: 420,
+    maxWidth: 'none',
   },
   error: {
     backgroundColor: MAP_ERROR_BACKGROUND_COLOR,
