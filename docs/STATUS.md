@@ -7,12 +7,18 @@ but left Results on the origin charger. A minimal transition now opens Compariso
 so destination ETAs are visible. Outlook captions now expose source/expiry/model
 with the label "Experimental AI Outlook". Ranking and all data guards are preserved.
 96 driver tests, strict TypeScript, zero-warning project lint, web export and
-42 AI tests pass. Production deployment/acceptance remains pending.
+42 AI tests pass. Production code commit `142090f` deployed successfully in run
+`38116394331`, Cloudflare version `2c226bd0-81ac-40e7-b3fd-a74c38732eaa`.
+Fresh actual public 1440/1280 desktop and 390/320 mobile CSS-pixel acceptance
+passes with no horizontal overflow or observed console/hydration errors.
+Genuine HTTP 200 TomTom estimates display in Results, Comparison and Details;
+issue preview, etiquette and coming-soon rewards were preserved and exercised.
 
-Live read-only SQL confirms 2,445 fresh eligible groups at 05:48:31 UTC from poll
+Live read-only SQL confirms 2,445 fresh eligible groups at 06:06:05 UTC from poll
 `cdcff5c1-2d8d-4888-b630-79d5d8f5a186`; zero published predictions. The required
-reviewer-protected publication environment is missing; GitHub private Pro reviewer
-controls are unavailable. Publication and automatic publication remain disabled.
+reviewer-protected publication environment is missing; required-reviewer controls
+are unavailable in the current private repository. Publication and automatic
+publication remain disabled. Full dual-feature success is not claimed.
 The genuine hourly collector/archive/inference dry-run chain remains functioning.
 See `tasks/active/FINAL-LIVE-RELEASE.md` and `artifacts/final-live-release/REPORT.md`.
 

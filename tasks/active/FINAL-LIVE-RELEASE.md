@@ -1,6 +1,6 @@
 # Final AI Outlook and TomTom live release — 2026-10-11
 
-Status: frontend verified locally; production deployment pending. AI publication
+Status: TomTom frontend deployed and public web acceptance passed. AI publication
 blocked by the required protected approval environment, not data freshness.
 
 Scope: the user's final pre-pitch release request. Preserve TASK-015 collection,
@@ -20,6 +20,8 @@ source times 05:14:28.526–05:14:32.422 UTC and zero published rows.
 CatBoost `availability_v1` checksum:
 `c14082644ae49b617501dd052bdf36ad35092506f21bb13bbaac7a4d430e7e42`.
 No timestamp substitution, model retraining or publication occurred.
+Final read-only recheck at 06:06:05 UTC confirms the same poll, 2,445 eligible
+groups, zero stale/future groups and zero published rows.
 
 The deployed prediction table has RLS and denies public insert/update access.
 The actual RPC matches the reviewed migration: bounded exact station/connector
@@ -28,7 +30,8 @@ Public Opera/CCS2 RPC returns HTTP 200 and `[]`; no outlook is fabricated.
 
 The AI README explicitly requires environment reviewers before setting
 `GROW_EV_ALLOW_PUBLISH=approved`. GitHub currently lists only `prediction-dry-run`;
-`prediction-publication` is absent and required-reviewer controls are unavailable.
+`prediction-publication` is absent and required-reviewer controls are unavailable
+in the current private repository.
 [GitHub documentation](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments)
 limits these controls on Pro private repositories. No unprotected environment,
 approval variable, publication dispatch or automatic publication was enabled.
@@ -57,10 +60,17 @@ stopped; the unrelated TASK-016 server was preserved. Final locked install passe
 A broad `eslint .` also scanned generated MapLibre vendor code; the project's
 Expo lint command passes with zero warnings. No dependency files changed.
 
-## Acceptance remaining
+## Public acceptance and remaining blocker
 
-Deploy through the single existing web workflow, verify real fresh public desktop
-1440/1280 and mobile 390/320 CSS-pixel loads, and record deployment evidence.
+Production code commit `142090f27697be401a6eb910a2f9170252a42edc` deployed in
+[38116394331](https://github.com/dhossain-ai/grow-ev/actions/runs/38116394331).
+Cloudflare version `2c226bd0-81ac-40e7-b3fd-a74c38732eaa`.
+Fresh actual public desktop 1440/1280 and mobile 390/320 CSS-pixel loads pass,
+with measured viewport/scroll width equality and zero observed console errors.
+Desktop Results/Comparison and mobile Comparison/Details show genuine TomTom
+ETAs; the fixed button opens Comparison directly without a congestion event.
+320px Type 2 search, real station-linked unsent report review, etiquette and
+Grow Points coming-soon state were exercised. Screenshot evidence is local.
 AI visibility and one subsequent automatic publication cycle cannot pass while
 the required reviewer gate remains unavailable. Do not claim full release success.
 Physical-device and spoken-command acceptance are outside this web validation.
