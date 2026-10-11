@@ -11,15 +11,19 @@ const json = (body: unknown, status = 200): Response => Response.json(body, { st
 
 export async function runs(env: Env, request: typeof fetch = fetch): Promise<Run[]> {
   const response = await request(`${API}/runs?per_page=100&branch=${encodeURIComponent(env.GITHUB_REF)}`, {
-    headers: headers(env), signal: AbortSignal.timeout(15_000), redirect: 'error' });
-  if (!response.ok) throw new Error('GitHub run inspection failed');
+    headers: headers(env), signal: AbortSignal.timeout(15_000), redirect: 'follow' });
+  if (!response.ok) {
+    const reqId = response.headers.get('x-github-request-id') || 'none';
+    throw new Error(`GitHub run inspection failed: HTTP ${response.status} (${response.statusText || 'error'}) [request-id: ${reqId}]`);
+  }
   const data = await response.json() as { workflow_runs?: Run[] };
-  if (!Array.isArray(data.workflow_runs) || data.workflow_runs.some(r => !Number.isSafeInteger(r.id) || typeof r.display_title !== 'string' || typeof r.status !== 'string' || !Number.isFinite(Date.parse(r.updated_at)))) throw new Error('Invalid GitHub run response');
+  if (!Array.isArray(data.workflow_runs) || data.workflow_runs.some(r => !Number.isSafeInteger(r.id) || typeof r.display_title !== 'string' || typeof r.status !== 'string' || !Number.isFinite(Date.parse(r.updated_at)))) throw new Error('Invalid GitHub run response schema');
   return data.workflow_runs;
 }
 function headers(env: Env): Record<string, string> {
-  if (!env.GITHUB_TOKEN) throw new Error('GitHub secret missing');
-  return { Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json',
+  const token = env.GITHUB_TOKEN?.trim();
+  if (!token) throw new Error('GitHub secret missing');
+  return { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'grow-ev-collector-trigger' };
 }
 export function health(items: Run[], now: number): Record<string, unknown> {
@@ -35,7 +39,7 @@ export function health(items: Run[], now: number): Record<string, unknown> {
 export async function dispatch(env: Env, dispatchId: string, request: typeof fetch = fetch): Promise<number> {
   const response = await request(`${API}/dispatches`, { method: 'POST', headers: { ...headers(env), 'Content-Type': 'application/json' },
     body: JSON.stringify({ ref: env.GITHUB_REF, inputs: { mode: 'permanent', dispatch_id: dispatchId } }),
-    signal: AbortSignal.timeout(15_000), redirect: 'error' });
+    signal: AbortSignal.timeout(15_000), redirect: 'follow' });
   return response.status;
 }
 export class CollectorCoordinator {
@@ -51,8 +55,12 @@ export class CollectorCoordinator {
   }
   private async handle(request: Request): Promise<Response> {
     if (new URL(request.url).pathname === '/health') {
-      try { return json({ enabled: this.env.ENABLED === 'approved', last_attempt: await this.state.storage.get('attempt'), ...health(await runs(this.env), Date.now()) }); }
-      catch { return json({ status: 'unavailable', reason: 'GitHub inspection failed' }, 503); }
+      try {
+        const items = await runs(this.env);
+        return json({ enabled: this.env.ENABLED === 'approved', last_attempt: await this.state.storage.get('attempt'), last_inspection_error: await this.state.storage.get('last_inspection_error'), ...health(items, Date.now()) });
+      } catch (err: any) {
+        return json({ status: 'unavailable', reason: 'GitHub inspection failed', error: err.message, last_attempt: await this.state.storage.get('attempt'), last_inspection_error: await this.state.storage.get('last_inspection_error') }, 503);
+      }
     }
     if (this.env.ENABLED !== 'approved') return json({ status: 'disabled' });
     const body = await request.json() as { scheduledTime: number };
@@ -62,7 +70,10 @@ export class CollectorCoordinator {
     if (previous && previous.slot >= slot) return json({ status: 'already_attempted', dispatch_id: previous.dispatch_id });
     let items: Run[];
     try { items = await runs(this.env); }
-    catch { return json({ status: 'inspection_failed_no_dispatch' }, 503); }
+    catch (err: any) {
+      await this.state.storage.put('last_inspection_error', { time: new Date().toISOString(), message: err.message });
+      return json({ status: 'inspection_failed_no_dispatch', error: err.message }, 503);
+    }
     if (items.some(r => r.status !== 'completed')) return json({ status: 'collector_active_no_dispatch', ...health(items, Date.now()) });
     const receipt: Receipt = { slot, dispatch_id: `cf-${slot}`, outcome: 'uncertain', checked_at: new Date().toISOString() };
     // Reservation survives network ambiguity/restarts. Never retry a POST in the same slot.
@@ -81,11 +92,16 @@ export default {
   async scheduled(event: { scheduledTime: number }, env: Env): Promise<void> {
     const response = await env.COORDINATOR.get(env.COORDINATOR.idFromName('collector')).fetch(new Request('https://internal/dispatch', {
       method: 'POST', body: JSON.stringify({ scheduledTime: event.scheduledTime }) }));
-    if (!response.ok) throw new Error('Collector dispatch failed; inspect protected health endpoint');
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`Collector dispatch failed (HTTP ${response.status}): ${errText}`);
+      throw new Error(`Collector dispatch failed: HTTP ${response.status}`);
+    }
   },
   async fetch(request: Request, env: Env): Promise<Response> {
     if (new URL(request.url).pathname !== '/health') return json({ error: 'not_found' }, 404);
-    if (!env.STATUS_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.STATUS_TOKEN}`) return json({ error: 'unauthorized' }, 401);
+    const expected = env.STATUS_TOKEN?.trim();
+    if (!expected || request.headers.get('Authorization') !== `Bearer ${expected}`) return json({ error: 'unauthorized' }, 401);
     if (request.method !== 'GET') return json({ error: 'method_not_allowed' }, 405);
     return env.COORDINATOR.get(env.COORDINATOR.idFromName('collector')).fetch(new Request('https://internal/health'));
   },
