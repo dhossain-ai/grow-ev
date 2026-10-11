@@ -57,3 +57,15 @@ GPS/devices, Android human voice and fresh-congestion acceptance remain pending.
 See `artifacts/task-016/INTELLIGENCE-INTEGRATION.md` for the final evidence report.
 Commit only this driver integration and named evidence; stop after commit. No
 deployment, merge, publication, model retraining or infrastructure changes.
+
+### Responsible-charging follow-up — 2026-10-11
+
+User-authorized follow-up adds compact etiquette, a real-station report preview
+and Grow Points information only inside expanded details. Reporting remains
+explicitly unsent; no backend or accounts. Original 76 untracked files audited
+and preserved locally. 92 tests, typecheck, zero-warning lint, both exports and
+offline x86_64 debug build passed. Chrome desktop/320/390 and Pixel_8 sheet
+interactions verified. Preserve both completed commits; one focused additions
+commit and normal feature-branch push are authorized. Stop after push and report;
+main merge, deployment, TASK-015 and Voice Worker changes remain out of scope.
+See `artifacts/task-016/RESPONSIBLE-CHARGING.md` for evidence and safe future gates.

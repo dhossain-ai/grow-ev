@@ -1,5 +1,23 @@
 # Grow EV — Current Project Status
 
+## TASK-016 responsible charging — 2026-10-11
+
+Expanded station details now include charging etiquette, a station-linked unsent
+report preview (five categories, optional 240-character description), and Grow
+Points information labeled "Rewards program · Coming soon". No reporting endpoint
+exists in the inspected application; no submission, storage, rewards or accounts
+were added. Premium UI and intelligence commits `ec21628` and `2e6f6d2` preserved.
+
+92 tests, TypeScript, zero-warning ESLint, web/Android exports and offline x86_64
+debug assembly passed. Chrome desktop/320/390 layouts and Pixel_8 report/rewards
+sheets were exercised with real station identity; Android keyboard and Back close
+checked. Original 76 untracked evidence files audited individually and retained
+outside the commit. Feature branch pushed; no main merge or deployment.
+See `artifacts/task-016/RESPONSIBLE-CHARGING.md` and its untracked-file audit.
+Real reporting/rewards, published live forecasts and physical-device acceptance
+remain future work. Main pushes currently trigger deployment; gate that workflow
+before a separately approved merge if deployment has not also been approved.
+
 ## TASK-016 driver intelligence integration — 2026-10-11
 
 Follow-up to preserved premium UI commit `ec21628` in `E:\Grow EV-task016`.

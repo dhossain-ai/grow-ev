@@ -1,5 +1,6 @@
 import type { DrivingRoute } from '../../../../../packages/routing';
 import { PredictionOutlook } from '../predictions/PredictionOutlook';
+import { ResponsibleCharging } from './ResponsibleCharging';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
@@ -48,7 +49,7 @@ export function PremiumStationDetails({ evidence, standard, now, recommendation,
       <Text style={styles.label}>LOCATION</Text><View style={styles.box}><Text selectable style={styles.body}>{address || 'Address not reported'}</Text>{address ? <ActionButton secondary label="Copy address" onPress={() => { void copyAddress(); }} /> : null}{copyMessage ? <Text accessibilityLiveRegion="polite" style={styles.caption}>{copyMessage}</Text> : null}<Text style={styles.body}>Operator · {station.operator_name || 'Not reported'}</Text></View>
       <Text style={styles.label}>CHARGING DATA</Text><View style={styles.box}><Text style={styles.body}>Source · Via Lietuva OCPI</Text><Text selectable style={styles.body}>Oldest compatible observation · {observation.observedAt ? new Date(observation.observedAt).toLocaleString() : 'Not reported'}</Text><Text style={styles.caption}>Charging conditions can change after observation.</Text></View>
     </> : null}
-    {expanded ? <ActionButton label="Get directions  →" onPress={onDirections} /> : null}
+    {expanded ? <><ResponsibleCharging key={station.location_id} station={station} /><ActionButton label="Get directions  →" onPress={onDirections} /></> : null}
   </View>;
 }
 const styles = StyleSheet.create({
