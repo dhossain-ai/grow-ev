@@ -1,5 +1,17 @@
 # Grow EV — Current Project Status
 
+## Premium driver UX restored — 2026-10-12
+
+Driver release `b7fe873` deployed to grow-ev-demo, Cloudflare version `05a8e5fb-ec36-4fe0-ac30-348bcab1b0c0`.
+Clean station-card information hierarchy restored: station name (capped at 2 lines), operator, connector and power, actual TomTom road-driving ETA, availability with observation age, and view actions.
+Removed large standalone station-name/ETA text blocks above cards.
+Replaced diagnostic text with concise driver-facing heading "Compatible charging stations nearby".
+Replaced verbose routing-origin paragraph with compact "Starting from:" badge component distinguishing demo origin, selected charger, and user location.
+Eliminated "Driving time unavailable" on the starting charger, replacing with "Starting point / Driving estimates start from this charger". Full station title accessible in expanded Details.
+Automated tests (103 passed), strict TypeScript, ESLint (0 warnings), and production web export passed.
+Verified live on public site across 1440px, 1280px, 390px, and 320px viewports without horizontal overflow.
+Rollback target: `428c3d19-a9c7-40c5-b0f0-1e44ba2dcada`.
+
 ## Final core intelligence completion — 2026-10-11
 
 Driver release 91a6af6 deployed to grow-ev-demo, Cloudflare version
