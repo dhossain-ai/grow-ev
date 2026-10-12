@@ -1,6 +1,7 @@
 import { geographicDistanceMeters, isCoordinates, isDrivingRoute, sameCoordinates, ROUTE_MAX_AGE_MS, type RouteOutcome, type Coordinates } from '../../../../../packages/routing';
 import { compatibleCapacity, FRESHNESS_MS, type ConnectorStandard, type StationEvidence } from '../map/congestion';
 import { formatConnector, type MapStation } from '../map/types';
+export { sameCoordinates };
 
 export function stationTitle(station: MapStation) { return station.name || station.address || 'Charging station'; }
 export function connectorKind(standard: ConnectorStandard) { return standard === 'IEC_62196_T2' ? 'AC charging' : standard === 'CHADEMO' ? 'DC charging' : 'Fast DC'; }

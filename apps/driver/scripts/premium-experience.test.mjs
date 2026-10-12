@@ -119,7 +119,7 @@ export const ActionButton=({label,onPress})=>React.createElement('button',{onCli
 export const useReducedMotion=()=>true;
 export const ConnectorSelector=({value,onChange})=>React.createElement('button',{onClick:()=>onChange('IEC_62196_T2'), 'aria-label':'Use Type 2', 'aria-pressed':value==='IEC_62196_T2'},'Type 2');`);
 const icons = await compile('../src/components/DriverIcons.tsx', { ...common, '../features/map/tokens': tokens });
-const cardDeps = { '../predictions/PredictionOutlook': dataUrl('export const PredictionOutlook=()=>null;'), ...common, '../../components/CalmUI': ui, '../../components/DriverIcons': icons, '../map/types': types, './presentation': presentationUrl };
+const cardDeps = { '../predictions/PredictionOutlook': dataUrl('export const PredictionOutlook=()=>null;'), ...common, '../../components/CalmUI': ui, '../../components/DriverIcons': icons, '../map/types': types, './presentation': presentationUrl, '../../../../../packages/routing': routing };
 const cardUrl = await compile('../src/features/experience/PremiumStationCard.tsx', cardDeps);
 const { PremiumStationCard } = await import(cardUrl);
 const responsibleUrl = await compile('../src/features/experience/ResponsibleCharging.tsx', { ...cardDeps, 'react-native-safe-area-context': dataUrl('export const useSafeAreaInsets=()=>({bottom:0});') });
@@ -260,7 +260,7 @@ test('ordinary web search opts into routing and Results exposes destination card
   const other = { ...row, station: station('destination') };
   globalThis.premiumFixture.search = searchState('ready', [row, other]); rerender();
   const tree = ExperiencePanel(panelProps);
-  assert.match(render(tree), /Driving estimates from Synthetic a.*charger origin, not your location/);
+  assert.match(render(tree), /Starting from:.*Demo origin.*Synthetic a/);
   assert.ok(nodes(tree).some(node => node.type === PremiumStationCard && node.props.evidence === other));
 });
 
@@ -502,4 +502,36 @@ test('forecast lifecycle clears at expiry/background and ignores a late canceled
     f.predictionBackground('background'); release(forecast); await Promise.resolve(); await Promise.resolve();
     rerender(); assert.equal(render(LifecycleOutlook(props)), ''); cleanup();
   } finally {cleanup?.();globalThis.setTimeout=originalSetTimeout;globalThis.clearTimeout=originalClearTimeout;}
+});
+
+test('premium station card and details show starting point instead of unavailable on origin station', () => {
+  reset();
+  const originStation = station('origin-station');
+  const originRow = { station: originStation, evses: [evse('o1', 'AVAILABLE', ccs, now)] };
+  const cardHtml = render(React.createElement(PremiumStationCard, {
+    evidence: originRow, standard: ccs, now, featured: true, originKind: 'selected-charger',
+    originStationId: 'origin-station', displayOrigin: { lat: originStation.latitude, lng: originStation.longitude },
+    onDetails() {}, onDirections() {},
+  }));
+  assert.match(cardHtml, /Starting point/);
+  assert.match(cardHtml, /Driving estimates start from this charger/);
+  assert.doesNotMatch(cardHtml, /Driving time unavailable/);
+
+  const detailsHtml = render(React.createElement(PremiumStationDetails, {
+    evidence: originRow, standard: ccs, now, originKind: 'selected-charger',
+    originStationId: 'origin-station', displayOrigin: { lat: originStation.latitude, lng: originStation.longitude },
+    onDirections() {}, onCompare() {},
+  }));
+  assert.match(detailsHtml, /Starting point/);
+  assert.match(detailsHtml, /Driving estimates start from this charger/);
+  assert.doesNotMatch(detailsHtml, /Driving time unavailable/);
+});
+
+test('results panel displays concise driver-facing language without technical diagnosis or standalone ETA text', () => {
+  reset(['results', null, false, false, null]);
+  globalThis.premiumFixture.search = { ...searchState('ready', [row]), result: { recommendations: [], rankingBasis: 'geographic-proximity' } };
+  const html = render(ExperiencePanel(panelProps));
+  assert.match(html, /Compatible charging stations nearby/);
+  assert.doesNotMatch(html, /Current observations do not support a ranked alternative/);
+  assert.doesNotMatch(html, /Synthetic a · \d+ min drive/);
 });

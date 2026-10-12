@@ -118,5 +118,6 @@ export function useDriverSearch(standard: ConnectorStandard, bounds: BoundingBox
     if (!candidates.length) { setError('Request your location to calculate a drive to this charger.'); return; }
     await requestDriving(routeOrigin, candidates, generation.current, origin);
   };
-  return { phase, rows: suitableRows, options, routeFor, anchor, result, now, error, search, reset, routing, compareDriving, retryAt };
+  const clearUserOrigin = useCallback(() => { setSearchOrigin(undefined); setOriginAt(0); }, []);
+  return { phase, rows: suitableRows, options, routeFor, anchor, displayOrigin, result, now, error, search, reset, routing, compareDriving, clearUserOrigin, retryAt };
 }
